@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
-import { db } from '@/lib/firebase-admin';
+import stripe from '@/lib/stripe';
+import { adminDb as db } from '@/lib/firebase-admin';
 
 export async function POST(req: Request) {
     try {

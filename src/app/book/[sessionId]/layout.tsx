@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { use } from 'react';
 import { usePathname } from 'next/navigation';
 import { BookingProvider, useBooking } from '@/context/BookingContext';
-import { ChefHat, MapPin, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { ChefHat } from 'lucide-react';
 import styles from './layout.module.css';
 
 const steps = [
@@ -21,8 +21,12 @@ function WizardLayoutInner({ children }: { children: React.ReactNode }) {
 
     if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
 
-    const activeStepIndex = steps.findIndex(s => pathname.includes(s.path));
     const filteredSteps = steps.filter(s => !s.condition || s.condition(state));
+
+    const sessionDate = state.session?.date ? new Date(state.session.date) : null;
+    const dateString = sessionDate && !isNaN(sessionDate.getTime())
+        ? sessionDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+        : '...';
 
     return (
         <div className={styles.wrapper}>
@@ -35,10 +39,10 @@ function WizardLayoutInner({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className={styles.sessionSummary}>
                             <div className={styles.sessionMain}>
-                                <strong>{state.session?.className}</strong>
+                                <strong>{state.session?.className || 'Loading...'}</strong>
                             </div>
                             <div className={styles.sessionMeta}>
-                                <span>{new Date(state.session?.date || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                                <span>{dateString}</span>
                                 <span>{state.session?.venueName}</span>
                             </div>
                         </div>
@@ -75,9 +79,10 @@ function WizardLayoutInner({ children }: { children: React.ReactNode }) {
     );
 }
 
-export default function BookingLayout({ params, children }: { params: { sessionId: string }; children: React.ReactNode }) {
+export default function BookingLayout({ params, children }: { params: Promise<{ sessionId: string }>; children: React.ReactNode }) {
+    const { sessionId } = use(params);
     return (
-        <BookingProvider sessionId={params.sessionId}>
+        <BookingProvider sessionId={sessionId}>
             <WizardLayoutInner>{children}</WizardLayoutInner>
         </BookingProvider>
     );

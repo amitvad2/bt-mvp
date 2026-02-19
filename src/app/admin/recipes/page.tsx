@@ -74,7 +74,7 @@ export default function AdminRecipes() {
                     <p>Create and manage recipes that can be linked to sessions.</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-                    <Plus size={18} /> Add Recipe
+                    Add Recipe
                 </button>
             </div>
 
@@ -89,7 +89,7 @@ export default function AdminRecipes() {
                                     <img src={recipe.photoUrl} alt={recipe.name} />
                                 ) : (
                                     <div className={styles.placeholder}>
-                                        <BookOpen size={24} />
+                                        <BookOpen size={24} strokeWidth={1.5} />
                                     </div>
                                 )}
                             </div>
@@ -97,12 +97,14 @@ export default function AdminRecipes() {
                                 <h3>{recipe.name}</h3>
                                 <p className={styles.description}>{recipe.description}</p>
                                 <div className={styles.actions}>
-                                    <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(recipe)}>
-                                        <Edit2 size={16} /> Edit
-                                    </button>
-                                    <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(recipe.id)}>
-                                        <Trash2 size={16} /> Delete
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(recipe)}>
+                                            <Edit2 size={16} strokeWidth={1.5} />
+                                        </button>
+                                        <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(recipe.id)}>
+                                            <Trash2 size={16} strokeWidth={1.5} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

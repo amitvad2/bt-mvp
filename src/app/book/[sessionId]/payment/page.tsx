@@ -31,7 +31,7 @@ export default function PaymentPage() {
         })
             .then((res) => res.json())
             .then((data) => setClientSecret(data.clientSecret));
-    }, [state]);
+    }, [state.sessionId, state.studentId, state.session?.price]);
 
     const appearance = {
         theme: 'stripe' as const,

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Users, Calendar, MapPin, CreditCard, ChevronRight, ChefHat, Image as ImageIcon } from 'lucide-react';
+import { Users, Calendar, MapPin, CreditCard, ChevronRight, ChefHat, Image as ImageIcon, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import styles from './page.module.css';
 
@@ -95,9 +95,11 @@ export default function AdminDashboard() {
                 <section className={styles.quickActions}>
                     <h3>Quick Actions</h3>
                     <div className={styles.actionLinks}>
-                        <Link href="/admin/sessions"><Calendar size={18} /> Add New Session</Link>
-                        <Link href="/admin/classes"><ChefHat size={18} /> Add New Class Type</Link>
-                        <Link href="/admin/gallery"><ImageIcon size={18} /> Upload Photo</Link>
+                        <Link href="/admin/sessions"><Calendar size={18} strokeWidth={1.5} /> Add New Session</Link>
+                        <Link href="/admin/classes"><ChefHat size={18} strokeWidth={1.5} /> Add New Class Type</Link>
+                        <Link href="/admin/venues"><MapPin size={18} strokeWidth={1.5} /> Add New Venue</Link>
+                        <Link href="/admin/recipes"><BookOpen size={18} strokeWidth={1.5} /> Add New Recipe</Link>
+                        <Link href="/admin/gallery"><ImageIcon size={18} strokeWidth={1.5} /> Upload Photo</Link>
                     </div>
                 </section>
             </div>

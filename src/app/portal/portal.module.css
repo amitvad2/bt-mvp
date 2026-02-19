@@ -2,11 +2,12 @@
     display: grid;
     grid-template-columns: 260px 1fr;
     min-height: 100vh;
-    background: var(--bt-gray-50);
+    background: var(--bt-white);
 }
 
 .sidebar {
-    background: var(--bt-gray-900);
+    background: var(--bt-gray-50);
+    border-right: 1px solid var(--bt-gray-200);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -14,74 +15,72 @@
     top: 0;
     height: 100vh;
     overflow-y: auto;
-    padding: var(--space-6) 0;
+    padding: var(--space-8) 0;
 }
 
 .sidebarTop {
     display: flex;
     flex-direction: column;
-    gap: var(--space-6);
-    padding: 0 var(--space-4);
+    gap: var(--space-8);
+    padding: 0 var(--space-6);
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.625rem;
+    gap: 10px;
     font-family: var(--font-heading);
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--bt-amber);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
     text-decoration: none;
-    padding: 0 var(--space-2);
 }
 
 .userInfo {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-lg);
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--bt-gray-200);
+    margin-bottom: var(--space-2);
 }
 
 .avatar {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--bt-amber), var(--bt-amber-dark));
+    background: var(--bt-gray-200);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
+    font-weight: 600;
     font-size: 0.85rem;
-    color: #fff;
+    color: var(--bt-gray-600);
     flex-shrink: 0;
-    text-transform: uppercase;
 }
 
 .userInfo strong {
     display: block;
-    font-size: 0.875rem;
-    color: #fff;
-    margin-bottom: 4px;
+    font-size: 0.9rem;
+    color: var(--bt-gray-900);
+    margin-bottom: 2px;
 }
 
 .nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .navItem {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: 0.75rem var(--space-4);
+    gap: 12px;
+    padding: 10px var(--space-4);
     border-radius: var(--radius);
-    color: var(--bt-gray-400);
-    font-size: 0.9rem;
-    font-weight: 600;
+    color: var(--bt-gray-600);
+    font-size: 0.95rem;
+    font-weight: 500;
     text-decoration: none;
     transition: all var(--transition);
     cursor: pointer;
@@ -93,35 +92,33 @@
 }
 
 .navItem:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    background: var(--bt-gray-200);
+    color: var(--bt-gray-900);
 }
 
 .navItem.active {
-    background: rgba(245, 158, 11, 0.15);
-    color: var(--bt-amber);
+    background: var(--bt-accent-light);
+    color: var(--bt-accent);
 }
 
 .navItem.active svg {
-    color: var(--bt-amber);
+    color: var(--bt-accent);
 }
 
 .sidebarBottom {
-    padding: 0 var(--space-4);
+    padding: var(--space-6);
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding-top: var(--space-4);
-    margin-top: var(--space-4);
+    gap: 4px;
+    border-top: 1px solid var(--bt-gray-200);
 }
 
 .logoutBtn {
-    color: var(--bt-rose) !important;
+    color: var(--bt-danger) !important;
 }
 
 .logoutBtn:hover {
-    background: rgba(244, 63, 94, 0.1) !important;
+    background: rgba(209, 17, 36, 0.05) !important;
 }
 
 .main {
@@ -129,8 +126,7 @@
 }
 
 .content {
-    padding: var(--space-8) var(--space-10);
-    max-width: 1000px;
+    padding: var(--space-12);
 }
 
 @media (max-width: 900px) {

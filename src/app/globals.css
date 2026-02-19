@@ -128,7 +128,7 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-input,
+input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
   font-family: inherit;
@@ -407,6 +407,21 @@ p {
   outline: none;
 }
 
+.form-row {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.form-row>.form-group {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+}
+
 /* ============================================================
    CARDS (Apple Store Cards)
    ============================================================ */
@@ -462,6 +477,45 @@ p {
   to {
     opacity: 1;
   }
+}
+
+/* ============================================================
+   BADGES (Apple Style Pills)
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-indigo {
+  background: var(--bt-accent-light);
+  color: var(--bt-accent);
+}
+
+.badge-amber {
+  background: #FFF9E6;
+  color: #D97706;
+}
+
+.badge-green {
+  background: #E6F6EB;
+  color: #059669;
+}
+
+.badge-red {
+  background: #FFEBEB;
+  color: var(--bt-danger);
+}
+
+.badge-gray {
+  background: var(--bt-gray-100);
+  color: var(--bt-gray-600);
 }
 
 @keyframes slideUp {

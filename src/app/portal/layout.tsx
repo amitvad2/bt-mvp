@@ -46,7 +46,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarTop}>
                     <Link href="/" className={styles.logo}>
-                        <ChefHat size={24} />
+                        <ChefHat size={24} strokeWidth={1.5} />
                         <span>Blooming Tastebuds</span>
                     </Link>
 
@@ -56,7 +56,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                         </div>
                         <div>
                             <strong>{btUser?.firstName} {btUser?.lastName}</strong>
-                            <span className={`badge ${btUser?.role === 'admin' ? 'badge-red' : btUser?.role === 'parent' ? 'badge-amber' : 'badge-green'}`}>
+                            <span className={`badge ${btUser?.role === 'admin' ? 'badge-indigo' : btUser?.role === 'parent' ? 'badge-amber' : 'badge-green'}`}>
                                 {btUser?.role === 'youngAdult' ? 'Young Adult' : btUser?.role === 'parent' ? 'Parent' : 'Admin'}
                             </span>
                         </div>
@@ -69,7 +69,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                                 href={href}
                                 className={`${styles.navItem} ${pathname.startsWith(href) ? styles.active : ''}`}
                             >
-                                <Icon size={18} />
+                                <Icon size={20} strokeWidth={1.5} />
                                 <span>{label}</span>
                             </Link>
                         ))}
@@ -78,11 +78,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
                 <div className={styles.sidebarBottom}>
                     <Link href="/" className={styles.navItem}>
-                        <ExternalLink size={18} />
+                        <ExternalLink size={20} strokeWidth={1.5} />
                         <span>Back to Website</span>
                     </Link>
                     <button onClick={logOut} className={`${styles.navItem} ${styles.logoutBtn}`}>
-                        <LogOut size={18} />
+                        <LogOut size={20} strokeWidth={1.5} />
                         <span>Logout</span>
                     </button>
                 </div>

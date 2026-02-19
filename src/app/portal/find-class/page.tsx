@@ -35,13 +35,16 @@ export default function FindClassPage() {
     const handleSearch = async () => {
         setLoading(true);
         try {
-            let q = query(
+            // Simplified query to avoid index requirements for now
+            const q = query(
                 collection(db, 'sessions'),
-                where('status', '==', 'open'),
-                orderBy('date', 'asc')
+                where('status', '==', 'open')
             );
             const snap = await getDocs(q);
             let results = snap.docs.map(d => ({ id: d.id, ...d.data() } as Session));
+
+            // Sort by date on client side
+            results.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
             // Client-side filtering
             if (filters.venueId !== 'all') {
@@ -50,27 +53,47 @@ export default function FindClassPage() {
             if (filters.type !== 'all') {
                 results = results.filter(s => s.classType === filters.type);
             }
-            // Date filtering (Simplified)
+
+            // Date filtering
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+
             if (filters.dateRange === 'this-week') {
-                const now = new Date();
                 const nextWeek = new Date();
                 nextWeek.setDate(now.getDate() + 7);
                 results = results.filter(s => {
                     const d = new Date(s.date);
                     return d >= now && d <= nextWeek;
                 });
+            } else if (filters.dateRange === 'this-month') {
+                const nextMonth = new Date();
+                nextMonth.setMonth(now.getMonth() + 1);
+                results = results.filter(s => {
+                    const d = new Date(s.date);
+                    return d >= now && d <= nextMonth;
+                });
+            } else {
+                // By default, only show future/today's classes
+                results = results.filter(s => new Date(s.date) >= now);
             }
 
             setSessions(results);
         } catch (e) {
-            console.error(e);
+            console.error('Error fetching sessions:', e);
+            setSessions([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // Initial load
-    useEffect(() => { handleSearch(); }, []);
+    // Initial load and reactivity to URL params
+    useEffect(() => {
+        const typeParam = searchParams.get('type');
+        if (typeParam) {
+            setFilters(prev => ({ ...prev, type: typeParam }));
+        }
+        handleSearch();
+    }, [searchParams]);
 
     return (
         <div className={styles.page}>
@@ -158,7 +181,7 @@ export default function FindClassPage() {
                             <div className="flex justify-between items-center" style={{ marginTop: 'auto' }}>
                                 <div className="text-xl font-bold">£{(s.price / 100).toFixed(2)}</div>
                                 <button
-                                    onClick={() => router.push(`/book/${s.id}`)}
+                                    onClick={() => router.push(`/book/${s.id}/student`)}
                                     className="btn btn-primary"
                                     disabled={s.spotsAvailable === 0}
                                 >

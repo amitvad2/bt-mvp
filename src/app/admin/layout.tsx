@@ -55,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
 
                     <Link href="/" className={styles.logo}>
-                        <ChefHat size={20} />
+                        <ChefHat size={24} strokeWidth={1.5} />
                         <span>Blooming Tastebuds</span>
                     </Link>
 
@@ -66,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 href={href}
                                 className={`${styles.navItem} ${pathname.startsWith(href) ? styles.active : ''}`}
                             >
-                                <Icon size={18} />
+                                <Icon size={20} strokeWidth={1.5} />
                                 <span>{label}</span>
                             </Link>
                         ))}
@@ -75,11 +75,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 <div className={styles.sidebarBottom}>
                     <Link href="/portal/dashboard" className={styles.navItem}>
-                        <ExternalLink size={18} />
+                        <ExternalLink size={20} strokeWidth={1.5} />
                         <span>User Portal</span>
                     </Link>
                     <button onClick={logOut} className={`${styles.navItem} ${styles.logoutBtn}`}>
-                        <LogOut size={18} />
+                        <LogOut size={20} strokeWidth={1.5} />
                         <span>Logout</span>
                     </button>
                 </div>
@@ -92,8 +92,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <span>Admin</span> / <span>{navItems.find(i => pathname.startsWith(i.href))?.label || 'Dashboard'}</span>
                     </div>
                     <div className={styles.adminUser}>
-                        <span>{btUser?.firstName} (Admin)</span>
-                        <div className={styles.avatar}>{btUser?.firstName?.[0]}</div>
+                        <span className="badge badge-indigo">Administrator</span>
+                        <span>{btUser?.firstName}</span>
+                        <div className={styles.avatar}>{btUser?.firstName?.[0]}{btUser?.lastName?.[0]}</div>
                     </div>
                 </header>
                 <div className={styles.content}>

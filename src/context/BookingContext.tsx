@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Session, Student, BookingWizardState, MedicalInfo, EmergencyContact, Questionnaire } from '@/types';
@@ -39,19 +39,21 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
         fetchSession();
     }, [sessionId]);
 
-    const setSession = (session: Session) => setState(prev => ({ ...prev, session }));
-    const setStudent = (student: Student | 'self') => setState(prev => ({ ...prev, student, studentId: student === 'self' ? undefined : student.id }));
-    const setMedicalInfo = (medicalInfo: MedicalInfo) => setState(prev => ({ ...prev, medicalInfo }));
-    const setEmergencyContact = (emergencyContact: EmergencyContact) => setState(prev => ({ ...prev, emergencyContact }));
-    const setQuestionnaire = (questionnaire: Questionnaire) => setState(prev => ({ ...prev, questionnaire }));
-    const setTermsAccepted = (termsAccepted: boolean) => setState(prev => ({ ...prev, termsAccepted }));
-    const clearState = () => setState({ sessionId });
+    const setSession = useCallback((session: Session) => setState(prev => ({ ...prev, session })), []);
+    const setStudent = useCallback((student: Student | 'self') => setState(prev => ({ ...prev, student, studentId: student === 'self' ? undefined : student.id })), []);
+    const setMedicalInfo = useCallback((medicalInfo: MedicalInfo) => setState(prev => ({ ...prev, medicalInfo })), []);
+    const setEmergencyContact = useCallback((emergencyContact: EmergencyContact) => setState(prev => ({ ...prev, emergencyContact })), []);
+    const setQuestionnaire = useCallback((questionnaire: Questionnaire) => setState(prev => ({ ...prev, questionnaire })), []);
+    const setTermsAccepted = useCallback((termsAccepted: boolean) => setState(prev => ({ ...prev, termsAccepted })), []);
+    const clearState = useCallback(() => setState({ sessionId }), [sessionId]);
+
+    const contextValue = useMemo(() => ({
+        state, loading, setSession, setStudent, setMedicalInfo,
+        setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState
+    }), [state, loading, setSession, setStudent, setMedicalInfo, setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState]);
 
     return (
-        <BookingContext.Provider value={{
-            state, loading, setSession, setStudent, setMedicalInfo,
-            setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState
-        }}>
+        <BookingContext.Provider value={contextValue}>
             {children}
         </BookingContext.Provider>
     );

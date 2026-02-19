@@ -74,39 +74,43 @@ export default function AdminVenues() {
                     <p>Manage the locations where cooking sessions are held.</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-                    <Plus size={18} /> Add Venue
+                    Add Venue
                 </button>
             </div>
 
             {loading ? (
                 <div className="spinner" />
             ) : (
-                <div className={`card ${styles.tableCard}`}>
-                    <div className="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Venue Name</th>
-                                    <th>Address</th>
-                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                <div className={styles.tableCard}>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Venue Name</th>
+                                <th>Address</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {venues.map(venue => (
+                                <tr key={venue.id}>
+                                    <td className={styles.venueName}>
+                                        <MapPin size={16} strokeWidth={1.5} /> <strong>{venue.name}</strong>
+                                    </td>
+                                    <td>{venue.address}</td>
+                                    <td style={{ textAlign: 'right' }}>
+                                        <div className="flex justify-end gap-2">
+                                            <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(venue)}>
+                                                <Edit2 size={16} strokeWidth={1.5} />
+                                            </button>
+                                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(venue.id)}>
+                                                <Trash2 size={16} strokeWidth={1.5} />
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {venues.map(venue => (
-                                    <tr key={venue.id}>
-                                        <td className={styles.venueName}>
-                                            <MapPin size={16} /> <strong>{venue.name}</strong>
-                                        </td>
-                                        <td>{venue.address}</td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(venue)}><Edit2 size={16} /></button>
-                                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(venue.id)}><Trash2 size={16} /></button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
 

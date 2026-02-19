@@ -6,7 +6,7 @@
 }
 
 .sidebar {
-    background: var(--bt-gray-100);
+    background: var(--bt-gray-50);
     border-right: 1px solid var(--bt-gray-200);
     display: flex;
     flex-direction: column;
@@ -28,11 +28,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     color: var(--bt-gray-500);
+    margin-bottom: -10px;
 }
 
 .adminIcon {
@@ -75,9 +76,8 @@
 }
 
 .navItem.active {
-    background: var(--bt-accent);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+    background: var(--bt-accent-light);
+    color: var(--bt-accent);
 }
 
 .sidebarBottom {
@@ -94,13 +94,11 @@
     width: 100%;
     text-align: left;
     cursor: pointer;
-    color: var(--bt-danger);
-    opacity: 0.8;
+    color: var(--bt-danger) !important;
 }
 
 .logoutBtn:hover {
-    background: rgba(209, 17, 36, 0.05);
-    opacity: 1;
+    background: rgba(209, 17, 36, 0.05) !important;
 }
 
 /* Main Area */

@@ -97,7 +97,7 @@ export default function AdminClasses() {
                     <p>Define recurring class types and their default settings.</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-                    <Plus size={18} /> Add Class Type
+                    Add Class Type
                 </button>
             </div>
 
@@ -112,14 +112,26 @@ export default function AdminClasses() {
                                     {c.type === 'kidsAfterSchool' ? 'Kids' : 'Young Adult'}
                                 </span>
                                 <div className={styles.classActions}>
-                                    <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(c)}><Edit2 size={16} /></button>
+                                    <div className="flex gap-2">
+                                        <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(c)}>
+                                            <Edit2 size={16} strokeWidth={1.5} />
+                                        </button>
+                                        <button className="btn btn-ghost btn-sm text-danger" onClick={async () => {
+                                            if (confirm('Delete class type?')) {
+                                                await deleteDoc(doc(db, 'classes', c.id));
+                                                setClasses(prev => prev.filter(item => item.id !== c.id));
+                                            }
+                                        }}>
+                                            <Trash2 size={16} strokeWidth={1.5} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <h3>{c.type === 'kidsAfterSchool' ? 'Kids After School Club' : 'Weekend Workshop'}</h3>
                             <div className={styles.classMeta}>
-                                <p><Clock size={14} /> {c.dayOfWeek}, {c.startTime}–{c.endTime}</p>
-                                <p><MapPin size={14} /> {c.venueName}</p>
-                                <p><Users size={14} /> Ages {c.ageMin}–{c.ageMax} • Max {c.maxSize}</p>
+                                <p><Clock size={14} strokeWidth={1.5} /> {c.dayOfWeek}, {c.startTime}–{c.endTime}</p>
+                                <p><MapPin size={14} strokeWidth={1.5} /> {c.venueName}</p>
+                                <p><Users size={14} strokeWidth={1.5} /> Ages {c.ageMin}–{c.ageMax} • Max {c.maxSize}</p>
                                 <p><strong>Price: £{(c.price / 100).toFixed(2)}</strong></p>
                             </div>
                         </div>

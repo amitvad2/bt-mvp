@@ -76,6 +76,9 @@ export default function AdminSessions() {
             price: parentClass?.price || 1500,
             startTime: parentClass?.startTime || '',
             endTime: parentClass?.endTime || '',
+            spotsTotal: parentClass?.maxSize || 15,
+            ageMin: parentClass?.ageMin || 5,
+            ageMax: parentClass?.ageMax || 12,
             updatedAt: serverTimestamp(),
         };
 
