@@ -1,0 +1,143 @@
+.wrapper {
+    min-height: 100vh;
+    background: var(--bt-white);
+    padding-top: 48px;
+}
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+}
+
+.headerInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.logoIcon {
+    color: var(--bt-accent);
+}
+
+.sessionSummary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.85rem;
+}
+
+.sessionMain {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sessionMeta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--bt-gray-500);
+}
+
+.progress {
+    padding: var(--space-8) 0;
+    border-bottom: 1px solid var(--bt-gray-100);
+}
+
+.steps {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.3;
+    transition: all var(--transition);
+}
+
+.active {
+    opacity: 1;
+}
+
+.completed {
+    opacity: 1;
+    color: var(--bt-accent);
+}
+
+.stepCircle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bt-gray-200);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.completed .stepCircle {
+    background: var(--bt-accent);
+}
+
+.active .stepCircle {
+    background: var(--bt-gray-900);
+}
+
+.stepLabel {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.stepArrow {
+    color: var(--bt-gray-300);
+}
+
+.main {
+    padding: var(--space-16) 0;
+}
+
+.card {
+    background: #fff;
+    padding: var(--space-1);
+    /* Step pages will use their own padding */
+}
+
+@media (max-width: 640px) {
+    .sessionSummary {
+        display: none;
+    }
+
+    .stepLabel {
+        display: none;
+    }
+
+    .stepArrow {
+        opacity: 0.5;
+    }
+}

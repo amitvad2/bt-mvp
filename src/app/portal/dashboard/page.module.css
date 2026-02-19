@@ -1,0 +1,129 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    padding: var(--space-8) 0;
+}
+
+.header {
+    margin-bottom: var(--space-4);
+}
+
+.header h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+.tile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-10);
+    background: #fff;
+    border-radius: var(--radius-xl);
+    border: none;
+    box-shadow: var(--shadow);
+    transition: all var(--transition);
+}
+
+.tile:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-md);
+}
+
+.tileIcon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--bt-gray-50);
+    color: var(--bt-gray-800);
+    transition: all var(--transition);
+}
+
+.tile:hover .tileIcon {
+    background: var(--bt-accent-light);
+    color: var(--bt-accent);
+}
+
+.tileText {
+    flex: 1;
+}
+
+.tileText strong {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+    margin-bottom: 4px;
+}
+
+.tileText span {
+    font-size: 0.9rem;
+    color: var(--bt-gray-500);
+    line-height: 1.4;
+}
+
+.tileArrow {
+    color: var(--bt-gray-300);
+    flex-shrink: 0;
+    opacity: 0;
+    transition: all var(--transition);
+}
+
+.tile:hover .tileArrow {
+    opacity: 1;
+    transform: translateX(4px);
+    color: var(--bt-accent);
+}
+
+.findClassCard {
+    background: var(--bt-gray-50);
+    border: 1px solid var(--bt-gray-200);
+    padding: var(--space-12);
+}
+
+.findClassInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+}
+
+.findClassInner h3 {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-2);
+}
+
+.findClassInner p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-600);
+    max-width: 500px;
+}
+
+@media (max-width: 900px) {
+    .tiles {
+        grid-template-columns: 1fr;
+    }
+
+    .findClassInner {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+}

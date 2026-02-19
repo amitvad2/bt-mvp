@@ -1,0 +1,105 @@
+.layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.brand {
+    background: linear-gradient(135deg, #1a0a00 0%, #3d1a00 50%, #1a2e00 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-12);
+    position: relative;
+    overflow: hidden;
+}
+
+.brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(245, 158, 11, 0.15) 0%, transparent 60%);
+}
+
+.brandInner {
+    position: relative;
+    z-index: 1;
+    max-width: 380px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--bt-amber);
+    text-decoration: none;
+    margin-bottom: var(--space-5);
+}
+
+.brandInner>p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    margin-bottom: var(--space-8);
+}
+
+.features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.feature span {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--bt-green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-12) var(--space-8);
+    background: var(--bt-cream);
+    overflow-y: auto;
+}
+
+.formInner {
+    width: 100%;
+    max-width: 440px;
+}
+
+@media (max-width: 768px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .brand {
+        display: none;
+    }
+
+    .form {
+        padding: var(--space-8) var(--space-5);
+        align-items: flex-start;
+        padding-top: var(--space-12);
+    }
+}

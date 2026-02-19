@@ -1,0 +1,144 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header h1 {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-1);
+}
+
+.header p {
+    color: var(--bt-text-muted);
+}
+
+.empty {
+    text-align: center;
+    padding: var(--space-16) 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    color: var(--bt-gray-400);
+}
+
+.empty h3 {
+    color: var(--bt-gray-700);
+    font-family: var(--font-body);
+}
+
+.sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-5);
+    color: var(--bt-gray-800);
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.bookingCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4);
+    border-left: 4px solid var(--bt-amber);
+}
+
+.pastCard {
+    border-left-color: var(--bt-gray-300);
+    opacity: 0.8;
+}
+
+.cardInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+}
+
+.dateBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: var(--bt-gray-50);
+    border-radius: var(--radius);
+    border: 1px solid var(--bt-gray-200);
+    flex-shrink: 0;
+}
+
+.month {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--bt-amber-dark);
+}
+
+.day {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--bt-gray-800);
+    line-height: 1;
+}
+
+.details h3 {
+    font-size: 1.1rem;
+    font-family: var(--font-body);
+    margin-bottom: 2px;
+}
+
+.studentName {
+    font-size: 0.85rem;
+    color: var(--bt-text-muted);
+    margin-bottom: 6px;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: 0.8rem;
+    color: var(--bt-gray-500);
+}
+
+.meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.noItems {
+    color: var(--bt-text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.noItems a {
+    color: var(--bt-amber-dark);
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .bookingCard {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-4);
+    }
+
+    .cardActions {
+        width: 100%;
+        border-top: 1px solid var(--bt-gray-100);
+        padding-top: var(--space-2);
+    }
+}

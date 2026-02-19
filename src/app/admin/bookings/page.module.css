@@ -1,0 +1,162 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+}
+
+.toolbar {
+    display: flex;
+    gap: var(--space-4);
+    background: #fff;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--bt-gray-100);
+    box-shadow: var(--shadow-sm);
+}
+
+.searchBox {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--bt-gray-50);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius);
+    color: var(--bt-gray-400);
+}
+
+.searchBox input {
+    width: 100%;
+    padding: 0.75rem 0;
+    background: none;
+    border: none;
+    font-size: 0.95rem;
+    color: var(--bt-gray-900);
+}
+
+.searchBox input:focus {
+    outline: none;
+}
+
+.filters {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--bt-gray-400);
+}
+
+.filters select {
+    padding: 0.75rem var(--space-8) 0.75rem var(--space-4);
+    border-radius: var(--radius);
+    border: 1px solid var(--bt-gray-200);
+    background: var(--bt-white);
+    color: var(--bt-gray-800);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.tableCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    padding: 0;
+}
+
+.idCell code {
+    background: var(--bt-gray-100);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.nameCell,
+.classCell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nameCell strong,
+.classCell strong {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.nameCell span,
+.classCell span {
+    font-size: 0.85rem;
+    color: var(--bt-gray-500);
+}
+
+.dateCell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--bt-gray-700);
+    font-weight: 500;
+}
+
+.dateCell svg {
+    color: var(--bt-gray-400);
+}
+
+.empty {
+    padding: var(--space-12);
+    text-align: center;
+    color: var(--bt-gray-500);
+}
+
+/* Custom Table Styles for Admin Bookings */
+.tableCard :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tableCard :global(th) {
+    text-align: left;
+    padding: var(--space-4) var(--space-6);
+    background: var(--bt-gray-50);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bt-gray-500);
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.tableCard :global(td) {
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--bt-gray-100);
+    font-size: 0.95rem;
+}
+
+.tableCard :global(tr:last-child td) {
+    border-bottom: none;
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+    }
+}

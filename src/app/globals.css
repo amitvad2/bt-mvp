@@ -1,0 +1,491 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap');
+
+/* ============================================================
+   BLOOMING TASTEBUDS — Design System (Apple Inspired)
+   Minimalist, Premium, Effortless
+   ============================================================ */
+
+:root {
+  /* Grayscale Palette */
+  --bt-white: #FFFFFF;
+  --bt-off-white: #F5F5F7;
+  --bt-black: #1D1D1F;
+  --bt-gray-50: #FBFBFB;
+  --bt-gray-100: #F5F5F7;
+  --bt-gray-200: #E8E8ED;
+  --bt-gray-300: #D2D2D7;
+  --bt-gray-400: #A1A1A6;
+  --bt-gray-500: #86868B;
+  --bt-gray-600: #6E6E73;
+  --bt-gray-700: #424245;
+  --bt-gray-800: #1D1D1F;
+  --bt-gray-900: #000000;
+
+  /* Accents */
+  --bt-accent: #0066CC;
+  /* Indigo/Apple Blue */
+  --bt-accent-light: #E8F2FF;
+  --bt-accent-dark: #004499;
+
+  --bt-danger: #D11124;
+  --bt-success: #21A344;
+
+  /* Semantic */
+  --bt-primary: var(--bt-black);
+  --bt-secondary: var(--bt-accent);
+  --bt-bg: var(--bt-white);
+  --bt-bg-secondary: var(--bt-off-white);
+  --bt-text: var(--bt-gray-800);
+  --bt-text-muted: var(--bt-gray-500);
+  --bt-border: var(--bt-gray-200);
+
+  /* Typography */
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows (Subtle & Soft) */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.08);
+
+  /* Transitions */
+  --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bt-bg);
+  color: var(--bt-text);
+  line-height: 1.47059;
+  /* Apple-style precise line height */
+  font-weight: 400;
+  letter-spacing: -0.022em;
+  /* Apple-style tight tracking */
+  padding-top: 48px;
+  /* Fixed header offset */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  appearance: none;
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--bt-gray-900);
+}
+
+h1 {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.1;
+}
+
+h3 {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  line-height: 1.2;
+}
+
+h4 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+p {
+  margin-bottom: 1em;
+  color: var(--bt-gray-800);
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bt-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.5rem;
+}
+
+.text-muted {
+  color: var(--bt-text-muted);
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-lg {
+  font-size: 1.2rem;
+}
+
+.text-xl {
+  font-size: 1.5rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+/* ============================================================
+   LAYOUT UTILITIES
+   ============================================================ */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.container-sm {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.section {
+  padding: var(--space-24) 0;
+}
+
+.section-sm {
+  padding: var(--space-16) 0;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: var(--space-2);
+}
+
+.gap-4 {
+  gap: var(--space-4);
+}
+
+.gap-6 {
+  gap: var(--space-6);
+}
+
+.gap-8 {
+  gap: var(--space-8);
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.grid {
+  display: grid;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ============================================================
+   BUTTONS (Apple Understated & Confident)
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  transition: all var(--transition);
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--bt-accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--bt-accent-dark);
+  transform: scale(1.02);
+}
+
+.btn-secondary {
+  background: var(--bt-gray-100);
+  color: var(--bt-gray-900);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bt-gray-200);
+  transform: scale(1.02);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--bt-accent);
+  box-shadow: inset 0 0 0 1px var(--bt-accent);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--bt-accent-light);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--bt-accent);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  opacity: 0.7;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+
+.btn-lg {
+  padding: 14px 32px;
+  font-size: 1.1rem;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* = Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+}
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--bt-gray-800);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--bt-gray-300);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--bt-gray-900);
+  background: var(--bt-gray-50);
+  transition: all var(--transition);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: var(--bt-accent);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--bt-accent-light);
+  outline: none;
+}
+
+/* ============================================================
+   CARDS (Apple Store Cards)
+   ============================================================ */
+
+.card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-10);
+  border: none;
+  box-shadow: var(--shadow);
+  transition: transform var(--transition);
+}
+
+.card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-4);
+  animation: fadeIn 0.4s ease;
+}
+
+.modal {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: var(--space-12);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE UTILITIES
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .section {
+    padding: var(--space-16) 0;
+  }
+
+  .modal {
+    padding: var(--space-8);
+  }
+}

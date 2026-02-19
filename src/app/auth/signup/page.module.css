@@ -1,0 +1,119 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.title {
+    font-size: 2rem;
+    color: var(--bt-gray-900);
+    margin-bottom: 0;
+}
+
+.sub {
+    color: var(--bt-text-muted);
+    font-size: 1rem;
+    margin-top: -var(--space-2);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.roleGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+}
+
+.roleOption {
+    border: 2px solid var(--bt-gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    transition: all var(--transition);
+    background: #fff;
+}
+
+.roleOption input {
+    display: none;
+}
+
+.roleOption:hover {
+    border-color: var(--bt-amber);
+    background: var(--bt-amber-light);
+}
+
+.roleSelected {
+    border-color: var(--bt-amber);
+    background: var(--bt-amber-light);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.roleEmoji {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-1);
+}
+
+.roleOption strong {
+    font-size: 0.9rem;
+    color: var(--bt-gray-800);
+}
+
+.roleOption span {
+    font-size: 0.78rem;
+    color: var(--bt-text-muted);
+    line-height: 1.4;
+}
+
+.footer {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--bt-text-muted);
+}
+
+.footer a,
+.forgotLink {
+    color: var(--bt-amber-dark);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.footer a:hover,
+.forgotLink:hover {
+    text-decoration: underline;
+}
+
+.forgotLink {
+    font-size: 0.85rem;
+}
+
+.terms {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--bt-gray-400);
+}
+
+.terms a {
+    color: var(--bt-gray-500);
+    text-decoration: underline;
+}
+
+.successBox {
+    text-align: center;
+    padding: var(--space-8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.successIcon {
+    font-size: 3rem;
+}

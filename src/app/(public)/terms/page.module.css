@@ -1,0 +1,99 @@
+.hero {
+    background: linear-gradient(135deg, var(--bt-gray-800), var(--bt-gray-900));
+    padding: var(--space-16) 0;
+    color: #fff;
+}
+
+.hero .eyebrow {
+    color: var(--bt-amber);
+}
+
+.hero h1 {
+    color: #fff;
+    margin: var(--space-3) 0 var(--space-2);
+}
+
+.hero p {
+    color: var(--bt-gray-400);
+}
+
+.content {
+    background: var(--bt-cream);
+}
+
+.toc {
+    background: var(--bt-amber-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-10);
+}
+
+.toc h3 {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bt-amber-dark);
+    margin-bottom: var(--space-3);
+}
+
+.toc ol {
+    padding-left: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.toc ol li a {
+    font-size: 0.9rem;
+    color: var(--bt-amber-dark);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.toc ol li a:hover {
+    text-decoration: underline;
+}
+
+.body section {
+    margin-bottom: var(--space-10);
+    padding-bottom: var(--space-8);
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.body section:last-child {
+    border-bottom: none;
+}
+
+.body h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-4);
+    color: var(--bt-gray-900);
+}
+
+.body p {
+    color: var(--bt-gray-600);
+    margin-bottom: var(--space-4);
+    font-size: 0.95rem;
+}
+
+.body p:last-child {
+    margin-bottom: 0;
+}
+
+.body ul {
+    padding-left: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.body ul li {
+    color: var(--bt-gray-600);
+    font-size: 0.95rem;
+}
+
+.body strong {
+    color: var(--bt-gray-800);
+}

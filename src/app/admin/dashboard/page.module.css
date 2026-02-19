@@ -1,0 +1,178 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+}
+
+.header h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-6);
+}
+
+.statCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    box-shadow: var(--shadow);
+    border: none;
+    transition: transform var(--transition);
+}
+
+.statCard:hover {
+    transform: translateY(-2px);
+}
+
+.iconBox {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bt-gray-50);
+    color: var(--bt-gray-800);
+}
+
+.statContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.statContent span {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--bt-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.statContent strong {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.dashboardGrid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-8);
+}
+
+.recentSection,
+.quickActions {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-8);
+}
+
+.sectionHeader h3,
+.quickActions h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.sectionHeader a {
+    font-size: 0.9rem;
+    color: var(--bt-accent);
+    font-weight: 500;
+}
+
+.bookingList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.bookingItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--bt-gray-100);
+}
+
+.bookingItem:last-child {
+    border-bottom: none;
+}
+
+.bookingMain {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bookingMain strong {
+    font-size: 1rem;
+    color: var(--bt-gray-900);
+}
+
+.bookingMain span {
+    font-size: 0.85rem;
+    color: var(--bt-gray-500);
+}
+
+.bookingMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.actionLinks {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+.actionLinks a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px var(--space-4);
+    background: var(--bt-gray-50);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--bt-gray-700);
+    transition: all var(--transition);
+}
+
+.actionLinks a:hover {
+    background: var(--bt-accent-light);
+    color: var(--bt-accent);
+}
+
+@media (max-width: 1024px) {
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboardGrid {
+        grid-template-columns: 1fr;
+    }
+}

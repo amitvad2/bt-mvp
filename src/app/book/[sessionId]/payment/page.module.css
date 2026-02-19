@@ -1,0 +1,87 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+}
+
+.icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--bt-gray-400);
+    background: var(--bt-gray-50);
+    padding: var(--space-3);
+    border-radius: var(--radius);
+    flex-shrink: 0;
+}
+
+.sectionHeader h2 {
+    margin-bottom: 4px;
+}
+
+.sectionHeader p {
+    color: var(--bt-gray-500);
+    font-size: 0.95rem;
+}
+
+.amountSummary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-8);
+    background: var(--bt-gray-100);
+    border-radius: var(--radius-lg);
+    border: none;
+}
+
+.amountSummary span {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--bt-gray-600);
+}
+
+.amountSummary strong {
+    font-size: 2.25rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-12);
+    color: var(--bt-gray-500);
+}
+
+.guarantee {
+    display: flex;
+    gap: var(--space-5);
+    padding: var(--space-6);
+    background: var(--bt-gray-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--bt-gray-200);
+}
+
+.guarantee svg {
+    color: var(--bt-gray-400);
+    flex-shrink: 0;
+}
+
+.guarantee strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.guarantee p {
+    font-size: 0.9rem;
+    color: var(--bt-gray-500);
+    line-height: 1.5;
+}

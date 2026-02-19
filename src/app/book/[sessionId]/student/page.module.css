@@ -1,0 +1,104 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-2);
+}
+
+.sub {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+    margin-bottom: var(--space-4);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+.studentItem,
+.addItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-8);
+    background: #fff;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--bt-gray-200);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-align: left;
+}
+
+.studentItem:hover,
+.addItem:hover {
+    border-color: var(--bt-accent);
+    box-shadow: var(--shadow-sm);
+    transform: scale(1.02);
+}
+
+.selected {
+    border-color: var(--bt-accent);
+    background: var(--bt-accent-light);
+}
+
+.avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: var(--bt-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--bt-gray-800);
+    flex-shrink: 0;
+}
+
+.studentItem strong,
+.addItem strong {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-4);
+}
+
+.center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--space-6);
+    padding: var(--space-12) 0;
+}
+
+.iconCircle {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    background: var(--bt-accent-light);
+    color: var(--bt-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}

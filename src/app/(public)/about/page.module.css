@@ -1,0 +1,187 @@
+.hero {
+    background: linear-gradient(135deg, var(--bt-amber-dark) 0%, var(--bt-amber) 100%);
+    padding: var(--space-20) 0;
+    color: #fff;
+}
+
+.hero .eyebrow {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.hero h1 {
+    color: #fff;
+    margin: var(--space-3) 0 var(--space-4);
+}
+
+.hero p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.15rem;
+    max-width: 560px;
+}
+
+.founderGrid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: var(--space-16);
+    align-items: center;
+}
+
+.imagePlaceholder {
+    aspect-ratio: 3/4;
+    background: linear-gradient(135deg, var(--bt-amber-light), var(--bt-green-light));
+    border-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    font-size: 5rem;
+    color: var(--bt-gray-400);
+}
+
+.imagePlaceholder p {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.founderText .eyebrow {
+    display: block;
+    margin-bottom: var(--space-3);
+}
+
+.founderText h2 {
+    margin-bottom: var(--space-5);
+}
+
+.founderText p {
+    color: var(--bt-text-muted);
+    margin-bottom: var(--space-4);
+}
+
+.journey {
+    background: var(--bt-warm-white);
+}
+
+.timeline {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 5.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--bt-gray-200);
+}
+
+.timelineItem {
+    display: grid;
+    grid-template-columns: 5rem 1.5rem 1fr;
+    gap: var(--space-4);
+    align-items: flex-start;
+    margin-bottom: var(--space-8);
+    position: relative;
+}
+
+.timelineYear {
+    font-weight: 800;
+    color: var(--bt-amber-dark);
+    font-size: 0.9rem;
+    padding-top: 2px;
+    text-align: right;
+}
+
+.timelineDot {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--bt-amber);
+    border: 3px solid var(--bt-cream);
+    box-shadow: 0 0 0 2px var(--bt-amber);
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.timelineContent h4 {
+    font-family: var(--font-body);
+    margin-bottom: var(--space-1);
+    font-size: 1rem;
+}
+
+.timelineContent p {
+    color: var(--bt-text-muted);
+    font-size: 0.9rem;
+}
+
+.valuesGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+}
+
+.valueCard {
+    text-align: center;
+    padding: var(--space-8) var(--space-6);
+}
+
+.valueIcon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: var(--space-4);
+}
+
+.valueCard h4 {
+    font-family: var(--font-body);
+    margin-bottom: var(--space-2);
+}
+
+.valueCard p {
+    color: var(--bt-text-muted);
+    font-size: 0.9rem;
+}
+
+.cta {
+    background: linear-gradient(135deg, var(--bt-gray-900), #1a2e00);
+    padding: var(--space-20) 0;
+    text-align: center;
+    color: #fff;
+}
+
+.cta h2 {
+    color: #fff;
+    margin-bottom: var(--space-4);
+}
+
+.cta p {
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: var(--space-8);
+    font-size: 1.1rem;
+}
+
+@media (max-width: 900px) {
+    .founderGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .valuesGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .valuesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .timeline::before {
+        left: 4.5rem;
+    }
+
+    .timelineItem {
+        grid-template-columns: 4rem 1.5rem 1fr;
+    }
+}

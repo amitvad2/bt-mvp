@@ -1,0 +1,74 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header h1 {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-1);
+}
+
+.header p {
+    color: var(--bt-text-muted);
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--space-6);
+    align-items: flex-start;
+}
+
+.accountCard h3 {
+    font-family: var(--font-body);
+    margin-bottom: 2px;
+}
+
+.subText {
+    font-size: 0.85rem;
+    color: var(--bt-text-muted);
+    margin-bottom: var(--space-6);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    margin-top: var(--space-4);
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--bt-gray-100);
+    padding-top: var(--space-5);
+    margin-top: var(--space-2);
+}
+
+.roleCard {
+    background: var(--bt-gray-50);
+    border: 1px dashed var(--bt-gray-300);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.roleCard h3 {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+}
+
+.roleDesc {
+    font-size: 0.85rem;
+    color: var(--bt-text-muted);
+    line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+    .content {
+        grid-template-columns: 1fr;
+    }
+}

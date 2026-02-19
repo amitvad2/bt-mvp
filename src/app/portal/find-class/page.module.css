@@ -1,0 +1,123 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+}
+
+.filters {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow);
+}
+
+.filterRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr) auto;
+    gap: var(--space-6);
+    align-items: flex-end;
+}
+
+.searchBtn {
+    height: 52px;
+    padding: 0 32px;
+}
+
+.resultCount {
+    font-size: 0.9rem;
+    color: var(--bt-gray-500);
+    font-weight: 500;
+}
+
+.sessionGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+}
+
+.sessionCard {
+    background: #fff;
+    padding: var(--space-10);
+    border: none;
+    box-shadow: var(--shadow);
+    transition: transform var(--transition);
+}
+
+.sessionCard:hover {
+    transform: scale(1.02);
+}
+
+.sessionHeader {
+    margin-bottom: var(--space-6);
+}
+
+.sessionName {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.sessionDetails {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+}
+
+.sessionDetails>div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: var(--bt-gray-600);
+}
+
+.sessionDetails svg {
+    color: var(--bt-gray-400);
+}
+
+.ageRange {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--bt-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.empty {
+    text-align: center;
+    padding: var(--space-20) 0;
+    background: var(--bt-gray-50);
+    border-radius: var(--radius-xl);
+}
+
+.empty span {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: var(--space-6);
+}
+
+.empty h3 {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-2);
+}
+
+@media (max-width: 900px) {
+    .filterRow {
+        grid-template-columns: 1fr;
+    }
+
+    .sessionGrid {
+        grid-template-columns: 1fr;
+    }
+}
