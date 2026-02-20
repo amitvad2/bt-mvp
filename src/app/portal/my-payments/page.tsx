@@ -19,11 +19,19 @@ export default function MyPaymentsPage() {
             try {
                 const q = query(
                     collection(db, 'bookings'),
-                    where('bookedByUid', '==', user.uid),
-                    orderBy('createdAt', 'desc')
+                    where('bookedByUid', '==', user.uid)
                 );
                 const snap = await getDocs(q);
-                setBookings(snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking)));
+                const payments = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+
+                // Client-side sort by createdAt desc
+                payments.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
+                    const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+                    return timeB - timeA;
+                });
+
+                setBookings(payments);
             } catch (e) {
                 console.error(e);
             } finally {

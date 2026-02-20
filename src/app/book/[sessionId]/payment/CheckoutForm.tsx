@@ -23,6 +23,7 @@ export default function CheckoutForm() {
 
     const [message, setMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isReady, setIsReady] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -83,7 +84,24 @@ export default function CheckoutForm() {
                     spotsAvailable: increment(-1)
                 });
 
-                // 4. Redirect to confirmation
+                // 4. Send Confirmation Email
+                fetch('/api/emails/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        to: user.email,
+                        subject: `Booking Confirmed: ${state.session?.className}`,
+                        type: 'confirmation',
+                        data: {
+                            className: state.session?.className,
+                            sessionDate: new Date(state.session?.date || '').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
+                            venueName: state.session?.venueName,
+                            studentName: state.student === 'self' ? `${btUser.firstName} ${btUser.lastName}` : `${state.student?.firstName} ${state.student?.lastName}`,
+                        }
+                    })
+                }).catch(err => console.error('Failed to send confirmation email:', err));
+
+                // 5. Redirect to confirmation
                 router.push(`/book/${state.sessionId}/confirmation?bookingId=${docRef.id}`);
             } catch (e) {
                 console.error('Error saving booking:', e);
@@ -95,7 +113,7 @@ export default function CheckoutForm() {
 
     return (
         <form id="payment-form" onSubmit={handleSubmit} className={styles.stripeForm}>
-            <PaymentElement id="payment-element" options={{ layout: 'tabs' }} />
+            <PaymentElement id="payment-element" options={{ layout: 'tabs' }} onReady={() => setIsReady(true)} />
 
             {message && <div className="alert alert-error"><AlertCircle size={18} /> {message}</div>}
 
@@ -104,7 +122,7 @@ export default function CheckoutForm() {
                 <span>Secure encrypted payment via Stripe</span>
             </div>
 
-            <button disabled={isLoading || !stripe || !elements} id="submit" className="btn btn-primary btn-full">
+            <button disabled={isLoading || !stripe || !elements || !isReady} id="submit" className="btn btn-primary btn-full">
                 {isLoading ? (
                     <div className="spinner-inline" />
                 ) : (

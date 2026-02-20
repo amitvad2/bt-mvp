@@ -19,11 +19,18 @@ export default function MyClassesPage() {
             try {
                 const q = query(
                     collection(db, 'bookings'),
-                    where('bookedByUid', '==', user.uid),
-                    orderBy('createdAt', 'desc')
+                    where('bookedByUid', '==', user.uid)
                 );
                 const snap = await getDocs(q);
-                const bookingData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+                let bookingData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+
+                // Client-side sort by createdAt desc
+                bookingData.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime();
+                    const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt).getTime();
+                    return timeB - timeA;
+                });
+
                 setBookings(bookingData);
             } catch (e) {
                 console.error(e);
@@ -42,6 +49,23 @@ export default function MyClassesPage() {
                 status: 'cancelled',
                 cancelledAt: new Date()
             });
+
+            // Trigger Cancellation Email
+            fetch('/api/emails/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: user?.email,
+                    subject: `Booking Cancelled: ${booking.className}`,
+                    type: 'cancellation',
+                    data: {
+                        className: booking.className,
+                        sessionDate: booking.sessionDate ? new Date(booking.sessionDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : 'N/A',
+                        venueName: booking.venueName,
+                    }
+                })
+            }).catch(err => console.error('Failed to send cancellation email:', err));
+
             setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'cancelled' } : b));
             alert('Booking cancelled successfully.');
         } catch (e) {
@@ -50,8 +74,11 @@ export default function MyClassesPage() {
         }
     };
 
-    const upcomingBookings = bookings.filter(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= new Date());
-    const pastBookings = bookings.filter(b => b.status === 'cancelled' || new Date(b.sessionDate!) < new Date());
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcomingBookings = bookings.filter(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
+    const pastBookings = bookings.filter(b => b.status === 'cancelled' || new Date(b.sessionDate!) < today);
 
     return (
         <div className={styles.page}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useBooking } from '@/context/BookingContext';
@@ -33,19 +33,19 @@ export default function PaymentPage() {
             .then((data) => setClientSecret(data.clientSecret));
     }, [state.sessionId, state.studentId, state.session?.price]);
 
-    const appearance = {
+    const appearance = useMemo(() => ({
         theme: 'stripe' as const,
         variables: {
             colorPrimary: '#0066CC', // bt-accent
             fontFamily: 'Inter, sans-serif',
             borderRadius: '12px',
         },
-    };
+    }), []);
 
-    const options = {
+    const options = useMemo(() => ({
         clientSecret,
         appearance,
-    };
+    }), [clientSecret, appearance]);
 
     return (
         <div className={styles.container}>
@@ -63,7 +63,7 @@ export default function PaymentPage() {
             </div>
 
             {clientSecret ? (
-                <Elements options={options} stripe={stripePromise}>
+                <Elements options={options} stripe={stripePromise} key={clientSecret}>
                     <CheckoutForm />
                 </Elements>
             ) : (
