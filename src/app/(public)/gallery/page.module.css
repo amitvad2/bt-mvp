@@ -1,44 +1,62 @@
 .hero {
-    background: linear-gradient(135deg, var(--bt-green-dark), var(--bt-green));
-    padding: var(--space-20) 0;
-    color: #fff;
-}
-
-.hero .eyebrow {
-    color: rgba(255, 255, 255, 0.8);
+    background: var(--bt-gray-50);
+    padding: var(--space-24) 0 var(--space-16);
+    border-bottom: 1px solid var(--bt-gray-200);
 }
 
 .hero h1 {
-    color: #fff;
-    margin: var(--space-3) 0 var(--space-4);
+    font-family: var(--font-outfit);
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--bt-gray-900);
+    margin-bottom: var(--space-4);
+    letter-spacing: -0.02em;
 }
 
 .hero p {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+    font-size: 1.25rem;
 }
 
-.gallery {
-    background: var(--bt-cream);
+.gallerySection {
+    background: #fff;
+    padding: var(--space-20) 0;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-5);
+    gap: var(--space-8);
 }
 
 .imageCard {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-4);
+    opacity: 0;
+    animation: fadeIn var(--transition) forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .imageWrapper {
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     overflow: hidden;
-    aspect-ratio: 4/3;
+    aspect-ratio: 4/5;
+    /* Premium portrait feel */
     background: var(--bt-gray-100);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all var(--transition-slow);
 }
 
 .imageWrapper img {
@@ -48,30 +66,40 @@
     transition: transform var(--transition-slow);
 }
 
+.imageCard:hover .imageWrapper {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
 .imageCard:hover .imageWrapper img {
-    transform: scale(1.04);
-}
-
-.placeholder {
-    aspect-ratio: 4/3;
-    border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--bt-amber-light), var(--bt-green-light));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 4rem;
-    transition: transform var(--transition-slow);
-}
-
-.imageCard:hover .placeholder {
-    transform: scale(1.02);
+    transform: scale(1.05);
 }
 
 .caption {
-    font-size: 0.85rem;
-    color: var(--bt-text-muted);
-    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--bt-gray-800);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.empty {
+    grid-column: 1 / -1;
     text-align: center;
+    padding: var(--space-20);
+    color: var(--bt-gray-500);
+    font-style: italic;
+    background: var(--bt-gray-50);
+    border-radius: var(--radius-xl);
+}
+
+@media (max-width: 1024px) {
+    .hero h1 {
+        font-size: 2.75rem;
+    }
+
+    .grid {
+        gap: var(--space-6);
+    }
 }
 
 @media (max-width: 900px) {
@@ -80,8 +108,22 @@
     }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
+    .hero {
+        padding: var(--space-16) 0;
+    }
+
+    .hero h1 {
+        font-size: 2.25rem;
+    }
+
     .grid {
         grid-template-columns: 1fr;
+        gap: var(--space-10);
+    }
+
+    .imageWrapper {
+        aspect-ratio: 1;
+        /* Square on mobile */
     }
 }

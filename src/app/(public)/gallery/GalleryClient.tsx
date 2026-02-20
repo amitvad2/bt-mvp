@@ -36,13 +36,13 @@ export default function GalleryClient() {
                     <p>Capturing the smiles, the skills, and the snacks from our recent sessions.</p>
                 </div>
 
-                <div className={styles.galleryGrid}>
+                <div className={styles.grid}>
                     {images.map((img) => (
-                        <div key={img.id} className={styles.galleryItem}>
-                            <img src={img.imageUrl} alt={img.altText} className={styles.image} loading="lazy" />
-                            <div className={styles.imageOverlay}>
-                                <p>{img.description}</p>
+                        <div key={img.id} className={styles.imageCard}>
+                            <div className={styles.imageWrapper}>
+                                <img src={img.imageUrl} alt={img.altText} loading="lazy" />
                             </div>
+                            {img.description && <p className={styles.caption}>{img.description}</p>}
                         </div>
                     ))}
                     {images.length === 0 && (

@@ -14,10 +14,10 @@ export default function Footer() {
                     </div>
                     <p>Inspiring a love of cooking in children and young adults through fun, hands-on sessions in a safe and supportive environment.</p>
                     <div className={styles.socials}>
-                        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><Youtube size={20} /></a>
-                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><Facebook size={20} /></a>
-                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={20} /></a>
-                        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={20} /></a>
+                        <a href="https://www.youtube.com/@bloomingtastebuds" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><Youtube size={20} /></a>
+                        <a href="https://www.facebook.com/nishavadhel4" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><Facebook size={20} /></a>
+                        <a href="https://www.instagram.com/blooming_tastebuds/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={20} /></a>
+                        <a href="https://www.linkedin.com/in/nisha-vadhel-a55a121a0/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={20} /></a>
                     </div>
                 </div>
 
@@ -49,15 +49,15 @@ export default function Footer() {
                     <h4>Get in Touch</h4>
                     <ul>
                         <li>
-                            <a href="mailto:hello@bloomingtastebuds.com">
+                            <a href="mailto:bloomingtastebuds@gmail.com">
                                 <Mail size={14} />
-                                hello@bloomingtastebuds.com
+                                bloomingtastebuds@gmail.com
                             </a>
                         </li>
                         <li>
-                            <a href="tel:+441234567890">
+                            <a href="tel:+447809722517">
                                 <Phone size={14} />
-                                +44 (0) 1234 567 890
+                                +44 7809 722 517
                             </a>
                         </li>
                     </ul>

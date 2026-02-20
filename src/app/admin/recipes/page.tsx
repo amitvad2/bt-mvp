@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
 import { Recipe } from '@/types';
-import { BookOpen, Plus, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import { BookOpen, Plus, Edit2, Trash2, X, Upload, Loader2, AlertCircle } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminRecipes() {
@@ -13,6 +14,13 @@ export default function AdminRecipes() {
     const [showModal, setShowModal] = useState(false);
     const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
     const [formData, setFormData] = useState({ name: '', description: '', photoUrl: '' });
+
+    // Upload state
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchRecipes = async () => {
@@ -36,33 +44,126 @@ export default function AdminRecipes() {
             setEditingRecipe(null);
             setFormData({ name: '', description: '', photoUrl: '' });
         }
+        setSelectedFile(null);
+        setUploadError(null);
+        setUploadProgress(0);
         setShowModal(true);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                setUploadError('File is too large. Max size is 10MB.');
+                return;
+            }
+            setSelectedFile(file);
+            setUploadError(null);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setUploading(true);
+        setUploadError(null);
+        setUploadProgress(0);
+        console.info('[RecipeUpload] Starting submit process...');
+
         try {
-            if (editingRecipe) {
-                await updateDoc(doc(db, 'recipes', editingRecipe.id), { ...formData, updatedAt: serverTimestamp() });
-                setRecipes(prev => prev.map(r => r.id === editingRecipe.id ? { ...r, ...formData } : r));
-            } else {
-                const docRef = await addDoc(collection(db, 'recipes'), { ...formData, createdAt: serverTimestamp() });
-                setRecipes(prev => [...prev, { id: docRef.id, ...formData } as Recipe].sort((a, b) => a.name.localeCompare(b.name)));
+            let finalPhotoUrl = formData.photoUrl;
+
+            // Handle file upload if a new file is selected
+            if (selectedFile) {
+                console.info('[RecipeUpload] File selected:', selectedFile.name, 'Size:', selectedFile.size);
+
+                const fileExt = selectedFile.name.split('.').pop();
+                const fileName = `recipes/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+                const storageRef = ref(storage, fileName);
+
+                console.info('[RecipeUpload] Initiating resumable upload to:', fileName);
+
+                const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+                const uploadPromise = new Promise<string>((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        console.warn('[RecipeUpload] TIMEOUT REACHED (60s)');
+                        uploadTask.cancel();
+                        reject(new Error('Upload timed out after 60 seconds. Please check your internet connection or try a smaller file.'));
+                    }, 60000);
+
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            setUploadProgress(progress);
+                            console.info(`[RecipeUpload] Progress: ${progress.toFixed(2)}% (${snapshot.state})`);
+                        },
+                        (error) => {
+                            clearTimeout(timeout);
+                            console.error('[RecipeUpload] Storage error code:', error.code, 'Message:', error.message);
+                            reject(error);
+                        },
+                        async () => {
+                            clearTimeout(timeout);
+                            console.info('[RecipeUpload] Storage upload complete, fetching URL...');
+                            try {
+                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                resolve(downloadURL);
+                            } catch (urlErr) {
+                                console.error('[RecipeUpload] Error getting download URL:', urlErr);
+                                reject(urlErr);
+                            }
+                        }
+                    );
+                });
+
+                finalPhotoUrl = await uploadPromise;
             }
+
+            const payload = {
+                ...formData,
+                photoUrl: finalPhotoUrl,
+                updatedAt: serverTimestamp()
+            };
+
+            if (editingRecipe) {
+                console.info('[RecipeUpload] Updating Firestore doc:', editingRecipe.id);
+                await updateDoc(doc(db, 'recipes', editingRecipe.id), payload);
+                setRecipes(prev => prev.map(r => r.id === editingRecipe.id ? { ...r, ...payload } : r));
+            } else {
+                console.info('[RecipeUpload] Creating new Firestore doc');
+                const docRef = await addDoc(collection(db, 'recipes'), { ...payload, createdAt: serverTimestamp() });
+                setRecipes(prev => [...prev, { id: docRef.id, ...payload } as Recipe].sort((a, b) => a.name.localeCompare(b.name)));
+            }
+
+            console.info('[RecipeUpload] Process finished successfully.');
             setShowModal(false);
-        } catch (e) {
-            console.error(e);
-            alert('Error saving recipe.');
+        } catch (e: any) {
+            console.error('[RecipeUpload] FATAL:', e);
+            setUploadError(e.message || 'An unexpected error occurred while saving.');
+        } finally {
+            setUploading(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (recipe: Recipe) => {
         if (!confirm('Are you sure you want to delete this recipe?')) return;
         try {
-            await deleteDoc(doc(db, 'recipes', id));
-            setRecipes(prev => prev.filter(r => r.id !== id));
+            // 1. Delete photo from Storage if it's a Firebase URL
+            if (recipe.photoUrl && recipe.photoUrl.includes('firebasestorage.googleapis.com')) {
+                try {
+                    const storageRef = ref(storage, recipe.photoUrl);
+                    await deleteObject(storageRef);
+                } catch (se) {
+                    console.warn('Storage deletion failed or file already gone:', se);
+                }
+            }
+
+            // 2. Delete from Firestore
+            await deleteDoc(doc(db, 'recipes', recipe.id));
+            setRecipes(prev => prev.filter(r => r.id !== recipe.id));
         } catch (e) {
             console.error(e);
+            alert('Error deleting recipe.');
         }
     };
 
@@ -74,7 +175,7 @@ export default function AdminRecipes() {
                     <p>Create and manage recipes that can be linked to sessions.</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-                    Add Recipe
+                    <Plus size={18} /> Add Recipe
                 </button>
             </div>
 
@@ -101,7 +202,7 @@ export default function AdminRecipes() {
                                         <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(recipe)}>
                                             <Edit2 size={16} strokeWidth={1.5} />
                                         </button>
-                                        <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(recipe.id)}>
+                                        <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(recipe)}>
                                             <Trash2 size={16} strokeWidth={1.5} />
                                         </button>
                                     </div>
@@ -129,8 +230,59 @@ export default function AdminRecipes() {
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="e.g. Handmade Pasta"
+                                    disabled={uploading}
                                 />
                             </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Photo (Optional)</label>
+                                <div className={styles.uploadArea} onClick={() => !uploading && fileInputRef.current?.click()}>
+                                    {selectedFile ? (
+                                        <div className={styles.preview}>
+                                            <p>{selectedFile.name}</p>
+                                            <span>Click to change</span>
+                                        </div>
+                                    ) : formData.photoUrl ? (
+                                        <div className={styles.preview}>
+                                            <img src={formData.photoUrl} alt="Current" className={styles.previewImage} />
+                                            <span>Click to replace</span>
+                                        </div>
+                                    ) : (
+                                        <div className={styles.uploadPlaceholder}>
+                                            <Upload className={styles.uploadIcon} />
+                                            <p>Click to upload photo</p>
+                                            <span>Max size: 10MB (JPG, PNG)</span>
+                                        </div>
+                                    )}
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        style={{ display: 'none' }}
+                                        disabled={uploading}
+                                    />
+                                </div>
+
+                                {uploading && (
+                                    <div className={styles.progressContainer}>
+                                        <div
+                                            className={styles.progressFill}
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                        <p className={styles.progressText}>{Math.round(uploadProgress)}% uploaded</p>
+                                    </div>
+                                )}
+
+                                {uploadError && (
+                                    <div className={styles.errorText}>
+                                        <AlertCircle size={14} />
+                                        {uploadError}
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="form-group">
                                 <label className="form-label">Description <span className="required">*</span></label>
                                 <textarea
@@ -140,20 +292,22 @@ export default function AdminRecipes() {
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Tell students about the dish..."
+                                    disabled={uploading}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Photo URL (Optional)</label>
-                                <input
-                                    className="form-input"
-                                    value={formData.photoUrl}
-                                    onChange={e => setFormData({ ...formData, photoUrl: e.target.value })}
-                                    placeholder="https://images.unsplash.com/..."
-                                />
-                            </div>
+
                             <div className={styles.modalActions}>
-                                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary">Save Recipe</button>
+                                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)} disabled={uploading}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn btn-primary" disabled={uploading}>
+                                    {uploading ? (
+                                        <>
+                                            <Loader2 className="spinner-inline" />
+                                            {uploadProgress < 100 ? 'Uploading...' : 'Saving...'}
+                                        </>
+                                    ) : editingRecipe ? 'Save Changes' : 'Save Recipe'}
+                                </button>
                             </div>
                         </form>
                     </div>
