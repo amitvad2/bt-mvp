@@ -5,26 +5,18 @@
 }
 
 .brand {
-    background: linear-gradient(135deg, #1a0a00 0%, #3d1a00 50%, #1a2e00 100%);
+    background: var(--bt-white);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: var(--space-12);
     position: relative;
     overflow: hidden;
-}
-
-.brand::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 30% 50%, rgba(245, 158, 11, 0.15) 0%, transparent 60%);
+    border-right: 1px solid var(--bt-gray-100);
 }
 
 .brandInner {
-    position: relative;
-    z-index: 1;
-    max-width: 380px;
+    max-width: 400px;
 }
 
 .logo {
@@ -32,17 +24,19 @@
     align-items: center;
     gap: 0.75rem;
     font-family: var(--font-heading);
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 700;
-    color: var(--bt-amber);
+    color: var(--bt-accent);
     text-decoration: none;
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-4);
+    letter-spacing: -0.02em;
 }
 
 .brandInner>p {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--bt-gray-600);
     font-size: 1.1rem;
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-12);
+    line-height: 1.4;
 }
 
 .features {
@@ -54,21 +48,21 @@
 .feature {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.95rem;
+    gap: var(--space-4);
+    color: var(--bt-gray-800);
+    font-size: 1rem;
     font-weight: 500;
 }
 
 .feature span {
-    width: 1.5rem;
-    height: 1.5rem;
-    background: var(--bt-green);
+    width: 1.25rem;
+    height: 1.25rem;
+    background: var(--bt-accent);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 800;
     color: #fff;
     flex-shrink: 0;
@@ -79,7 +73,7 @@
     align-items: center;
     justify-content: center;
     padding: var(--space-12) var(--space-8);
-    background: var(--bt-cream);
+    background: var(--bt-gray-50);
     overflow-y: auto;
 }
 

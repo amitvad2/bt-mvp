@@ -23,6 +23,25 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
     const [state, setState] = useState<BookingWizardState>({ sessionId });
     const [loading, setLoading] = useState(true);
 
+    // Initial load from sessionStorage
+    useEffect(() => {
+        const savedState = sessionStorage.getItem(`booking_${sessionId}`);
+        if (savedState) {
+            try {
+                setState(JSON.parse(savedState));
+            } catch (e) {
+                console.error('Error parsing saved booking state:', e);
+            }
+        }
+    }, [sessionId]);
+
+    // Save to sessionStorage whenever state changes
+    useEffect(() => {
+        if (Object.keys(state).length > 1) { // Only save if more than just sessionId
+            sessionStorage.setItem(`booking_${sessionId}`, JSON.stringify(state));
+        }
+    }, [state, sessionId]);
+
     useEffect(() => {
         const fetchSession = async () => {
             try {
@@ -45,7 +64,10 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
     const setEmergencyContact = useCallback((emergencyContact: EmergencyContact) => setState(prev => ({ ...prev, emergencyContact })), []);
     const setQuestionnaire = useCallback((questionnaire: Questionnaire) => setState(prev => ({ ...prev, questionnaire })), []);
     const setTermsAccepted = useCallback((termsAccepted: boolean) => setState(prev => ({ ...prev, termsAccepted })), []);
-    const clearState = useCallback(() => setState({ sessionId }), [sessionId]);
+    const clearState = useCallback(() => {
+        setState({ sessionId });
+        sessionStorage.removeItem(`booking_${sessionId}`);
+    }, [sessionId]);
 
     const contextValue = useMemo(() => ({
         state, loading, setSession, setStudent, setMedicalInfo,

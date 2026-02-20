@@ -11,10 +11,19 @@ import styles from './page.module.css';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function PaymentPage() {
-    const { state } = useBooking();
+    const { state, loading } = useBooking();
     const [clientSecret, setClientSecret] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (loading) return;
+
+        if (!state.session?.price) {
+            setError('Session data is missing. Please restart your booking.');
+            return;
+        }
+
+        setError(null);
         // Create PaymentIntent as soon as the page loads
         fetch('/api/payments/create-intent', {
             method: 'POST',
@@ -29,9 +38,17 @@ export default function PaymentPage() {
                 }
             }),
         })
-            .then((res) => res.json())
-            .then((data) => setClientSecret(data.clientSecret));
-    }, [state.sessionId, state.studentId, state.session?.price]);
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to initialize payment');
+                return data;
+            })
+            .then((data) => setClientSecret(data.clientSecret))
+            .catch(err => {
+                console.error('Payment Error:', err);
+                setError(err.message);
+            });
+    }, [state.sessionId, state.studentId, state.session?.price, loading]);
 
     const appearance = useMemo(() => ({
         theme: 'stripe' as const,
@@ -62,7 +79,15 @@ export default function PaymentPage() {
                 <strong>£{((state.session?.price || 0) / 100).toFixed(2)}</strong>
             </div>
 
-            {clientSecret ? (
+            {error ? (
+                <div className="alert alert-error">
+                    <strong>Payment Initialization Failed</strong>
+                    <p>{error}</p>
+                    <button className="btn btn-primary btn-sm" onClick={() => window.location.reload()} style={{ marginTop: '1rem' }}>
+                        Retry
+                    </button>
+                </div>
+            ) : clientSecret ? (
                 <Elements options={options} stripe={stripePromise} key={clientSecret}>
                     <CheckoutForm />
                 </Elements>

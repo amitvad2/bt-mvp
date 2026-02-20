@@ -30,7 +30,7 @@
 }
 
 .roleOption {
-    border: 2px solid var(--bt-gray-200);
+    border: 1px solid var(--bt-gray-200);
     border-radius: var(--radius-lg);
     padding: var(--space-4);
     cursor: pointer;
@@ -46,14 +46,14 @@
 }
 
 .roleOption:hover {
-    border-color: var(--bt-amber);
-    background: var(--bt-amber-light);
+    border-color: var(--bt-accent);
+    background: var(--bt-accent-light);
 }
 
 .roleSelected {
-    border-color: var(--bt-amber);
-    background: var(--bt-amber-light);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    border-color: var(--bt-accent);
+    background: var(--bt-accent-light);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
 .roleEmoji {
@@ -80,14 +80,14 @@
 
 .footer a,
 .forgotLink {
-    color: var(--bt-amber-dark);
-    font-weight: 700;
+    color: var(--bt-accent);
+    font-weight: 600;
     text-decoration: none;
 }
 
 .footer a:hover,
 .forgotLink:hover {
-    text-decoration: underline;
+    color: var(--bt-accent-dark);
 }
 
 .forgotLink {
