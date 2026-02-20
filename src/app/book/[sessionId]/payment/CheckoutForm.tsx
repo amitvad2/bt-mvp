@@ -113,7 +113,13 @@ export default function CheckoutForm() {
 
     return (
         <form id="payment-form" onSubmit={handleSubmit} className={styles.stripeForm}>
-            <PaymentElement id="payment-element" options={{ layout: 'tabs' }} onReady={() => setIsReady(true)} />
+            <div className={styles.stripeContainer}>
+                <PaymentElement
+                    id="payment-element"
+                    options={{ layout: 'accordion' }}
+                    onReady={() => setIsReady(true)}
+                />
+            </div>
 
             {message && <div className="alert alert-error"><AlertCircle size={18} /> {message}</div>}
 

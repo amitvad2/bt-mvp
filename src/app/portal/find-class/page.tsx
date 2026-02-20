@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -9,6 +9,14 @@ import { Calendar, MapPin, Clock, ArrowRight } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function FindClassPage() {
+    return (
+        <Suspense fallback={<div className="loading-screen"><div className="spinner" /></div>}>
+            <FindClassContent />
+        </Suspense>
+    );
+}
+
+function FindClassContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [venues, setVenues] = useState<Venue[]>([]);
