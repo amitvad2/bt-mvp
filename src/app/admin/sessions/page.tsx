@@ -20,7 +20,7 @@ export default function AdminSessions() {
         date: '',
         recipeId: '',
         instructor: '',
-        status: 'open' as const,
+        status: 'open' as Session['status'],
         spotsAvailable: 15,
     });
 
@@ -85,10 +85,10 @@ export default function AdminSessions() {
         try {
             if (editingSession) {
                 await updateDoc(doc(db, 'sessions', editingSession.id), data);
-                setSessions(prev => prev.map(s => s.id === editingSession.id ? { ...s, ...data } : s));
+                setSessions(prev => prev.map(s => s.id === editingSession.id ? { ...s, ...data } as Session : s));
             } else {
                 const docRef = await addDoc(collection(db, 'sessions'), { ...data, createdAt: serverTimestamp() });
-                setSessions(prev => [{ id: docRef.id, ...data } as Session, ...prev]);
+                setSessions(prev => [{ id: docRef.id, ...data, createdAt: new Date() } as Session, ...prev]);
             }
             setShowModal(false);
         } catch (e) {

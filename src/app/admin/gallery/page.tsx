@@ -137,11 +137,11 @@ export default function AdminGallery() {
             if (editingImage) {
                 console.info('[GalleryUpload] Updating Firestore doc:', editingImage.id);
                 await updateDoc(doc(db, 'gallery', editingImage.id), payload);
-                setImages(prev => prev.map(img => img.id === editingImage.id ? { ...img, ...payload } : img).sort((a, b) => a.order - b.order));
+                setImages(prev => prev.map(img => img.id === editingImage.id ? { ...img, ...payload } as GalleryImage : img).sort((a, b) => a.order - b.order));
             } else {
                 console.info('[GalleryUpload] Creating new Firestore doc');
                 const docRef = await addDoc(collection(db, 'gallery'), { ...payload, createdAt: serverTimestamp() });
-                setImages(prev => [...prev, { id: docRef.id, ...payload } as GalleryImage].sort((a, b) => a.order - b.order));
+                setImages(prev => [...prev, { id: docRef.id, ...payload, createdAt: new Date() } as GalleryImage].sort((a, b) => a.order - b.order));
             }
 
             console.info('[GalleryUpload] Process finished successfully.');

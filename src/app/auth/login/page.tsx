@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -17,6 +17,14 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="spinner" />}>
+            <LoginContent />
+        </Suspense>
+    );
+}
+
+function LoginContent() {
     const { signIn } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { BTClass, Venue } from '@/types';
+import { BTClass, Venue, ClassType } from '@/types';
 import { ChefHat, Plus, Edit2, Trash2, X, Clock, Users, MapPin } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -15,7 +15,7 @@ export default function AdminClasses() {
     const [editingClass, setEditingClass] = useState<BTClass | null>(null);
 
     const [formData, setFormData] = useState({
-        type: 'kidsAfterSchool' as const,
+        type: 'kidsAfterSchool' as ClassType,
         dayOfWeek: 'Monday',
         startTime: '15:30',
         endTime: '16:30',

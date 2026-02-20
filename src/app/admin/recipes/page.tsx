@@ -128,11 +128,11 @@ export default function AdminRecipes() {
             if (editingRecipe) {
                 console.info('[RecipeUpload] Updating Firestore doc:', editingRecipe.id);
                 await updateDoc(doc(db, 'recipes', editingRecipe.id), payload);
-                setRecipes(prev => prev.map(r => r.id === editingRecipe.id ? { ...r, ...payload } : r));
+                setRecipes(prev => prev.map(r => r.id === editingRecipe.id ? { ...r, ...payload } as Recipe : r));
             } else {
                 console.info('[RecipeUpload] Creating new Firestore doc');
                 const docRef = await addDoc(collection(db, 'recipes'), { ...payload, createdAt: serverTimestamp() });
-                setRecipes(prev => [...prev, { id: docRef.id, ...payload } as Recipe].sort((a, b) => a.name.localeCompare(b.name)));
+                setRecipes(prev => [...prev, { id: docRef.id, ...payload, createdAt: new Date() } as Recipe].sort((a, b) => a.name.localeCompare(b.name)));
             }
 
             console.info('[RecipeUpload] Process finished successfully.');
