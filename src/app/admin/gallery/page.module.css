@@ -106,17 +106,30 @@
     text-overflow: ellipsis;
 }
 
+.metaRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.categoryBadge {
+    background: var(--bt-gray-700);
+    color: var(--bt-white);
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .orderBadge {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
     background: var(--bt-amber);
     color: #000;
     font-size: 0.7rem;
     font-weight: 800;
     padding: 2px 6px;
     border-radius: 4px;
-    z-index: 5;
 }
 
 .form {

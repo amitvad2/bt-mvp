@@ -8,6 +8,8 @@ import {
     signOut,
     sendPasswordResetEmail,
     onAuthStateChanged,
+    GoogleAuthProvider, // Added
+    signInWithPopup,    // Added
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -15,10 +17,11 @@ import { BTUser, UserRole } from '@/types';
 
 interface AuthContextType {
     user: User | null;
-    btUser: BTUser | null;
-    loading: boolean;
-    signUp: (email: string, password: string, firstName: string, lastName: string, role: UserRole) => Promise<void>;
-    signIn: (email: string, password: string) => Promise<void>;
+    btUser: BTUser | null; // Kept from original
+    loading: boolean; // Kept from original
+    signUp: (email: string, pass: string, firstName: string, lastName: string, role: UserRole) => Promise<void>; // Changed password to pass
+    signIn: (email: string, pass: string) => Promise<void>; // Changed password to pass
+    signInWithGoogle: (role: UserRole) => Promise<void>; // Added
     logOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
 }
@@ -40,9 +43,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                     if (userDoc.exists()) {
                         setBtUser({ uid: firebaseUser.uid, ...userDoc.data() } as BTUser);
+                    } else {
+                        // This case might happen if a user signs up via Google but the doc creation failed or was delayed.
+                        // For now, we'll just log it. A more robust solution might re-create or prompt.
+                        console.warn("User document not found for authenticated user:", firebaseUser.uid);
+                        setBtUser(null); // Or handle as an incomplete profile
                     }
                 } catch (e) {
                     console.error('Error fetching user doc:', e);
+                    setBtUser(null);
                 }
             } else {
                 setBtUser(null);
@@ -54,33 +63,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return unsubscribe;
     }, []);
 
-    const signUp = async (
-        email: string,
-        password: string,
-        firstName: string,
-        lastName: string,
-        role: UserRole
-    ) => {
+    const signUp = async (email: string, pass: string, firstName: string, lastName: string, role: UserRole) => {
         try {
-            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, pass);
 
-            const userData: Omit<BTUser, 'uid'> = {
-                role,
+            const newUser: BTUser = {
+                uid: firebaseUser.uid,
+                email,
                 firstName,
                 lastName,
-                email,
-                createdAt: new Date(),
+                role,
+                createdAt: serverTimestamp(),
             };
 
-            // We set a small timeout hint in logs, though Firestore handles its own retries
-            await setDoc(doc(db, 'users', cred.user.uid), {
-                ...userData,
-                createdAt: serverTimestamp(),
-            });
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
 
             // Explicitly set cookie here too to be safe before redirect
             document.cookie = `session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
-            setBtUser({ uid: cred.user.uid, ...userData });
+            setBtUser(newUser);
+        } catch (error: any) {
+            throw error;
+        }
+    };
+
+    const signInWithGoogle = async (role: UserRole) => {
+        try {
+            const provider = new GoogleAuthProvider();
+            const { user: firebaseUser } = await signInWithPopup(auth, provider);
+
+            // Set session cookie
+            document.cookie = `session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
+
+            // Check if user document exists
+            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+
+            if (!userDoc.exists()) {
+                const firstName = firebaseUser.displayName?.split(' ')[0] || '';
+                const lastName = firebaseUser.displayName?.split(' ').slice(1).join(' ') || '';
+
+                const newUser: BTUser = {
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email || '',
+                    firstName,
+                    lastName,
+                    role,
+                    createdAt: serverTimestamp(),
+                };
+                await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+                setBtUser(newUser);
+            } else {
+                setBtUser({ uid: firebaseUser.uid, ...userDoc.data() } as BTUser);
+            }
         } catch (error: any) {
             throw error;
         }
@@ -108,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, btUser, loading, signUp, signIn, logOut, resetPassword }}>
+        <AuthContext.Provider value={{ user, btUser, loading, signUp, signIn, signInWithGoogle, logOut, resetPassword }}>
             {children}
         </AuthContext.Provider>
     );

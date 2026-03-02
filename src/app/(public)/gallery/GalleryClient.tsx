@@ -3,12 +3,21 @@
 import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { GalleryImage } from '@/types';
+import { GalleryImage, GalleryCategory } from '@/types';
 import styles from './page.module.css';
+
+const CATEGORIES: { value: GalleryCategory | 'all', label: string }[] = [
+    { value: 'all', label: 'All Photos' },
+    { value: 'cooking-classes', label: 'Cooking Classes' },
+    { value: 'cakes', label: 'Cakes' },
+    { value: 'cookies', label: 'Cookies' },
+    { value: 'breads', label: 'Breads' }
+];
 
 export default function GalleryClient() {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeCategory, setActiveCategory] = useState<GalleryCategory | 'all'>('all');
 
     useEffect(() => {
         const fetchImages = async () => {
@@ -27,6 +36,10 @@ export default function GalleryClient() {
 
     if (loading) return <div className="spinner" />;
 
+    const filteredImages = activeCategory === 'all'
+        ? images
+        : images.filter(img => (img.category || 'cooking-classes') === activeCategory);
+
     return (
         <section className={`section ${styles.gallerySection}`}>
             <div className="container">
@@ -36,8 +49,22 @@ export default function GalleryClient() {
                     <p>Capturing the smiles, the skills, and the snacks from our recent sessions.</p>
                 </div>
 
+                <div className={styles.categoryNavigation}>
+                    <div className={styles.tabGroup}>
+                        {CATEGORIES.map(category => (
+                            <button
+                                key={category.value}
+                                className={`${styles.tabButton} ${activeCategory === category.value ? styles.activeTab : ''}`}
+                                onClick={() => setActiveCategory(category.value)}
+                            >
+                                {category.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div className={styles.grid}>
-                    {images.map((img) => (
+                    {filteredImages.map((img) => (
                         <div key={img.id} className={styles.imageCard}>
                             <div className={styles.imageWrapper}>
                                 <img src={img.imageUrl} alt={img.altText} loading="lazy" />
@@ -45,9 +72,9 @@ export default function GalleryClient() {
                             {img.description && <p className={styles.caption}>{img.description}</p>}
                         </div>
                     ))}
-                    {images.length === 0 && (
+                    {filteredImages.length === 0 && (
                         <div className={styles.empty}>
-                            <p>Our gallery is currently empty. Check back soon for photos from our sessions!</p>
+                            <p>No photos found for this category yet. Check back soon!</p>
                         </div>
                     )}
                 </div>

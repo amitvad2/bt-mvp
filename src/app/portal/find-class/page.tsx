@@ -59,7 +59,8 @@ function FindClassContent() {
                 results = results.filter(s => s.venueId === filters.venueId);
             }
             if (filters.type !== 'all') {
-                results = results.filter(s => s.classType === filters.type);
+                // Case insensitive and trimmed comparison for safety
+                results = results.filter(s => s.classType?.toLowerCase() === filters.type.toLowerCase());
             }
 
             // Date filtering
@@ -175,7 +176,7 @@ function FindClassContent() {
                         <div key={s.id} className={`card ${styles.sessionCard}`}>
                             <div className={styles.sessionHeader}>
                                 <div className={styles.ageRange}>
-                                    {s.classType === 'kidsAfterSchool' ? 'Kids 5-12' : 'Young Adult'}
+                                    {s.classType === 'kidsAfterSchool' ? 'Kids 5-12' : 'Young Adult 18+'}
                                 </div>
                                 <h3 className={styles.sessionName}>{s.className}</h3>
                             </div>

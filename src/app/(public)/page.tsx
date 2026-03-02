@@ -88,37 +88,35 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* ── MISSION STRIP ── */}
-            <section className={styles.mission}>
+            {/* Features Section */}
+            <section className="section">
                 <div className="container">
-                    <div className={styles.missionInner}>
-                        <div className={styles.missionText}>
-                            <span className="eyebrow">Our Mission</span>
-                            <h2>Nurturing the joy of food.</h2>
-                            <p>
-                                At Blooming Tastebuds, we believe every child deserves the confidence
-                                to cook nutritious, delicious meals. Our sessions go beyond recipes — we nurture
-                                curiosity, teamwork, and independence.
-                            </p>
-                            <Link href="/about" className="btn btn-ghost" style={{ marginTop: '1.5rem' }}>
-                                Meet Our Founder <ArrowRight size={16} />
-                            </Link>
+                    <div className={styles.featuresHeader}>
+                        <span className="eyebrow">Our Mission</span>
+                        <h2>Nurturing Confident Cooks</h2>
+                        <p>Cooking adventures for kids and teens</p>
+                    </div>
+
+                    <div className={styles.featuresLayout}>
+                        <div className={styles.featuresImageWrapper}>
+                            <img src="/images/nurturing-cooks.jpg" alt="Students cooking at Blooming Tastebuds" className={styles.featuresImage} />
                         </div>
-                        <div className={styles.missionFeatures}>
-                            {[
-                                { icon: '🛡️', title: 'Safety First', desc: 'Medical info collected at booking.' },
-                                { icon: '🌱', title: 'Inclusive', desc: 'We accommodate all dietary needs.' },
-                                { icon: '👩‍🍳', title: 'Expert Chefs', desc: 'Passionate coaches who love to teach.' },
-                                { icon: '📱', title: 'Easy Booking', desc: 'Manage everything entirely online.' },
-                            ].map((f) => (
-                                <div key={f.title} className={styles.featureItem}>
-                                    <span className={styles.featureIcon}>{f.icon}</span>
-                                    <div>
-                                        <strong>{f.title}</strong>
-                                        <p>{f.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
+                        <div className={styles.featureGrid}>
+                            <div className={styles.featureCard}>
+                                <div className={styles.featureIcon}>🍳</div>
+                                <h3>Culinary Confidence</h3>
+                                <p>Discover the joy of cooking with easy-to-learn recipes and techniques. Build essential life skills, boost your confidence in the kitchen, and have fun along the way.</p>
+                            </div>
+                            <div className={styles.featureCard}>
+                                <div className={styles.featureIcon}>🌱</div>
+                                <h3>Vegetarian Adventures</h3>
+                                <p>At Blooming Tastebuds, we inspire young minds to explore the joys of healthy cooking. We teach students how to whip up delicious and nutritious vegetarian dishes.</p>
+                            </div>
+                            <div className={styles.featureCard}>
+                                <div className={styles.featureIcon}>✨</div>
+                                <h3>Life Skills</h3>
+                                <p>Through dynamic cooking sessions and hands-on learning, we foster essential life skills, culinary confidence, and creativity in each child.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -161,22 +159,20 @@ export default function HomePage() {
                         <h2>Loved by parents and kids.</h2>
                     </div>
                     <div className={styles.testimonialGrid}>
-                        {[
-                            { quote: 'My daughter absolutely loves the Monday sessions. She comes home so proud of what she\'s made.', name: 'Sarah M.', role: 'Parent of Lily' },
-                            { quote: 'The booking process was so easy. I love that I can see the recipe before I book.', name: 'James T.', role: 'Parent of twins' },
-                            { quote: 'As a student heading to uni, these classes gave me real confidence.', name: 'Priya K.', role: 'Young Adult student' },
-                        ].map((t) => (
-                            <div key={t.name} className={`card ${styles.testimonialCard}`}>
+                        <div className={styles.testimonialCard}>
+                            <div className={styles.testimonialContent}>
                                 <div className={styles.stars}>
-                                    {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
+                                    {[...Array(5)].map((_, i) => <Star key={i} size={18} fill="currentColor" />)}
                                 </div>
-                                <p className={styles.quote}>"{t.quote}"</p>
+                                <p className={styles.quote}>
+                                    "Nisha has been an exceptional cooking teacher, demonstrating professionalism, dedication, and a passion for teaching. She communicates effectively, simplifies complex cooking techniques, and delivers engaging lessons for students across Key Stages 3 to 5. Her punctuality, innovative methods, and ability to inspire a love for culinary arts have made a lasting impact on our school community."
+                                </p>
                                 <div className={styles.testimonialAuthor}>
-                                    <strong>{t.name}</strong>
-                                    <span>{t.role}</span>
+                                    <strong>Academy Review</strong>
+                                    <span>Enrichment Lead, Ark Elvin Academy</span>
                                 </div>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             </section>

@@ -158,6 +158,74 @@
     color: var(--bt-gray-400);
 }
 
+/* Features Section */
+.featuresHeader {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+.featuresHeader h2 {
+    margin: var(--space-4) 0;
+}
+
+.featuresHeader p {
+    font-size: 1.25rem;
+    color: var(--bt-gray-600);
+}
+
+.featuresLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8);
+    align-items: center;
+}
+
+.featuresImageWrapper {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-lg);
+}
+
+.featuresImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.featureGrid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    justify-content: center;
+}
+
+.featureCard {
+    padding: var(--space-6);
+    border: 1px solid var(--bt-gray-200);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: #fff;
+}
+
+.featureIcon {
+    font-size: 1.5rem;
+    background: var(--bt-gray-50);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    margin-bottom: var(--space-2);
+}
+
 /* Mission Section */
 .mission {
     background: var(--bt-white);
@@ -247,28 +315,83 @@
 }
 
 /* Testimonials */
+.testimonialSection {
+    background: var(--bt-gray-50);
+}
+
 .testimonialGrid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: var(--space-8);
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 .testimonialCard {
     background: #fff;
-    padding: var(--space-10);
-    box-shadow: none;
-    border: 1px solid var(--bt-gray-200);
+    padding: var(--space-12);
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    border: none;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.testimonialCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.testimonialCard::before {
+    content: '"';
+    position: absolute;
+    top: -20px;
+    left: 20px;
+    font-size: 8rem;
+    color: var(--bt-gray-100);
+    font-family: serif;
+    line-height: 1;
+    z-index: 0;
+}
+
+.testimonialContent {
+    position: relative;
+    z-index: 1;
 }
 
 .stars {
-    color: #ffb400;
-    margin-bottom: var(--space-4);
+    color: var(--bt-accent);
+    margin-bottom: var(--space-6);
+    display: flex;
+    gap: 4px;
 }
 
 .quote {
-    font-size: 1.1rem;
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
     line-height: 1.6;
-    color: var(--bt-gray-700);
+    color: var(--bt-gray-800);
+    margin-bottom: var(--space-8);
+    font-weight: 400;
+}
+
+.testimonialAuthor {
+    display: flex;
+    flex-direction: column;
+    border-left: 3px solid var(--bt-accent);
+    padding-left: var(--space-4);
+}
+
+.testimonialAuthor strong {
+    font-size: 1.1rem;
+    color: var(--bt-gray-900);
+    margin-bottom: 2px;
+}
+
+.testimonialAuthor span {
+    font-size: 0.95rem;
+    color: var(--bt-gray-500);
 }
 
 /* CTA Banner */
@@ -292,6 +415,7 @@
 @media (max-width: 900px) {
 
     .classGrid,
+    .featuresLayout,
     .missionFeatures,
     .testimonialGrid,
     .stepsGrid {

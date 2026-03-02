@@ -23,6 +23,52 @@
     padding: var(--space-20) 0;
 }
 
+.categoryNavigation {
+    margin: var(--space-12) 0;
+    display: flex;
+    justify-content: center;
+}
+
+.tabGroup {
+    display: inline-flex;
+    background: var(--bt-gray-100);
+    padding: 6px;
+    border-radius: var(--radius-full);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+}
+
+.tabGroup::-webkit-scrollbar {
+    display: none;
+}
+
+.tabButton {
+    background: transparent;
+    border: none;
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-full);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--bt-gray-600);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition);
+}
+
+.tabButton:hover:not(.activeTab) {
+    color: var(--bt-gray-900);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.activeTab {
+    background: #fff;
+    color: var(--bt-accent);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

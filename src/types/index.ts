@@ -141,12 +141,15 @@ export interface Booking {
     createdAt: any;
 }
 
+export type GalleryCategory = 'cooking-classes' | 'cakes' | 'cookies' | 'breads';
+
 export interface GalleryImage {
     id: string;
     imageUrl: string;
     description: string;
     altText: string;
     order: number;
+    category?: GalleryCategory;
     createdAt: any;
 }
 

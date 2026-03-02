@@ -31,21 +31,21 @@ export default function AboutPage() {
                             </div>
                         </div>
                         <div className={styles.founderText}>
-                            <span className="eyebrow">Meet the Founder</span>
-                            <h2>A Chef, Educator & Entrepreneur</h2>
+                            <span className="eyebrow">Meet our Founder</span>
+                            <h2>Nurturing Confident Cooks</h2>
                             <p>
-                                Blooming Tastebuds was founded with a heartfelt mission: to make cooking accessible,
-                                joyful, and empowering for young people. Our founder brings years of culinary expertise
-                                and a deep passion for education to every class.
+                                At Blooming Tastebuds, we inspire young minds to explore the joys of healthy cooking.
+                                Our passionate Cooking Instructor brings over 2 years of experience in teaching school
+                                students how to whip up delicious and nutritious vegetarian dishes.
                             </p>
                             <p>
-                                Having worked in professional kitchens and educational settings, she recognised a gap
-                                in the market for high-quality, affordable cooking classes that truly prioritise
-                                safety, inclusivity, and fun.
+                                Through dynamic cooking sessions and hands-on learning, we foster essential life skills,
+                                culinary confidence, and creativity in each child. Join us in cultivating independence
+                                and healthier lifestyles, paving the way for future chefs to bloom!
                             </p>
                             <p>
-                                What started as a small after-school club has grown into a thriving community of
-                                young chefs and their families — all united by a love of food and learning.
+                                Discover the joy of cooking with easy-to-learn recipes and techniques. Build essential
+                                life skills, boost your confidence in the kitchen, and have fun along the way.
                             </p>
                         </div>
                     </div>

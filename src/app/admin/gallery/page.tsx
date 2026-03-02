@@ -4,19 +4,26 @@ import { useState, useEffect, useRef } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
-import { GalleryImage } from '@/types';
+import { GalleryImage, GalleryCategory } from '@/types';
 import { Image as ImageIcon, Plus, Edit2, Trash2, X, Upload, Loader2, AlertCircle } from 'lucide-react';
 import styles from './page.module.css';
+
+const CATEGORIES: { value: GalleryCategory, label: string }[] = [
+    { value: 'cooking-classes', label: 'Cooking Class Photos' },
+    { value: 'cakes', label: 'Cakes' },
+    { value: 'cookies', label: 'Cookies' },
+    { value: 'breads', label: 'Breads' }
+];
 
 export default function AdminGallery() {
     const [images, setImages] = useState<GalleryImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingImage, setEditingImage] = useState<GalleryImage | null>(null);
-    const [formData, setFormData] = useState({ imageUrl: '', description: '', altText: '', order: 0 });
+    const [formData, setFormData] = useState<{ imageUrl: string, description: string, altText: string, order: number, category: GalleryCategory }>({ imageUrl: '', description: '', altText: '', order: 0, category: 'cooking-classes' });
 
     // Upload state
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadError, setUploadError] = useState<string | null>(null);
@@ -43,27 +50,29 @@ export default function AdminGallery() {
                 imageUrl: img.imageUrl,
                 description: img.description || '',
                 altText: img.altText || '',
-                order: img.order || 0
+                order: img.order || 0,
+                category: img.category || 'cooking-classes'
             });
         } else {
             setEditingImage(null);
-            setFormData({ imageUrl: '', description: '', altText: '', order: images.length });
+            setFormData({ imageUrl: '', description: '', altText: '', order: images.length, category: 'cooking-classes' });
         }
-        setSelectedFile(null);
+        setSelectedFiles([]);
         setUploadError(null);
         setUploadProgress(0);
         setShowModal(true);
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (file.size > 10 * 1024 * 1024) { // Increased to 10MB limit
-                setUploadError('File is too large. Max size is 10MB.');
-                return;
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
+            if (validFiles.length < files.length) {
+                setUploadError('Some files were too large and skipped. Max size is 10MB.');
+            } else {
+                setUploadError(null);
             }
-            setSelectedFile(file);
-            setUploadError(null);
+            setSelectedFiles(prev => editingImage ? validFiles.slice(0, 1) : [...prev, ...validFiles]);
         }
     };
 
@@ -75,73 +84,70 @@ export default function AdminGallery() {
         console.info('[GalleryUpload] Starting submit process...');
 
         try {
-            let finalImageUrl = formData.imageUrl;
-
-            // Handle file upload if a new file is selected
-            if (selectedFile) {
-                console.info('[GalleryUpload] File selected:', selectedFile.name, 'Size:', selectedFile.size);
-
-                const fileExt = selectedFile.name.split('.').pop();
-                const fileName = `gallery/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-                const storageRef = ref(storage, fileName);
-
-                console.info('[GalleryUpload] Initiating resumable upload to:', fileName);
-
-                const uploadTask = uploadBytesResumable(storageRef, selectedFile);
-
-                const uploadPromise = new Promise<string>((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        console.warn('[GalleryUpload] TIMEOUT REACHED (60s)');
-                        uploadTask.cancel();
-                        reject(new Error('Upload timed out after 60 seconds. Please check your internet connection or try a smaller file.'));
-                    }, 60000);
-
-                    uploadTask.on('state_changed',
-                        (snapshot) => {
-                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            setUploadProgress(progress);
-                            console.info(`[GalleryUpload] Progress: ${progress.toFixed(2)}% (${snapshot.state})`);
-                        },
-                        (error) => {
-                            clearTimeout(timeout);
-                            console.error('[GalleryUpload] Storage error code:', error.code, 'Message:', error.message);
-                            reject(error);
-                        },
-                        async () => {
-                            clearTimeout(timeout);
-                            console.info('[GalleryUpload] Storage upload complete, fetching URL...');
-                            try {
-                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                                resolve(downloadURL);
-                            } catch (urlErr) {
-                                console.error('[GalleryUpload] Error getting download URL:', urlErr);
-                                reject(urlErr);
-                            }
-                        }
-                    );
-                });
-
-                finalImageUrl = await uploadPromise;
-            }
-
-            if (!finalImageUrl) {
-                throw new Error('No image URL available. Please upload a photo.');
-            }
-
-            const payload = {
-                ...formData,
-                imageUrl: finalImageUrl,
-                updatedAt: serverTimestamp()
-            };
-
             if (editingImage) {
-                console.info('[GalleryUpload] Updating Firestore doc:', editingImage.id);
+                let finalImageUrl = formData.imageUrl;
+
+                if (selectedFiles.length > 0) {
+                    const file = selectedFiles[0];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `gallery/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+                    const storageRef = ref(storage, fileName);
+
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    const uploadPromise = new Promise<string>((resolve, reject) => {
+                        uploadTask.on('state_changed',
+                            (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
+                            (error) => reject(error),
+                            async () => resolve(await getDownloadURL(uploadTask.snapshot.ref))
+                        );
+                    });
+                    finalImageUrl = await uploadPromise;
+                }
+
+                if (!finalImageUrl) throw new Error('No image URL available.');
+
+                const payload = { ...formData, imageUrl: finalImageUrl, updatedAt: serverTimestamp() };
                 await updateDoc(doc(db, 'gallery', editingImage.id), payload);
                 setImages(prev => prev.map(img => img.id === editingImage.id ? { ...img, ...payload } as GalleryImage : img).sort((a, b) => a.order - b.order));
+
             } else {
-                console.info('[GalleryUpload] Creating new Firestore doc');
-                const docRef = await addDoc(collection(db, 'gallery'), { ...payload, createdAt: serverTimestamp() });
-                setImages(prev => [...prev, { id: docRef.id, ...payload, createdAt: new Date() } as GalleryImage].sort((a, b) => a.order - b.order));
+                if (selectedFiles.length === 0) throw new Error('Please select at least one photo.');
+
+                const newGalleryImages: GalleryImage[] = [];
+                let currentOrder = formData.order;
+
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `gallery/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+                    const storageRef = ref(storage, fileName);
+
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    const downloadURL = await new Promise<string>((resolve, reject) => {
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                const fileProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                const totalProgress = ((i / selectedFiles.length) * 100) + (fileProgress / selectedFiles.length);
+                                setUploadProgress(totalProgress);
+                            },
+                            (error) => reject(error),
+                            async () => resolve(await getDownloadURL(uploadTask.snapshot.ref))
+                        );
+                    });
+
+                    const payload = {
+                        ...formData,
+                        imageUrl: downloadURL,
+                        order: currentOrder++,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    };
+
+                    const docRef = await addDoc(collection(db, 'gallery'), payload);
+                    newGalleryImages.push({ id: docRef.id, ...payload, createdAt: new Date() } as GalleryImage);
+                }
+
+                setImages(prev => [...prev, ...newGalleryImages].sort((a, b) => a.order - b.order));
             }
 
             console.info('[GalleryUpload] Process finished successfully.');
@@ -198,7 +204,10 @@ export default function AdminGallery() {
                             </div>
                             <img src={img.imageUrl} alt={img.altText} className={styles.image} />
                             <div className={styles.itemMeta}>
-                                <span className={styles.orderBadge}>#{img.order}</span>
+                                <div className={styles.metaRow}>
+                                    <span className={styles.orderBadge}>#{img.order}</span>
+                                    <span className={styles.categoryBadge}>{CATEGORIES.find(c => c.value === (img.category || 'cooking-classes'))?.label}</span>
+                                </div>
                                 <p>{img.description || 'No description'}</p>
                             </div>
                         </div>
@@ -220,10 +229,10 @@ export default function AdminGallery() {
                                 <label className="form-label">Photo <span className="required">*</span></label>
 
                                 <div className={styles.uploadArea} onClick={() => !uploading && fileInputRef.current?.click()}>
-                                    {selectedFile ? (
+                                    {selectedFiles.length > 0 ? (
                                         <div className={styles.preview}>
-                                            <p>{selectedFile.name}</p>
-                                            <span>Click to change</span>
+                                            <p>{selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected</p>
+                                            <span>{editingImage ? 'Click to change' : 'Click to add more'}</span>
                                         </div>
                                     ) : formData.imageUrl ? (
                                         <div className={styles.preview}>
@@ -233,7 +242,7 @@ export default function AdminGallery() {
                                     ) : (
                                         <div className={styles.uploadPlaceholder}>
                                             <Upload className={styles.uploadIcon} />
-                                            <p>Click to upload image</p>
+                                            <p>Click to upload image{editingImage ? '' : 's'}</p>
                                             <span>Max size: 10MB (JPG, PNG)</span>
                                         </div>
                                     )}
@@ -242,6 +251,7 @@ export default function AdminGallery() {
                                         ref={fileInputRef}
                                         className="hidden"
                                         accept="image/*"
+                                        multiple={!editingImage}
                                         onChange={handleFileChange}
                                         style={{ display: 'none' }}
                                         disabled={uploading}
@@ -264,6 +274,20 @@ export default function AdminGallery() {
                                         {uploadError}
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Category <span className="required">*</span></label>
+                                <select
+                                    className="form-input"
+                                    value={formData.category}
+                                    onChange={e => setFormData({ ...formData, category: e.target.value as GalleryCategory })}
+                                    disabled={uploading}
+                                >
+                                    {CATEGORIES.map(c => (
+                                        <option key={c.value} value={c.value}>{c.label}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="form-group">
@@ -304,13 +328,13 @@ export default function AdminGallery() {
                                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)} disabled={uploading}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-primary" disabled={uploading || (!selectedFile && !formData.imageUrl)}>
+                                <button type="submit" className="btn btn-primary" disabled={uploading || (selectedFiles.length === 0 && !formData.imageUrl)}>
                                     {uploading ? (
                                         <>
                                             <Loader2 className="spinner-inline" />
-                                            {uploadProgress < 100 ? 'Uploading...' : 'Saving...'}
+                                            {uploadProgress < 100 ? `Uploading... ${Math.round(uploadProgress)}%` : 'Saving...'}
                                         </>
-                                    ) : editingImage ? 'Save Changes' : 'Upload to Gallery'}
+                                    ) : editingImage ? 'Save Changes' : `Upload ${selectedFiles.length > 1 ? `${selectedFiles.length} Photos` : 'Photo'} to Gallery`}
                                 </button>
                             </div>
                         </form>

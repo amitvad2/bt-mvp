@@ -6,8 +6,11 @@ export async function POST(req: Request) {
         const { to, subject, type, data } = await req.json();
 
         if (!to || !subject || !type) {
+            console.error('Email API: Missing required fields:', { to, subject, type });
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
+
+        console.log(`Email API: Attempting to send ${type} email to ${to}...`);
 
         let html = '';
 
@@ -90,6 +93,8 @@ export async function POST(req: Request) {
 
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        console.log(`Email API: Successfully sent email to ${to}. ID: ${resData?.id}`);
 
         return NextResponse.json({ success: true, data: resData });
     } catch (err: any) {

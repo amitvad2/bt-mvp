@@ -15,6 +15,7 @@ export default function Header() {
         { href: '/about', label: 'About Us' },
         { href: '/courses', label: 'Courses' },
         { href: '/gallery', label: 'Gallery' },
+        { href: '/testimonies', label: 'Testimonies' },
     ];
 
     return (

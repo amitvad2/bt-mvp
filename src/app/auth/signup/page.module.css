@@ -95,9 +95,54 @@
 }
 
 .terms {
+    margin-top: var(--space-6);
     text-align: center;
-    font-size: 0.8rem;
-    color: var(--bt-gray-400);
+    font-size: 0.85rem;
+    color: var(--bt-gray-500);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin: var(--space-8) 0;
+    color: var(--bt-gray-300);
+    font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--bt-gray-200);
+}
+
+.socialBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-4);
+    background: #fff;
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius);
+    color: var(--bt-gray-700);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.socialBtn:hover {
+    background: var(--bt-gray-50);
+    border-color: var(--bt-gray-300);
+}
+
+.googleIcon {
+    width: 18px;
+    height: 18px;
 }
 
 .terms a {
