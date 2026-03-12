@@ -174,7 +174,7 @@ export default function AdminInstructors() {
                 );
             } else {
                 const docRef = await addDoc(collection(db, 'instructors'), { ...payload, createdAt: serverTimestamp() });
-                setInstructors(prev => [...prev, { id: docRef.id, ...payload } as Instructor].sort((a, b) => a.order - b.order));
+                setInstructors(prev => [...prev, { id: docRef.id, ...payload, createdAt: new Date() } as Instructor].sort((a, b) => a.order - b.order));
             }
 
             setShowModal(false);

@@ -44,3 +44,5 @@ next-env.d.ts
 compile_errors.txt
 *.log
 .gemini/
+
+.vercel

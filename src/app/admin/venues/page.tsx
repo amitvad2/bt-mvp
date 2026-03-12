@@ -110,15 +110,15 @@ export default function AdminVenues() {
                 name: formData.name,
                 address: formData.address,
                 postcode: formData.postcode.trim().toUpperCase(),
-                lat: formData.lat ? parseFloat(formData.lat) : null,
-                lng: formData.lng ? parseFloat(formData.lng) : null,
+                lat: formData.lat ? parseFloat(formData.lat) : undefined,
+                lng: formData.lng ? parseFloat(formData.lng) : undefined,
             };
             if (editingVenue) {
                 await updateDoc(doc(db, 'venues', editingVenue.id), { ...payload, updatedAt: serverTimestamp() });
-                setVenues(prev => prev.map(v => v.id === editingVenue.id ? { ...v, ...payload } : v));
+                setVenues(prev => prev.map(v => v.id === editingVenue.id ? { ...v, ...payload } as Venue : v));
             } else {
                 const docRef = await addDoc(collection(db, 'venues'), { ...payload, createdAt: serverTimestamp() });
-                setVenues(prev => [...prev, { id: docRef.id, ...payload } as Venue]);
+                setVenues(prev => [...prev, { id: docRef.id, ...payload, createdAt: new Date() } as Venue]);
             }
             setShowModal(false);
         } catch (e) {
