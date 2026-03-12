@@ -1,6 +1,6 @@
 .hero {
     background: linear-gradient(135deg, var(--bt-amber-dark) 0%, var(--bt-amber) 100%);
-    padding: var(--space-20) 0;
+    padding: var(--space-20) 0 var(--space-8) 0;
     color: #fff;
 }
 
@@ -17,6 +17,10 @@
     color: rgba(255, 255, 255, 0.85);
     font-size: 1.15rem;
     max-width: 560px;
+}
+
+.founder {
+    padding-top: 0;
 }
 
 .founderGrid {
@@ -44,6 +48,15 @@
     font-weight: 600;
 }
 
+.founderImgTag {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+}
+
 .founderText .eyebrow {
     display: block;
     margin-bottom: var(--space-3);
@@ -56,6 +69,44 @@
 .founderText p {
     color: var(--bt-text-muted);
     margin-bottom: var(--space-4);
+    line-height: 1.6;
+}
+
+.volunteerList {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-6) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.volunteerList li {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--bt-gray-700);
+    position: relative;
+    padding-left: var(--space-6);
+}
+
+.volunteerList li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--bt-accent);
+    font-weight: bold;
+}
+
+.volunteerList li strong {
+    color: var(--bt-gray-900);
+}
+
+.founderSignoff {
+    font-size: 1.25rem !important;
+    font-family: var(--font-heading);
+    color: var(--bt-amber-dark) !important;
+    margin-top: var(--space-8) !important;
+    font-style: italic;
 }
 
 .journey {
@@ -162,6 +213,30 @@
     font-size: 1.1rem;
 }
 
+.faq {
+    background: var(--bt-gray-50);
+    padding: var(--space-24) 0;
+}
+
+.faqGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-10) var(--space-16);
+    margin-top: var(--space-12);
+}
+
+.faqCard h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+}
+
+.faqCard p {
+    font-size: 1rem;
+    color: var(--bt-gray-600);
+    line-height: 1.6;
+}
+
 @media (max-width: 900px) {
     .founderGrid {
         grid-template-columns: 1fr;
@@ -169,6 +244,10 @@
 
     .valuesGrid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .faqGrid {
+        grid-template-columns: 1fr;
     }
 }
 

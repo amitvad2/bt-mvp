@@ -13,7 +13,6 @@ export default function Header() {
     const navLinks = [
         { href: '/', label: 'Home' },
         { href: '/about', label: 'About Us' },
-        { href: '/courses', label: 'Courses' },
         { href: '/gallery', label: 'Gallery' },
         { href: '/testimonies', label: 'Testimonies' },
     ];

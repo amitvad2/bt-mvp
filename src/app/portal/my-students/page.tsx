@@ -23,20 +23,25 @@ export default function MyStudentsPage() {
     });
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !user.uid || !btUser) return;
+
+        let isMounted = true;
         const fetchStudents = async () => {
             try {
                 const q = query(collection(db, 'students'), where('parentUid', '==', user.uid));
                 const snap = await getDocs(q);
-                setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() } as Student)));
+                if (isMounted) {
+                    setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() } as Student)));
+                }
             } catch (e) {
-                console.error(e);
+                console.error('Error fetching students:', e);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
         fetchStudents();
-    }, [user]);
+        return () => { isMounted = false; };
+    }, [user, btUser]);
 
     const handleOpenModal = (student?: Student) => {
         if (student) {

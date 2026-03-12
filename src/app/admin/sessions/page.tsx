@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, BTClass, Recipe } from '@/types';
+import { Session, BTClass, Recipe, Instructor } from '@/types';
 import { Calendar, Plus, Edit2, Trash2, X, Clock, ChefHat, MapPin, UserCheck } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -11,6 +11,7 @@ export default function AdminSessions() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [classes, setClasses] = useState<BTClass[]>([]);
     const [recipes, setRecipes] = useState<Recipe[]>([]);
+    const [instructors, setInstructors] = useState<Instructor[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingSession, setEditingSession] = useState<Session | null>(null);
@@ -19,7 +20,7 @@ export default function AdminSessions() {
         classId: '',
         date: '',
         recipeId: '',
-        instructor: '',
+        instructorId: '',
         status: 'open' as Session['status'],
         spotsAvailable: 15,
     });
@@ -30,10 +31,12 @@ export default function AdminSessions() {
                 const sessionsSnap = await getDocs(query(collection(db, 'sessions'), orderBy('date', 'desc')));
                 const classesSnap = await getDocs(collection(db, 'classes'));
                 const recipesSnap = await getDocs(collection(db, 'recipes'));
+                const instructorsSnap = await getDocs(collection(db, 'instructors'));
 
                 setSessions(sessionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Session)));
                 setClasses(classesSnap.docs.map(d => ({ id: d.id, ...d.data() } as BTClass)));
                 setRecipes(recipesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Recipe)));
+                setInstructors(instructorsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Instructor)));
             } catch (e) {
                 console.error(e);
             } finally {
@@ -50,13 +53,13 @@ export default function AdminSessions() {
                 classId: s.classId,
                 date: s.date,
                 recipeId: s.recipeId || '',
-                instructor: s.instructor || '',
+                instructorId: s.instructorId || '',
                 status: s.status,
                 spotsAvailable: s.spotsAvailable,
             });
         } else {
             setEditingSession(null);
-            setFormData({ classId: '', date: '', recipeId: '', instructor: '', status: 'open', spotsAvailable: 15 });
+            setFormData({ classId: '', date: '', recipeId: '', instructorId: '', status: 'open', spotsAvailable: 15 });
         }
         setShowModal(true);
     };
@@ -65,6 +68,7 @@ export default function AdminSessions() {
         e.preventDefault();
         const parentClass = classes.find(c => c.id === formData.classId);
         const recipe = recipes.find(r => r.id === formData.recipeId);
+        const instructor = instructors.find(i => i.id === formData.instructorId);
 
         const data = {
             ...formData,
@@ -73,6 +77,7 @@ export default function AdminSessions() {
             venueId: parentClass?.venueId || '',
             venueName: parentClass?.venueName || '',
             recipeName: recipe?.name || '',
+            instructorName: instructor?.name || '',
             price: parentClass?.price || 1500,
             startTime: parentClass?.startTime || '',
             endTime: parentClass?.endTime || '',
@@ -94,6 +99,32 @@ export default function AdminSessions() {
         } catch (e) {
             console.error(e);
             alert('Error saving session.');
+        }
+    };
+
+    const handleDelete = async (session: Session) => {
+        try {
+            // Check if any bookings are linked to this session
+            const bookingsSnap = await getDocs(
+                query(collection(db, 'bookings'), where('sessionId', '==', session.id), where('status', '==', 'confirmed'))
+            );
+            const bookingCount = bookingsSnap.size;
+
+            const confirmMsg = bookingCount > 0
+                ? `⚠️ This session has ${bookingCount} confirmed booking${bookingCount > 1 ? 's' : ''}. Deleting it will NOT automatically cancel or refund those bookings. Are you sure you want to delete it?`
+                : 'Delete this session? This cannot be undone.';
+
+            if (!confirm(confirmMsg)) return;
+
+            await deleteDoc(doc(db, 'sessions', session.id));
+            setSessions(prev => prev.filter(s => s.id !== session.id));
+        } catch (e: any) {
+            console.error('[SessionDelete]', e);
+            if (e?.code === 'permission-denied') {
+                alert('Permission denied. You do not have access to delete this session.');
+            } else {
+                alert(`Failed to delete session: ${e?.message || 'Unknown error'}. Please try again.`);
+            }
         }
     };
 
@@ -141,12 +172,7 @@ export default function AdminSessions() {
                                     <td style={{ textAlign: 'right' }}>
                                         <div className="flex justify-end gap-2">
                                             <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(s)}><Edit2 size={16} strokeWidth={1.5} /></button>
-                                            <button className="btn btn-ghost btn-sm text-danger" onClick={async () => {
-                                                if (confirm('Delete session?')) {
-                                                    await deleteDoc(doc(db, 'sessions', s.id));
-                                                    setSessions(prev => prev.filter(item => item.id !== s.id));
-                                                }
-                                            }}><Trash2 size={16} strokeWidth={1.5} /></button>
+                                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(s)}><Trash2 size={16} strokeWidth={1.5} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -192,13 +218,21 @@ export default function AdminSessions() {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Status</label>
-                                    <select className="form-select" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
-                                        <option value="open">Open</option>
-                                        <option value="closed">Closed</option>
-                                        <option value="cancelled">Cancelled</option>
+                                    <label className="form-label">Instructor (Optional)</label>
+                                    <select className="form-select" value={formData.instructorId} onChange={e => setFormData({ ...formData, instructorId: e.target.value })}>
+                                        <option value="">None</option>
+                                        {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                                     </select>
                                 </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Status</label>
+                                <select className="form-select" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
+                                    <option value="open">Open</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
                             </div>
 
                             <div className={styles.modalActions}>

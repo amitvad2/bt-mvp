@@ -14,6 +14,50 @@
     color: var(--bt-gray-500);
 }
 
+.headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.viewToggle {
+    display: inline-flex;
+    background: var(--bt-gray-100);
+    padding: 4px;
+    border-radius: var(--radius-full);
+}
+
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--bt-gray-500);
+    transition: all 0.2s ease;
+}
+
+.toggleBtn:hover {
+    color: var(--bt-gray-900);
+}
+
+.toggleBtn.active {
+    background: #fff;
+    color: var(--bt-accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.mapContainer {
+    margin-top: var(--space-4);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
 .filters {
     background: #fff;
     border-radius: var(--radius-xl);

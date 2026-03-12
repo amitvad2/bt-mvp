@@ -59,6 +59,9 @@ export interface Venue {
     id: string;
     name: string;
     address: string;
+    postcode?: string;
+    lat?: number;
+    lng?: number;
     createdAt: any;
 }
 
@@ -95,7 +98,8 @@ export interface Session {
     status: 'open' | 'full' | 'cancelled' | 'closed'; // Added closed
     venueId: string;
     venueName: string;
-    instructor: string;
+    instructorId?: string;
+    instructorName?: string;
     startTime: string;
     endTime: string;
     ageMin: number;
@@ -150,6 +154,19 @@ export interface GalleryImage {
     altText: string;
     order: number;
     category?: GalleryCategory;
+    createdAt: any;
+}
+
+export type InstructorGender = 'male' | 'female' | 'non-binary' | 'prefer-not-to-say';
+
+export interface Instructor {
+    id: string;
+    name: string;
+    gender: InstructorGender;
+    expertise: string[];   // e.g. ['Baking', 'Pasta', 'Nutrition']
+    bio: string;
+    photoUrl?: string;
+    order: number;
     createdAt: any;
 }
 

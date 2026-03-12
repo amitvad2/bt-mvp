@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
+import fs from 'fs';
+import path from 'path';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -9,6 +12,18 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+    // Check if founder photo exists in public directory
+    let founderImageSrc = null;
+    const publicDir = path.join(process.cwd(), 'public');
+    const possibleFiles = ['founder.jpg', 'founder.jpeg', 'founder.png', 'founder.webp'];
+
+    for (const file of possibleFiles) {
+        if (fs.existsSync(path.join(publicDir, file))) {
+            founderImageSrc = `/${file}`;
+            break;
+        }
+    }
+
     return (
         <>
             {/* Hero */}
@@ -25,28 +40,45 @@ export default function AboutPage() {
                 <div className="container">
                     <div className={styles.founderGrid}>
                         <div className={styles.founderImage}>
-                            <div className={styles.imagePlaceholder}>
-                                <span>👩‍🍳</span>
-                                <p>Founder Photo</p>
-                            </div>
+                            {founderImageSrc ? (
+                                <Image
+                                    src={founderImageSrc}
+                                    alt="Founder of Blooming Tastebuds"
+                                    width={400}
+                                    height={533}
+                                    className={styles.founderImgTag}
+                                />
+                            ) : (
+                                <div className={styles.imagePlaceholder}>
+                                    <span>👩‍🍳</span>
+                                    <p>Add &apos;founder.jpg&apos; to public folder</p>
+                                </div>
+                            )}
                         </div>
                         <div className={styles.founderText}>
-                            <span className="eyebrow">Meet our Founder</span>
-                            <h2>Nurturing Confident Cooks</h2>
-                            <p>
-                                At Blooming Tastebuds, we inspire young minds to explore the joys of healthy cooking.
-                                Our passionate Cooking Instructor brings over 2 years of experience in teaching school
-                                students how to whip up delicious and nutritious vegetarian dishes.
-                            </p>
-                            <p>
-                                Through dynamic cooking sessions and hands-on learning, we foster essential life skills,
-                                culinary confidence, and creativity in each child. Join us in cultivating independence
-                                and healthier lifestyles, paving the way for future chefs to bloom!
-                            </p>
-                            <p>
-                                Discover the joy of cooking with easy-to-learn recipes and techniques. Build essential
-                                life skills, boost your confidence in the kitchen, and have fun along the way.
-                            </p>
+                            <span className="eyebrow" style={{ marginBottom: 'var(--space-2)' }}>The Instructor</span>
+                            <h2 style={{ marginBottom: 'var(--space-6)' }}>Nisha Vadhel</h2>
+
+                            <p>Welcome to Blooming Tastebuds!</p>
+
+                            <p>I'm Nisha Vadhel, the founder of Blooming Tastebuds and a dedicated cooking instructor based in London, UK. With over two years of experience teaching healthy and vegetarian recipes to school students, I am passionate about equipping young minds with essential culinary and life skills.</p>
+
+                            <p>At Ark Elvin Academy in Wembley, I've led cooking sessions for Year 11 and Year 13 students, fostering creativity and independence through engaging, hands-on lessons. Beyond the classroom, I contribute to Fun Fest holiday club, Northwood during school holidays, encouraging creativity, teamwork, and confidence in children through fun activities. Currently I work twice a week with smart raspberry after school cooking club with children aged 5 - 10 yrs.</p>
+
+                            <p>My commitment to community service is reflected in my volunteer work with organizations such as:</p>
+
+                            <ul className={styles.volunteerList}>
+                                <li><strong>Bags of Taste:</strong> Teaching vulnerable individuals the art of home cooking through online mentoring.</li>
+                                <li><strong>FoodCycle:</strong> Supporting the delivery of community meals to those in need.</li>
+                                <li><strong>Sue Ryder:</strong> Contributing to meaningful causes while building connections through work in their charity shop.</li>
+                                <li><strong>Girlguiding:</strong> Assisting in running activities that help young girls build confidence, teamwork, and essential life skills.</li>
+                            </ul>
+
+                            <p>Driven by a passion for promoting healthier lifestyles and nurturing young minds, I aspire to open a cooking school for young learners. This initiative combines my love for teaching with my belief in the transformative value of homemade meals, empowering individuals to gain independence and embrace nutritious living.</p>
+
+                            <p>At Blooming Tastebuds, my mission is to bridge the gap between young people and the culinary world, fostering a deep appreciation for vegetarian cuisine and inspiring the creation of nourishing and delicious meals. I believe that empowering young minds to prepare their own vegetarian meals can instill a lifelong habit of healthier eating, thereby reducing their dependence on processed foods.</p>
+
+                            <p className={styles.founderSignoff}>Join us on this flavorful journey towards health, creativity, and independence!</p>
                         </div>
                     </div>
                 </div>
@@ -100,6 +132,30 @@ export default function AboutPage() {
                                 <span className={styles.valueIcon}>{v.icon}</span>
                                 <h4>{v.title}</h4>
                                 <p>{v.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ */}
+            <section className={`section ${styles.faq}`}>
+                <div className="container">
+                    <div className="section-header" style={{ marginBottom: '4rem' }}>
+                        <h2>Common Questions</h2>
+                    </div>
+                    <div className={styles.faqGrid}>
+                        {[
+                            { q: 'Do I need to commit to a full term?', a: 'No! All sessions are booked individually. Book as many or as few as you like.' },
+                            { q: 'What if my child has allergies?', a: 'We collect detailed medical and allergy information at booking. Our instructors are trained to handle allergies safely.' },
+                            { q: 'How do I cancel a booking?', a: 'You can cancel upcoming sessions from your portal dashboard. Please check our Terms & Conditions for our cancellation policy.' },
+                            { q: 'Can I book for multiple children?', a: 'Yes! Parent accounts can manage multiple students and book sessions for each child separately.' },
+                            { q: 'What should my child bring?', a: 'Just themselves! All ingredients and equipment are provided. An apron is a nice touch but not required.' },
+                            { q: 'How do I pay?', a: 'All payments are made securely online via Stripe. You\'ll receive a booking confirmation and receipt by email.' },
+                        ].map((f) => (
+                            <div key={f.q} className={styles.faqCard}>
+                                <h4>{f.q}</h4>
+                                <p>{f.a}</p>
                             </div>
                         ))}
                     </div>

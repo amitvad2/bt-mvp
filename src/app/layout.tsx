@@ -1,6 +1,19 @@
 import type { Metadata } from 'next';
+import { Inter, Nunito } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+});
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  variable: '--font-heading',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Blooming Tastebuds — Cooking Classes for Kids & Young Adults',
@@ -19,10 +32,9 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${nunito.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -11,8 +11,10 @@ export default function QuestionnairePage() {
     const router = useRouter();
     const { state, setQuestionnaire } = useBooking();
 
+    const initialQuestionnaire = state.questionnaire || (state.student !== 'self' ? state.student?.questionnaire : undefined);
+
     const { register, handleSubmit } = useForm<Questionnaire>({
-        defaultValues: state.questionnaire || {
+        defaultValues: initialQuestionnaire || {
             dietaryRequirements: '',
             airborneAllergy: '',
             reactionDetails: '',

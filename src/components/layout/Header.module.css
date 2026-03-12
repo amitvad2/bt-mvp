@@ -4,12 +4,12 @@
     left: 0;
     right: 0;
     z-index: 1000;
-    height: 48px;
-    /* Apple-style thin navbar */
-    background: rgba(255, 255, 255, 0.72);
+    height: 64px;
+    background: rgba(255, 251, 245, 0.85);
+    /* Warm cream glass */
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--bt-border);
     display: flex;
     align-items: center;
     transition: all var(--transition);
@@ -26,15 +26,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--bt-gray-900);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--bt-coral);
     letter-spacing: -0.01em;
     font-family: var(--font-heading);
 }
 
 .logo svg {
-    color: var(--bt-gray-900);
+    color: var(--bt-coral);
 }
 
 .nav {
@@ -47,16 +47,14 @@
 }
 
 .navLink {
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--bt-gray-700);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bt-muted);
     transition: color var(--transition);
-    opacity: 0.8;
 }
 
 .navLink:hover {
-    color: var(--bt-gray-900);
-    opacity: 1;
+    color: var(--bt-coral-dark);
 }
 
 .actions {
@@ -67,16 +65,16 @@
 
 .hamburger {
     display: none;
-    color: var(--bt-gray-800);
+    color: var(--bt-charcoal);
 }
 
 .mobileMenu {
     position: fixed;
-    top: 48px;
+    top: 64px;
     left: 0;
     right: 0;
     bottom: 0;
-    background: #fff;
+    background: var(--bt-cream);
     padding: var(--space-8);
     display: flex;
     flex-direction: column;
@@ -86,8 +84,9 @@
 
 .mobileLink {
     font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--bt-gray-900);
+    font-weight: 700;
+    color: var(--bt-charcoal);
+    font-family: var(--font-heading);
 }
 
 @media (max-width: 768px) {

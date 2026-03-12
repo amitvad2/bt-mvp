@@ -1,7 +1,8 @@
 'use client';
 
-import React, { use } from 'react';
-import { usePathname } from 'next/navigation';
+import React from 'react';
+import { usePathname, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { BookingProvider, useBooking } from '@/context/BookingContext';
 import { ChefHat } from 'lucide-react';
 import styles from './layout.module.css';
@@ -33,10 +34,10 @@ function WizardLayoutInner({ children }: { children: React.ReactNode }) {
             <header className={styles.header}>
                 <div className="container">
                     <div className={styles.headerInner}>
-                        <div className={styles.brand}>
+                        <Link href="/" className={styles.brand} style={{ textDecoration: 'none', color: 'inherit' }}>
                             <ChefHat size={20} strokeWidth={1.5} className={styles.logoIcon} />
                             <span>Blooming Tastebuds — Checkout</span>
-                        </div>
+                        </Link>
                         <div className={styles.sessionSummary}>
                             <div className={styles.sessionMain}>
                                 <strong>{state.session?.className || 'Loading...'}</strong>
@@ -79,8 +80,12 @@ function WizardLayoutInner({ children }: { children: React.ReactNode }) {
     );
 }
 
-export default function BookingLayout({ params, children }: { params: Promise<{ sessionId: string }>; children: React.ReactNode }) {
-    const { sessionId } = use(params);
+export default function BookingLayout({ children }: { children: React.ReactNode }) {
+    const params = useParams();
+    const sessionId = params?.sessionId as string;
+    
+    if (!sessionId) return null;
+
     return (
         <BookingProvider sessionId={sessionId}>
             <WizardLayoutInner>{children}</WizardLayoutInner>

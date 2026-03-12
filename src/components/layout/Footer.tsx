@@ -27,7 +27,6 @@ export default function Footer() {
                     <ul>
                         <li><Link href="/">Home</Link></li>
                         <li><Link href="/about">About Us</Link></li>
-                        <li><Link href="/courses">Courses</Link></li>
                         <li><Link href="/gallery">Gallery</Link></li>
                         <li><Link href="/terms">Terms & Conditions</Link></li>
                     </ul>
@@ -37,8 +36,8 @@ export default function Footer() {
                 <div className={styles.col}>
                     <h4>Our Classes</h4>
                     <ul>
-                        <li><Link href="/courses#kids">After School Club (Ages 5–12)</Link></li>
-                        <li><Link href="/courses#young-adults">Weekend Classes (Young Adults)</Link></li>
+                        <li><Link href="/portal/find-class">After School Club (Ages 5–12)</Link></li>
+                        <li><Link href="/portal/find-class">Weekend Classes (Young Adults)</Link></li>
                         <li><Link href="/auth/signup">Register Now</Link></li>
                         <li><Link href="/portal/find-class">Find a Class</Link></li>
                     </ul>

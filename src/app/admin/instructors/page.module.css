@@ -1,0 +1,328 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+}
+
+/* ── Table ── */
+.tableCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.tableCard :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tableCard :global(th) {
+    text-align: left;
+    padding: var(--space-4) var(--space-5);
+    background: var(--bt-gray-50);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bt-gray-500);
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.tableCard :global(td) {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--bt-gray-100);
+    font-size: 0.95rem;
+    color: var(--bt-gray-800);
+    vertical-align: middle;
+}
+
+.tableCard :global(tr:last-child td) {
+    border-bottom: none;
+}
+
+.orderCell {
+    font-size: 0.75rem !important;
+    font-weight: 700;
+    color: var(--bt-gray-400) !important;
+    width: 40px;
+}
+
+.nameCell strong {
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.bioCell {
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--bt-gray-500) !important;
+    font-size: 0.85rem !important;
+}
+
+/* ── Photo Thumbnail ── */
+.thumbImage {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--bt-gray-200);
+    display: block;
+}
+
+.thumbPlaceholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bt-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bt-gray-400);
+    border: 2px solid var(--bt-gray-200);
+}
+
+/* ── Gender Badge ── */
+.genderBadge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    text-transform: capitalize;
+}
+
+.gender_female   { background: #fce7f3; color: #be185d; }
+.gender_male     { background: #dbeafe; color: #1d4ed8; }
+.gender_non_binary { background: #fef9c3; color: #854d0e; }
+.gender_prefer_not_to_say { background: var(--bt-gray-100); color: var(--bt-gray-500); }
+
+/* ── Expertise Tags ── */
+.expertiseTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.tag {
+    background: var(--bt-amber-light, #fef3c7);
+    color: #92400e;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+.noTags {
+    color: var(--bt-gray-400);
+}
+
+/* ── Actions ── */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+.empty {
+    text-align: center;
+    padding: var(--space-10);
+    color: var(--bt-gray-400);
+    font-style: italic;
+    font-size: 0.95rem;
+}
+
+/* ── Modal Form ── */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+/* Photo Upload */
+.uploadArea {
+    border: 2px dashed var(--bt-gray-300);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    background: var(--bt-gray-50);
+}
+
+.uploadArea:hover {
+    border-color: var(--bt-accent);
+    background: #fff;
+}
+
+.uploadPlaceholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--bt-gray-500);
+}
+
+.uploadIcon {
+    color: var(--bt-gray-400);
+}
+
+.uploadPlaceholder p {
+    font-weight: 600;
+    color: var(--bt-gray-800);
+    margin: 0;
+}
+
+.uploadPlaceholder span {
+    font-size: 0.75rem;
+    color: var(--bt-gray-400);
+}
+
+.previewBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.previewImage {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--bt-gray-200);
+}
+
+.previewBox span {
+    font-size: 0.75rem;
+    color: var(--bt-accent);
+    font-weight: 500;
+}
+
+.progressContainer {
+    margin-top: var(--space-3);
+    background: var(--bt-gray-200);
+    border-radius: var(--radius-full);
+    height: 6px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: var(--bt-accent);
+    transition: width 0.3s ease;
+}
+
+.errorText {
+    margin-top: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: #f43f5e;
+    font-size: 0.85rem;
+}
+
+/* Tag Input */
+.tagInputWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    border: 1px solid var(--bt-gray-300);
+    border-radius: var(--radius);
+    padding: var(--space-2) var(--space-3);
+    background: #fff;
+    min-height: 44px;
+    cursor: text;
+}
+
+.tagPill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bt-amber-light, #fef3c7);
+    color: #92400e;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+}
+
+.tagRemove {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+}
+
+.tagRemove:hover {
+    opacity: 1;
+}
+
+.tagInput {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 120px;
+    font-size: 0.9rem;
+    background: transparent;
+    color: var(--bt-gray-800);
+    font-family: inherit;
+}
+
+.suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.suggestionChip {
+    background: var(--bt-gray-100);
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius-full);
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    color: var(--bt-gray-600);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: inherit;
+}
+
+.suggestionChip:hover {
+    background: var(--bt-amber-light, #fef3c7);
+    color: #92400e;
+    border-color: transparent;
+}
+
+/* Modal Actions */
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--bt-gray-100);
+    margin-top: var(--space-2);
+}

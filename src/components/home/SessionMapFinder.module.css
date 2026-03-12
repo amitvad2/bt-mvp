@@ -1,0 +1,380 @@
+.section {
+    background: var(--bt-gray-100);
+}
+
+.headerTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-8);
+}
+
+.viewToggle {
+    display: inline-flex;
+    background: var(--bt-gray-200);
+    padding: 4px;
+    border-radius: var(--radius-full);
+}
+
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--bt-gray-500);
+    transition: all 0.2s ease;
+}
+
+.toggleBtn:hover {
+    color: var(--bt-gray-900);
+}
+
+.toggleBtn.active {
+    background: #fff;
+    color: var(--bt-accent);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── Search Bar ── */
+.searchBar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+    box-shadow: var(--shadow-md);
+    max-width: 680px;
+    margin: 0 auto var(--space-8);
+    border: 1px solid var(--bt-gray-200);
+}
+
+.postcodeField {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1;
+}
+
+.fieldIcon {
+    color: var(--bt-accent);
+    flex-shrink: 0;
+}
+
+.postcodeInput {
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--bt-gray-900);
+    background: transparent;
+    width: 100%;
+    letter-spacing: 0.04em;
+}
+
+.postcodeInput::placeholder {
+    color: var(--bt-gray-400);
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+.distanceField {
+    position: relative;
+    flex-shrink: 0;
+    border-left: 1px solid var(--bt-gray-200);
+    padding-left: var(--space-3);
+}
+
+.distanceSelect {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.9rem;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--bt-gray-700);
+    cursor: pointer;
+    padding-right: var(--space-5);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.selectIcon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--bt-gray-400);
+    pointer-events: none;
+}
+
+.searchBtn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    border-radius: var(--radius-lg) !important;
+}
+
+.spinning {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Error ── */
+.errorMsg {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: #f43f5e;
+    font-size: 0.9rem;
+    background: #fff1f2;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
+    max-width: 680px;
+    margin: 0 auto var(--space-6);
+}
+
+/* ── Map ── */
+.mapWrapper {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--bt-gray-200);
+    height: 420px;
+    margin-bottom: var(--space-8);
+}
+
+.leafletMap {
+    width: 100%;
+    height: 100%;
+}
+
+.mapPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bt-gray-100);
+    color: var(--bt-gray-400);
+}
+
+/* ── Popup ── */
+.popupContent {
+    padding: 4px 0;
+    min-width: 200px;
+}
+
+.popupVenue {
+    font-size: 0.95rem;
+    display: block;
+    margin-bottom: 2px;
+    color: var(--bt-gray-900);
+}
+
+.popupDist {
+    font-size: 0.78rem;
+    color: var(--bt-gray-500);
+    margin-bottom: 8px;
+}
+
+.popupSessions {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px;
+}
+
+.popupSessions li {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    padding: 4px 0;
+    border-top: 1px solid #f1f5f9;
+    color: var(--bt-gray-700);
+}
+
+.popupSpots {
+    font-weight: 600;
+    color: #10b981;
+}
+
+.popupCta {
+    display: block;
+    text-align: center;
+    background: var(--bt-accent);
+    color: #fff;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 4px;
+}
+
+.popupCta:hover {
+    background: var(--bt-accent-dark, #d97706);
+}
+
+/* ── Hint ── */
+.hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    color: var(--bt-gray-400);
+    font-size: 0.9rem;
+    margin-top: var(--space-2);
+}
+
+/* ── Results ── */
+.results {
+    margin-top: var(--space-4);
+}
+
+.resultCount {
+    font-size: 0.95rem;
+    color: var(--bt-gray-600);
+    margin-bottom: var(--space-6);
+    text-align: center;
+}
+
+.sessionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-5);
+}
+
+.sessionCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--bt-gray-200);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.sessionCard:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4) var(--space-5);
+    background: var(--bt-gray-50);
+    border-bottom: 1px solid var(--bt-gray-100);
+}
+
+.distancePill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bt-gray-500);
+    background: var(--bt-gray-100);
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+}
+
+.cardBody {
+    padding: var(--space-5);
+    flex: 1;
+}
+
+.sessionMeta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.9rem;
+    color: var(--bt-gray-700);
+}
+
+.metaItem svg {
+    color: var(--bt-gray-400);
+    flex-shrink: 0;
+}
+
+.cardFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--bt-gray-100);
+}
+
+.price {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bt-gray-800);
+}
+
+/* ── No Results ── */
+.noResults {
+    text-align: center;
+    padding: var(--space-12);
+    color: var(--bt-gray-500);
+}
+
+.noResults span {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: var(--space-4);
+}
+
+.noResults p {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-2);
+    color: var(--bt-gray-700);
+}
+
+.noResultsSub {
+    font-size: 0.9rem !important;
+    color: var(--bt-gray-400) !important;
+}
+
+@media (max-width: 700px) {
+    .searchBar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-2);
+        padding: var(--space-4);
+    }
+
+    .distanceField {
+        border-left: none;
+        border-top: 1px solid var(--bt-gray-200);
+        padding-left: 0;
+        padding-top: var(--space-2);
+    }
+
+    .mapWrapper {
+        height: 280px;
+    }
+
+    .sessionGrid {
+        grid-template-columns: 1fr;
+    }
+}

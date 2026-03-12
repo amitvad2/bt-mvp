@@ -16,10 +16,13 @@ export default function MedicalInfoPage() {
     const { state, setMedicalInfo, setEmergencyContact } = useBooking();
     const isKid = state.session?.classType === 'kidsAfterSchool';
 
+    const initialMedicalInfo = state.medicalInfo || (state.student !== 'self' ? state.student?.medicalInfo : undefined);
+    const initialEmergencyContact = state.emergencyContact || (state.student !== 'self' ? state.student?.emergencyContact : undefined);
+
     const { register, handleSubmit } = useForm<FormData>({
         defaultValues: {
-            ...state.medicalInfo,
-            emergencyContact: state.emergencyContact || { name: '', relationship: '', email: '', phone: '' }
+            ...initialMedicalInfo,
+            emergencyContact: initialEmergencyContact || { name: '', relationship: '', email: '', phone: '' }
         }
     });
 

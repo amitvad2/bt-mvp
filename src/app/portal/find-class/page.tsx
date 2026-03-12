@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Session, Venue } from '@/types';
-import { Calendar, MapPin, Clock, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowRight, ChefHat, Map, List } from 'lucide-react';
+import SessionMapSection from '@/components/home/SessionMapSection';
 import styles from './page.module.css';
 
 export default function FindClassPage() {
@@ -22,6 +23,9 @@ function FindClassContent() {
     const [venues, setVenues] = useState<Venue[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // View Toggle State
+    const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
     // Filters State
     const [filters, setFilters] = useState({
@@ -107,99 +111,130 @@ function FindClassContent() {
     return (
         <div className={styles.page}>
             <div className={styles.header}>
-                <h1>Find a Class</h1>
-                <p>Browse available sessions and book your spot.</p>
-            </div>
-
-            {/* Filters */}
-            <div className={`card ${styles.filters}`}>
-                <div className={styles.filterRow}>
-                    <div className="form-group">
-                        <label className="form-label">Venue</label>
-                        <select
-                            className="form-select"
-                            value={filters.venueId}
-                            onChange={e => setFilters(f => ({ ...f, venueId: e.target.value }))}
-                        >
-                            <option value="all">All Locations</option>
-                            {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                        </select>
+                <div className={styles.headerTop}>
+                    <div>
+                        <h1>Find a Class</h1>
+                        <p>Browse available sessions and book your spot.</p>
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">When</label>
-                        <select
-                            className="form-select"
-                            value={filters.dateRange}
-                            onChange={e => setFilters(f => ({ ...f, dateRange: e.target.value }))}
+                    <div className={styles.viewToggle}>
+                        <button
+                            className={`${styles.toggleBtn} ${viewMode === 'map' ? styles.active : ''}`}
+                            onClick={() => setViewMode('map')}
                         >
-                            <option value="all">Anytime</option>
-                            <option value="this-week">This Week</option>
-                            <option value="this-month">This Month</option>
-                        </select>
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Type</label>
-                        <select
-                            className="form-select"
-                            value={filters.type}
-                            onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}
+                            <Map size={18} /> Map
+                        </button>
+                        <button
+                            className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.active : ''}`}
+                            onClick={() => setViewMode('list')}
                         >
-                            <option value="all">All Classes</option>
-                            <option value="kidsAfterSchool">Kids (5-12)</option>
-                            <option value="youngAdultWeekend">Young Adult</option>
-                        </select>
+                            <List size={18} /> List
+                        </button>
                     </div>
-                    <button onClick={handleSearch} className={`btn btn-primary ${styles.searchBtn}`} disabled={loading}>
-                        {loading ? 'Searching...' : 'Search'}
-                    </button>
                 </div>
             </div>
 
-            <div className={styles.resultCount}>
-                {sessions.length} sessions available
-            </div>
-
-            {loading ? (
-                <div className="loading-screen">
-                    <div className="spinner" />
-                    <p>Finding sessions...</p>
-                </div>
-            ) : sessions.length === 0 ? (
-                <div className={styles.empty}>
-                    <span>🍳</span>
-                    <h3>No sessions found</h3>
-                    <p>Try adjusting your filters or checking a different date range.</p>
+            {viewMode === 'map' ? (
+                // Use the interactive Map Component we built for the home page
+                <div className={styles.mapContainer}>
+                    <SessionMapSection />
                 </div>
             ) : (
-                <div className={styles.sessionGrid}>
-                    {sessions.map(s => (
-                        <div key={s.id} className={`card ${styles.sessionCard}`}>
-                            <div className={styles.sessionHeader}>
-                                <div className={styles.ageRange}>
-                                    {s.classType === 'kidsAfterSchool' ? 'Kids 5-12' : 'Young Adult 18+'}
-                                </div>
-                                <h3 className={styles.sessionName}>{s.className}</h3>
-                            </div>
-
-                            <div className={styles.sessionDetails}>
-                                <div><Calendar size={18} strokeWidth={1.5} /> {new Date(s.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
-                                <div><Clock size={18} strokeWidth={1.5} /> {s.startTime} – {s.endTime}</div>
-                                <div><MapPin size={18} strokeWidth={1.5} /> {s.venueName}</div>
-                            </div>
-
-                            <div className="flex justify-between items-center" style={{ marginTop: 'auto' }}>
-                                <div className="text-xl font-bold">£{(s.price / 100).toFixed(2)}</div>
-                                <button
-                                    onClick={() => router.push(`/book/${s.id}/student`)}
-                                    className="btn btn-primary"
-                                    disabled={s.spotsAvailable === 0}
+                // Original List View Logic
+                <>
+                    {/* Filters */}
+                    <div className={`card ${styles.filters}`}>
+                        <div className={styles.filterRow}>
+                            <div className="form-group">
+                                <label className="form-label">Venue</label>
+                                <select
+                                    className="form-select"
+                                    value={filters.venueId}
+                                    onChange={e => setFilters(f => ({ ...f, venueId: e.target.value }))}
                                 >
-                                    {s.spotsAvailable === 0 ? 'Full' : 'Book Now'}
-                                </button>
+                                    <option value="all">All Locations</option>
+                                    {venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                </select>
                             </div>
+                            <div className="form-group">
+                                <label className="form-label">When</label>
+                                <select
+                                    className="form-select"
+                                    value={filters.dateRange}
+                                    onChange={e => setFilters(f => ({ ...f, dateRange: e.target.value }))}
+                                >
+                                    <option value="all">Anytime</option>
+                                    <option value="this-week">This Week</option>
+                                    <option value="this-month">This Month</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Type</label>
+                                <select
+                                    className="form-select"
+                                    value={filters.type}
+                                    onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}
+                                >
+                                    <option value="all">All Classes</option>
+                                    <option value="kidsAfterSchool">Kids (5-12)</option>
+                                    <option value="youngAdultWeekend">Young Adult</option>
+                                </select>
+                            </div>
+                            <button onClick={handleSearch} className={`btn btn-primary ${styles.searchBtn}`} disabled={loading}>
+                                {loading ? 'Searching...' : 'Search'}
+                            </button>
                         </div>
-                    ))}
-                </div>
+                    </div>
+
+                    <div className={styles.resultCount}>
+                        {sessions.length} sessions available
+                    </div>
+
+                    {loading ? (
+                        <div className="loading-screen">
+                            <div className="spinner" />
+                            <p>Finding sessions...</p>
+                        </div>
+                    ) : sessions.length === 0 ? (
+                        <div className={styles.empty}>
+                            <span>🍳</span>
+                            <h3>No sessions found</h3>
+                            <p>Try adjusting your filters or checking a different date range.</p>
+                        </div>
+                    ) : (
+                        <div className={styles.sessionGrid}>
+                            {sessions.map(s => (
+                                <div key={s.id} className={`card ${styles.sessionCard}`}>
+                                    <div className={styles.sessionHeader}>
+                                        <div className={styles.ageRange}>
+                                            {s.classType === 'kidsAfterSchool' ? `Kids (Ages ${s.ageMin}-${s.ageMax})` : `Teens (Ages ${s.ageMin}+)`}
+                                        </div>
+                                        <h3 className={styles.sessionName}>{s.className}</h3>
+                                    </div>
+
+                                    <div className={styles.sessionDetails}>
+                                        <div><Calendar size={18} strokeWidth={1.5} /> {new Date(s.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                                        <div><Clock size={18} strokeWidth={1.5} /> {s.startTime} – {s.endTime}</div>
+                                        <div><MapPin size={18} strokeWidth={1.5} /> {s.venueName}</div>
+                                        {s.instructorName && (
+                                            <div><ChefHat size={18} strokeWidth={1.5} /> {s.instructorName}</div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex justify-between items-center" style={{ marginTop: 'auto' }}>
+                                        <div className="text-xl font-bold">£{(s.price / 100).toFixed(2)}</div>
+                                        <button
+                                            onClick={() => router.push(`/book/${s.id}/student`)}
+                                            className="btn btn-primary"
+                                            disabled={s.spotsAvailable === 0}
+                                        >
+                                            {s.spotsAvailable === 0 ? 'Full' : 'Book Now'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

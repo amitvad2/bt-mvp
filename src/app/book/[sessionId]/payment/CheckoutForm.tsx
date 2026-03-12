@@ -84,7 +84,20 @@ export default function CheckoutForm() {
                     spotsAvailable: increment(-1)
                 });
 
-                // 4. Send Confirmation Email
+                // 4. Update Student Profile for future re-use
+                if (state.student !== 'self' && state.studentId) {
+                    try {
+                        await updateDoc(doc(db, 'students', state.studentId), {
+                            medicalInfo: state.medicalInfo || null,
+                            emergencyContact: state.emergencyContact || null,
+                            questionnaire: state.questionnaire || null,
+                        });
+                    } catch (err) {
+                        console.error('Failed to update student profile:', err);
+                    }
+                }
+
+                // 5. Send Confirmation Email
                 fetch('/api/emails/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -101,7 +114,7 @@ export default function CheckoutForm() {
                     })
                 }).catch(err => console.error('Failed to send confirmation email:', err));
 
-                // 5. Redirect to confirmation
+                // 6. Redirect to confirmation
                 router.push(`/book/${state.sessionId}/confirmation?bookingId=${docRef.id}`);
             } catch (e) {
                 console.error('Error saving booking:', e);

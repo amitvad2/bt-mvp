@@ -1,7 +1,7 @@
 .footer {
-    background: var(--bt-gray-100);
+    background: var(--bt-white);
     padding: var(--space-20) 0 var(--space-12);
-    border-top: 1px solid var(--bt-gray-200);
+    border-top: 1px solid var(--bt-border);
 }
 
 .inner {
@@ -22,15 +22,15 @@
     align-items: center;
     gap: 8px;
     font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--bt-gray-900);
+    font-weight: 800;
+    color: var(--bt-coral);
     font-family: var(--font-heading);
 }
 
 .brand p {
     font-size: 0.9rem;
     line-height: 1.6;
-    color: var(--bt-gray-600);
+    color: var(--bt-muted);
     max-width: 320px;
 }
 
@@ -41,20 +41,22 @@
 }
 
 .socials a {
-    color: var(--bt-gray-500);
+    color: var(--bt-charcoal);
     transition: color var(--transition);
+    opacity: 0.7;
 }
 
 .socials a:hover {
-    color: var(--bt-gray-900);
+    color: var(--bt-coral-dark);
+    opacity: 1;
 }
 
 .col h4 {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--bt-gray-900);
+    color: var(--bt-charcoal);
     margin-bottom: var(--space-6);
 }
 
@@ -66,13 +68,13 @@
 }
 
 .col ul li a {
-    font-size: 0.9rem;
-    color: var(--bt-gray-600);
+    font-size: 0.95rem;
+    color: var(--bt-muted);
     transition: color var(--transition);
 }
 
 .col ul li a:hover {
-    color: var(--bt-accent);
+    color: var(--bt-coral-dark);
 }
 
 .col ul li a svg {
@@ -81,7 +83,7 @@
 }
 
 .bottom {
-    border-top: 1px solid var(--bt-gray-200);
+    border-top: 1px solid var(--bt-border);
     padding-top: var(--space-8);
 }
 
@@ -89,8 +91,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--bt-gray-500);
-    font-size: 0.8rem;
+    color: var(--bt-muted);
+    font-size: 0.85rem;
 }
 
 @media (max-width: 900px) {
