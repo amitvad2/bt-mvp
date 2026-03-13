@@ -5,6 +5,7 @@ import { adminDb as db } from '@/lib/firebase-admin';
 export async function POST(req: Request) {
     try {
         const { sessionId, studentId, amount, metadata } = await req.json();
+        console.log('Creating payment intent for session:', sessionId, 'amount:', amount);
 
         if (!sessionId || !amount) {
             return NextResponse.json({ error: 'Missing sessionId or amount' }, { status: 400 });

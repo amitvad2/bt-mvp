@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(firebaseUser);
             if (firebaseUser) {
                 // Set session cookie for middleware
-                document.cookie = `session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
+                document.cookie = `bt_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
                 try {
                     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
                     if (userDoc.exists()) {
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else {
                 setBtUser(null);
                 // Clear session cookie
-                document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                document.cookie = 'bt_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
             }
             setLoading(false);
         });
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const { user: firebaseUser } = await signInWithPopup(auth, provider);
 
             // Set session cookie
-            document.cookie = `session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
+            document.cookie = `bt_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
 
             // Check if user document exists
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             // Set session cookie for middleware
-            document.cookie = `session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
+            document.cookie = `bt_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
         } catch (error: any) {
             throw error;
         }
@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await signOut(auth);
         setBtUser(null);
         // Clear session cookie
-        document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'bt_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     };
 
     const resetPassword = async (email: string) => {

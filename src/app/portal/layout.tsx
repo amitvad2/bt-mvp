@@ -17,11 +17,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     const pathname = usePathname();
 
     useEffect(() => {
-        // Only redirect if loading is finished AND there's truly no user 
-        // AND no session cookie (to prevent flash-redirects if cookie is still being processed)
-        const hasSessionCookie = document.cookie.includes('session=true');
+        if (loading) return;
 
-        if (!loading && !user && !hasSessionCookie) {
+        const hasSessionCookie = document.cookie.includes('bt_session=true');
+
+        if (!user && !hasSessionCookie) {
             router.push('/auth/login?redirect=' + pathname);
         }
     }, [user, loading, router, pathname]);

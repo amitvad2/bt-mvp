@@ -51,7 +51,7 @@ export default function Header() {
                                 Logout
                             </button>
                         </>
-                    ) : (
+                    ) : !loading ? (
                         <>
                             <Link href="/auth/login" className="btn btn-ghost btn-sm">
                                 Login
@@ -60,6 +60,8 @@ export default function Header() {
                                 Register
                             </Link>
                         </>
+                    ) : (
+                        <div className="spinner-inline" />
                     )}
                 </div>
 

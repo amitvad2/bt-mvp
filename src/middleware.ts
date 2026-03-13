@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Check for Firebase auth session cookie
-    const sessionCookie = request.cookies.get('session')?.value;
+    const sessionCookie = request.cookies.get('bt_session')?.value;
     const isAuthenticated = !!sessionCookie;
 
     // Redirect authenticated users away from auth pages
