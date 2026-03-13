@@ -7,7 +7,7 @@ import { Menu, X, ChefHat } from 'lucide-react';
 import styles from './Header.module.css';
 
 export default function Header() {
-    const { user, btUser, logOut } = useAuth();
+    const { user, btUser, loading, logOut } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const navLinks = [
