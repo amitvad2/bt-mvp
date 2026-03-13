@@ -129,8 +129,11 @@ export default function CheckoutForm() {
             <div className={styles.stripeContainer}>
                 <PaymentElement
                     id="payment-element"
-                    options={{ layout: 'accordion' }}
-                    onReady={() => setIsReady(true)}
+                    options={{ layout: 'tabs' }}
+                    onReady={() => {
+                        console.log('Stripe PaymentElement is ready.');
+                        setIsReady(true);
+                    }}
                 />
             </div>
 

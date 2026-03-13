@@ -98,7 +98,7 @@ export default function Header() {
                                 Logout
                             </button>
                         </>
-                    ) : (
+                    ) : !loading ? (
                         <>
                             <Link href="/auth/login" className="btn btn-ghost btn-full" onClick={() => setMobileOpen(false)}>
                                 Login
@@ -107,6 +107,8 @@ export default function Header() {
                                 Register Free
                             </Link>
                         </>
+                    ) : (
+                        <div className="spinner-inline" />
                     )}
                 </div>
             )}

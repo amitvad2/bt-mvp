@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
 
             // Explicitly set cookie here too to be safe before redirect
-            document.cookie = `session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
+            document.cookie = `bt_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`;
             setBtUser(newUser);
         } catch (error: any) {
             throw error;

@@ -8,7 +8,11 @@ import { CreditCard, ShieldCheck } from 'lucide-react';
 import CheckoutForm from './CheckoutForm';
 import styles from './page.module.css';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+if (!stripeKey) {
+    console.warn('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is missing!');
+}
+const stripePromise = loadStripe(stripeKey || '');
 
 export default function PaymentPage() {
     const { state, loading } = useBooking();
@@ -43,7 +47,10 @@ export default function PaymentPage() {
                 if (!res.ok) throw new Error(data.error || 'Failed to initialize payment');
                 return data;
             })
-            .then((data) => setClientSecret(data.clientSecret))
+            .then((data) => {
+                console.log('Payment initialized. Secret prefix:', data.clientSecret?.substring(0, 10));
+                setClientSecret(data.clientSecret);
+            })
             .catch(err => {
                 console.error('Payment Error:', err);
                 setError(err.message);
@@ -78,6 +85,12 @@ export default function PaymentPage() {
                 <span>Total Amount</span>
                 <strong>£{((state.session?.price || 0) / 100).toFixed(2)}</strong>
             </div>
+
+            {!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
+                <div className="alert alert-warning" style={{ margin: '1rem 0' }}>
+                    <strong>Frontend Configuration Missing:</strong> NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not defined in the browser. Please add it to your Vercel Environment Variables.
+                </div>
+            )}
 
             {error ? (
                 <div className="alert alert-error">

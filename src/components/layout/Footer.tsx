@@ -1,8 +1,13 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import { ChefHat, Youtube, Facebook, Instagram, Linkedin, Mail, Phone } from 'lucide-react';
 import styles from './Footer.module.css';
 
 export default function Footer() {
+    const { user } = useAuth();
+
     return (
         <footer className={styles.footer}>
             <div className={`container ${styles.inner}`}>
@@ -38,7 +43,7 @@ export default function Footer() {
                     <ul>
                         <li><Link href="/portal/find-class">After School Club (Ages 5–12)</Link></li>
                         <li><Link href="/portal/find-class">Weekend Classes (Young Adults)</Link></li>
-                        <li><Link href="/auth/signup">Register Now</Link></li>
+                        {!user && <li><Link href="/auth/signup">Register Now</Link></li>}
                         <li><Link href="/portal/find-class">Find a Class</Link></li>
                     </ul>
                 </div>
