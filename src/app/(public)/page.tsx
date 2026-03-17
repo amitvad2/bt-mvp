@@ -83,7 +83,7 @@ export default function HomePage() {
             <section className={styles.nurturingSection}>
                 <div className={`container ${styles.nurturingGrid}`}>
                     <div className={styles.nurturingImageWrap}>
-                        <img src="/images/nisha-portrait.jpg" alt="Instructor cooking" className={styles.nurturingImage} />
+                        <img src="/images/nurturing-cooks.JPG" alt="Instructor cooking" className={styles.nurturingImage} />
                         <div className={styles.imageBubble}>
                             <span>200+</span>
                             <small>Happy Students</small>
