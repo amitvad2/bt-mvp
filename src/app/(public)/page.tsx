@@ -83,7 +83,7 @@ export default function HomePage() {
             <section className={styles.nurturingSection}>
                 <div className={`container ${styles.nurturingGrid}`}>
                     <div className={styles.nurturingImageWrap}>
-                        <img src="/images/nurturing-cooks.JPG" alt="Instructor cooking" className={styles.nurturingImage} />
+                        <img src="/images/nisha-portrait.jpg" alt="Instructor cooking" className={styles.nurturingImage} />
                         <div className={styles.imageBubble}>
                             <span>200+</span>
                             <small>Happy Students</small>
@@ -243,7 +243,7 @@ export default function HomePage() {
                 <div className={`container ${styles.founderGrid}`}>
                     <div className={styles.founderImageCol}>
                         <div className={styles.founderImageFrame}>
-                            <img src="/images/nurturing-cooks.JPG" alt="Nisha Vadhel — Founder" className={styles.founderImage} />
+                            <img src="/images/nisha-portrait.jpg" alt="Nisha Vadhel — Founder" className={styles.founderImage} />
                         </div>
                     </div>
                     <div className={styles.founderText}>

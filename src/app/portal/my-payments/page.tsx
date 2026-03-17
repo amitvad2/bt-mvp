@@ -65,8 +65,8 @@ export default function MyPaymentsPage() {
                 </div>
             ) : (
                 <div className={`card ${styles.tableCard}`}>
-                    <div className="table-wrapper">
-                        <table>
+                    <div className={styles.tableWrap}>
+                        <table className={styles.table}>
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -82,8 +82,8 @@ export default function MyPaymentsPage() {
                                     <tr key={booking.id}>
                                         <td>
                                             {booking.createdAt?.toDate
-                                                ? new Date(booking.createdAt.toDate()).toLocaleDateString('en-GB')
-                                                : new Date(booking.createdAt).toLocaleDateString('en-GB')}
+                                                ? new Date(booking.createdAt.toDate()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                : new Date(booking.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                         </td>
                                         <td>
                                             <div className={styles.desc}>
@@ -93,9 +93,12 @@ export default function MyPaymentsPage() {
                                         </td>
                                         <td className={styles.amount}>{formatCurrency(booking.payment.amount)}</td>
                                         <td>
-                                            <span className={`badge ${booking.payment.status === 'paid' ? 'badge-green' :
-                                                booking.payment.status === 'pending' ? 'badge-amber' : 'badge-red'
-                                                }`}>
+                                            <span className={`${styles.statusBadge} ${
+                                                booking.payment.status === 'paid' ? styles.statusPaid :
+                                                booking.payment.status === 'pending' ? styles.statusPending : styles.statusFailed
+                                            }`}>
+                                                {booking.payment.status === 'paid' ? <CheckCircle size={12} /> :
+                                                 booking.payment.status === 'pending' ? <Clock size={12} /> : <XCircle size={12} />}
                                                 {booking.payment.status}
                                             </span>
                                         </td>
@@ -103,10 +106,10 @@ export default function MyPaymentsPage() {
                                         <td>
                                             {booking.payment.receiptUrl ? (
                                                 <a href={booking.payment.receiptUrl} target="_blank" rel="noopener noreferrer" className={styles.receiptLink}>
-                                                    <Download size={16} /> Receipt
+                                                    <Download size={14} /> Download
                                                 </a>
                                             ) : (
-                                                <span className={styles.noReceipt}>N/A</span>
+                                                <span className={styles.noReceipt}>—</span>
                                             )}
                                         </td>
                                     </tr>

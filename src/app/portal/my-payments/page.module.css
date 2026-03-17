@@ -13,6 +13,7 @@
     color: var(--bt-text-muted);
 }
 
+/* Empty State */
 .empty {
     text-align: center;
     padding: var(--space-16) 0;
@@ -28,38 +29,90 @@
     font-family: var(--font-body);
 }
 
+/* Table Card */
 .tableCard {
     padding: 0;
     overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--bt-gray-200);
 }
 
+.tableWrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.table thead {
+    background: var(--bt-gray-50);
+    border-bottom: 2px solid var(--bt-gray-200);
+}
+
+.table th {
+    padding: var(--space-4) var(--space-5);
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--bt-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.table td {
+    padding: var(--space-4) var(--space-5);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--bt-gray-100);
+    color: var(--bt-gray-700);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: var(--bt-gray-50);
+}
+
+/* Cell styles */
 .desc {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    white-space: normal;
+    min-width: 160px;
 }
 
 .desc strong {
     display: block;
     font-size: 0.9rem;
-    color: var(--bt-gray-800);
+    color: var(--bt-gray-900);
+    font-weight: 600;
 }
 
 .desc span {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--bt-text-muted);
 }
 
 .amount {
     font-weight: 700;
+    font-size: 1rem;
     color: var(--bt-gray-900);
 }
 
 .ref {
-    font-family: monospace;
-    font-size: 0.8rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
     color: var(--bt-gray-500);
     text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .receiptLink {
@@ -67,16 +120,56 @@
     align-items: center;
     gap: 6px;
     font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--bt-amber-dark);
+    font-weight: 600;
+    color: var(--bt-accent);
     text-decoration: none;
+    transition: color 0.15s;
 }
 
 .receiptLink:hover {
+    color: var(--bt-amber-dark);
     text-decoration: underline;
 }
 
 .noReceipt {
     font-size: 0.8rem;
     color: var(--bt-gray-400);
+}
+
+/* Status badge refinement */
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.statusPaid {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.statusPending {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.statusFailed {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Mobile card fallback */
+@media (max-width: 640px) {
+    .tableWrap {
+        overflow-x: auto;
+    }
+    .table {
+        min-width: 600px;
+    }
 }

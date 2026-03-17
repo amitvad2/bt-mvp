@@ -13,13 +13,16 @@ interface ExpandableReviewProps {
 
 export default function ExpandableReview({ quote, authorTitle, authorOrg, imageSrc }: ExpandableReviewProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [imgError, setImgError] = useState(false);
+
+    const hasImage = imageSrc && !imgError;
 
     return (
         <div className={styles.featuredReview}>
             <div className={styles.quoteWrapper}>
                 <div className={styles.quoteHeader}>
                     <p className={styles.mainQuote}>"{quote}"</p>
-                    {imageSrc && (
+                    {hasImage && (
                         <button
                             className={styles.expandButton}
                             onClick={() => setIsExpanded(!isExpanded)}
@@ -36,10 +39,15 @@ export default function ExpandableReview({ quote, authorTitle, authorOrg, imageS
                 </div>
             </div>
 
-            {isExpanded && imageSrc && (
+            {isExpanded && hasImage && (
                 <div className={styles.reviewImageContainer}>
                     <hr className={styles.imageDivider} />
-                    <img src={imageSrc} alt={`Original review from ${authorOrg}`} className={styles.reviewImage} />
+                    <img
+                        src={imageSrc}
+                        alt={`Original review from ${authorOrg}`}
+                        className={styles.reviewImage}
+                        onError={() => setImgError(true)}
+                    />
                 </div>
             )}
         </div>
