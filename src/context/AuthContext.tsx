@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
             } else {
                 setBtUser(null);
-                // Clear session cookie
-                document.cookie = 'bt_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                // Clear session cookie (must match flags used when setting)
+                document.cookie = 'bt_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
             }
             setLoading(false);
         });
@@ -132,8 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logOut = async () => {
         await signOut(auth);
         setBtUser(null);
-        // Clear session cookie
-        document.cookie = 'bt_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        // Clear session cookie (must match flags used when setting)
+        document.cookie = 'bt_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
     };
 
     const resetPassword = async (email: string) => {

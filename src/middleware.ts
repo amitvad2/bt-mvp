@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Routes that require authentication
-const protectedRoutes = ['/portal', '/book', '/admin'];
+// Routes that require authentication (server-side check via cookie)
+// NOTE: /portal is NOT listed here — it is protected client-side by PortalLayout
+const protectedRoutes = ['/book', '/admin'];
 // Routes that require admin role (checked client-side too)
 const adminRoutes = ['/admin'];
 // Routes that redirect to dashboard if already logged in
@@ -37,7 +38,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/portal/:path*',
         '/book/:path*',
         '/admin/:path*',
         '/auth/:path*',
