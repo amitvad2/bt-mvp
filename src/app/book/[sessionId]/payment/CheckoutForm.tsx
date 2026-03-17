@@ -134,6 +134,10 @@ export default function CheckoutForm() {
                         console.log('Stripe PaymentElement is ready.');
                         setIsReady(true);
                     }}
+                    onLoadError={(e) => {
+                        console.error('Stripe PaymentElement load error:', e);
+                        setMessage(`Payment form failed to load: ${e.error?.message || 'Unknown error'}. Please refresh the page.`);
+                    }}
                 />
             </div>
 
