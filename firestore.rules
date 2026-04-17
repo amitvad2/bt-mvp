@@ -1,0 +1,182 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // HELPER FUNCTIONS
+    // =========================================================================
+
+    // True when the request comes from an authenticated Firebase user.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Returns the role string stored in the caller's users/{uid} document.
+    // NOTE: each call costs one Firestore read from the security-rules quota.
+    // Only evaluated on write paths or admin-read paths; public reads bypass it.
+    function callerRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // True when the authenticated caller has the 'admin' role.
+    function isAdmin() {
+      return isSignedIn() && callerRole() == 'admin';
+    }
+
+    // True when the authenticated caller's UID matches the given uid argument.
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+
+    // =========================================================================
+    // PUBLIC CONTENT  — no auth required
+    // These collections hold non-sensitive business data needed by the public
+    // homepage (session map, gallery) and the portal find-class page.
+    // =========================================================================
+
+    // Gallery images shown on the public /gallery page.
+    match /gallery/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Session instances — public read needed by the unauthenticated homepage map
+    // and the portal session browser.
+    //
+    // CHANGED (webhook refactor): the narrow "authenticated user may decrement
+    // spotsAvailable" rule has been REMOVED. Capacity is now decremented
+    // exclusively by the Stripe webhook handler using Firebase Admin SDK, which
+    // bypasses these rules entirely.
+    match /sessions/{sessionId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin();
+    }
+
+    // Venues — shown on maps (public homepage) and in admin management.
+    match /venues/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Class definitions — read by admin session creation form.
+    // Made public for simplicity; contains no PII.
+    match /classes/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Recipes — used in admin session creation and session detail display.
+    match /recipes/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Instructors — public bio/photo display (About page future).
+    match /instructors/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+
+    // =========================================================================
+    // BOOKING DRAFTS  — server-side only (Admin SDK bypasses these rules)
+    // =========================================================================
+    //
+    // booking_drafts/{paymentIntentId} documents are written by the
+    // create-intent API route (server-side, Admin SDK) and read/deleted by
+    // the Stripe webhook handler (server-side, Admin SDK).
+    //
+    // No client should ever read or write this collection directly.
+    // The deny-all rule makes this explicit and prevents accidental exposure.
+    match /booking_drafts/{docId} {
+      allow read, write: if false;
+    }
+
+
+    // =========================================================================
+    // USERS
+    // =========================================================================
+
+    match /users/{uid} {
+      // Each user may read and update their own profile.
+      // (AuthContext reads this on every login; AccountPage writes it.)
+      allow read, update: if isOwner(uid);
+
+      // User creation: only the user themselves may create their own document.
+      // (AuthContext.signUp and signInWithGoogle both write users/{uid}.)
+      allow create: if isOwner(uid);
+
+      // Admins may read all user profiles (e.g. admin dashboard stats).
+      // Admins may NOT update or delete user accounts from the client SDK.
+      allow read: if isAdmin();
+    }
+
+
+    // =========================================================================
+    // STUDENTS
+    // =========================================================================
+
+    match /students/{studentId} {
+      // A parent can read their own students.
+      // Query pattern: where('parentUid', '==', user.uid) — Firestore validates
+      // this constraint matches the rule, so collection scans are safe.
+      allow read: if isSignedIn()
+        && resource.data.parentUid == request.auth.uid;
+
+      // A parent may create a student only if they set themselves as the owner.
+      allow create: if isSignedIn()
+        && request.resource.data.parentUid == request.auth.uid;
+
+      // A parent may update any field on their own student EXCEPT parentUid.
+      // Covers:
+      //   (a) my-students page — firstName, lastName, dateOfBirth
+      //   (Note: medicalInfo/emergencyContact/questionnaire write-back has
+      //   moved to the webhook — no longer written client-side from CheckoutForm)
+      allow update: if isSignedIn()
+        && resource.data.parentUid == request.auth.uid
+        && request.resource.data.parentUid == resource.data.parentUid;
+
+      // A parent may delete only their own students.
+      allow delete: if isSignedIn()
+        && resource.data.parentUid == request.auth.uid;
+
+      // Admins may read all student profiles.
+      allow read: if isAdmin();
+    }
+
+
+    // =========================================================================
+    // BOOKINGS
+    // =========================================================================
+    //
+    // CHANGED (webhook refactor): client-side booking creation has been
+    // REMOVED. Bookings are now created exclusively by the Stripe webhook
+    // handler (/api/webhooks/stripe) using Firebase Admin SDK.
+    //
+    // The 'allow create' rule is intentionally absent. Any attempt to create
+    // a booking from the browser will be denied.
+    // =========================================================================
+
+    match /bookings/{bookingId} {
+      // A user may read their own bookings.
+      // (my-classes, my-payments, and confirmation page all use this path.)
+      allow read: if isSignedIn()
+        && resource.data.bookedByUid == request.auth.uid;
+
+      // A user may cancel their own booking.
+      // my-classes/page.tsx sends: { status: 'cancelled', cancelledAt: new Date() }
+      // Only those two fields may change; no other fields can be modified.
+      allow update: if isSignedIn()
+        && resource.data.bookedByUid == request.auth.uid
+        && request.resource.data.status == 'cancelled'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'cancelledAt']);
+
+      // Admins: full access.
+      allow read, write: if isAdmin();
+    }
+
+  }
+}

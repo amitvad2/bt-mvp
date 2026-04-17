@@ -1,24 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+/**
+ * CheckoutForm — Stripe PaymentElement UI only.
+ *
+ * Booking creation, capacity decrement, student profile update, and email
+ * sending have all moved to the server-side Stripe webhook handler at
+ * /api/webhooks/stripe.
+ *
+ * After payment confirms, this component redirects to the confirmation page
+ * with ?payment_intent=<id> so the confirmation page can poll Firestore for
+ * the webhook-created booking document.
+ */
+
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     PaymentElement,
     useStripe,
-    useElements
+    useElements,
 } from '@stripe/react-stripe-js';
-import { useAuth } from '@/context/AuthContext';
 import { useBooking } from '@/context/BookingContext';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { CreditCard, ShieldCheck, AlertCircle, Lock } from 'lucide-react';
+import { CreditCard, AlertCircle, Lock } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function CheckoutForm() {
     const stripe = useStripe();
     const elements = useElements();
     const router = useRouter();
-    const { user, btUser } = useAuth();
     const { state } = useBooking();
 
     const [message, setMessage] = useState<string | null>(null);
@@ -28,100 +36,55 @@ export default function CheckoutForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!stripe || !elements || !user || !btUser) return;
+        if (!stripe || !elements) return;
 
         setIsLoading(true);
+        setMessage(null);
 
-        // 1. Confirm payment with Stripe
+        // Stripe will redirect to return_url if the payment method requires it
+        // (e.g. 3D Secure, bank redirects). For inline methods (card), the
+        // payment completes here and paymentIntent is returned directly.
+        //
+        // In both cases the confirmation page reads ?payment_intent=pi_xxx
+        // (Stripe appends it on redirect; we append it manually for inline).
         const { error, paymentIntent } = await stripe.confirmPayment({
             elements,
             confirmParams: {
+                // Stripe appends ?payment_intent=pi_xxx&redirect_status=succeeded
                 return_url: `${window.location.origin}/book/${state.sessionId}/confirmation`,
             },
             redirect: 'if_required',
         });
 
         if (error) {
-            if (error.type === 'card_error' || error.type === 'validation_error') {
-                setMessage(error.message || 'An error occurred.');
+            // Only surface card/validation errors to the user
+            if (
+                error.type === 'card_error' ||
+                error.type === 'validation_error'
+            ) {
+                setMessage(error.message || 'Your payment was declined.');
             } else {
-                setMessage('An unexpected error occurred.');
+                setMessage(
+                    'An unexpected error occurred. Please try again or contact support.'
+                );
             }
             setIsLoading(false);
             return;
         }
 
         if (paymentIntent && paymentIntent.status === 'succeeded') {
-            // 2. Payment Succeeded - Save booking to Firestore
-            try {
-                const bookingData = {
-                    sessionId: state.sessionId,
-                    sessionDate: state.session?.date || '',
-                    className: state.session?.className || '',
-                    venueName: state.session?.venueName || '',
-                    bookedByUid: user.uid,
-                    bookedByName: `${btUser.firstName} ${btUser.lastName}`,
-                    studentId: state.studentId || user.uid, // Default to parent UID for young adults
-                    studentName: state.student === 'self' ? `${btUser.firstName} ${btUser.lastName}` : `${state.student?.firstName} ${state.student?.lastName}`,
-                    medicalInfo: state.medicalInfo,
-                    emergencyContact: state.emergencyContact || null,
-                    questionnaire: state.questionnaire || null,
-                    termsAccepted: state.termsAccepted,
-                    status: 'confirmed',
-                    payment: {
-                        amount: state.session?.price || 0,
-                        currency: 'gbp',
-                        status: 'paid',
-                        stripePaymentIntentId: paymentIntent.id,
-                    },
-                    createdAt: serverTimestamp(),
-                };
-
-                const docRef = await addDoc(collection(db, 'bookings'), bookingData);
-
-                // 3. Update session availability
-                await updateDoc(doc(db, 'sessions', state.sessionId), {
-                    spotsAvailable: increment(-1)
-                });
-
-                // 4. Update Student Profile for future re-use
-                if (state.student !== 'self' && state.studentId) {
-                    try {
-                        await updateDoc(doc(db, 'students', state.studentId), {
-                            medicalInfo: state.medicalInfo || null,
-                            emergencyContact: state.emergencyContact || null,
-                            questionnaire: state.questionnaire || null,
-                        });
-                    } catch (err) {
-                        console.error('Failed to update student profile:', err);
-                    }
-                }
-
-                // 5. Send Confirmation Email
-                fetch('/api/emails/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        to: user.email,
-                        subject: `Booking Confirmed: ${state.session?.className}`,
-                        type: 'confirmation',
-                        data: {
-                            className: state.session?.className,
-                            sessionDate: new Date(state.session?.date || '').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
-                            venueName: state.session?.venueName,
-                            studentName: state.student === 'self' ? `${btUser.firstName} ${btUser.lastName}` : `${state.student?.firstName} ${state.student?.lastName}`,
-                        }
-                    })
-                }).catch(err => console.error('Failed to send confirmation email:', err));
-
-                // 6. Redirect to confirmation
-                router.push(`/book/${state.sessionId}/confirmation?bookingId=${docRef.id}`);
-            } catch (e) {
-                console.error('Error saving booking:', e);
-                setMessage('Payment succeeded but we failed to save your booking. Please contact support.');
-                setIsLoading(false);
-            }
+            // Payment confirmed inline (no browser redirect needed).
+            // Navigate to confirmation page — the webhook will create the
+            // booking asynchronously. Confirmation page polls Firestore.
+            router.push(
+                `/book/${state.sessionId}/confirmation?payment_intent=${paymentIntent.id}`
+            );
+            return;
         }
+
+        // Should not reach here under normal conditions with redirect: 'if_required'
+        setMessage('Payment status is unclear. Please check your email or contact support.');
+        setIsLoading(false);
     };
 
     return (
@@ -130,25 +93,33 @@ export default function CheckoutForm() {
                 <PaymentElement
                     id="payment-element"
                     options={{ layout: 'tabs' }}
-                    onReady={() => {
-                        console.log('Stripe PaymentElement is ready.');
-                        setIsReady(true);
-                    }}
+                    onReady={() => setIsReady(true)}
                     onLoadError={(e) => {
                         console.error('Stripe PaymentElement load error:', e);
-                        setMessage(`Payment form failed to load: ${e.error?.message || 'Unknown error'}. Please refresh the page.`);
+                        setMessage(
+                            `Payment form failed to load: ${e.error?.message || 'Unknown error'}. ` +
+                            `Please refresh the page.`
+                        );
                     }}
                 />
             </div>
 
-            {message && <div className="alert alert-error"><AlertCircle size={18} /> {message}</div>}
+            {message && (
+                <div className="alert alert-error">
+                    <AlertCircle size={18} /> {message}
+                </div>
+            )}
 
             <div className={styles.securityBox}>
                 <Lock size={14} />
                 <span>Secure encrypted payment via Stripe</span>
             </div>
 
-            <button disabled={isLoading || !stripe || !elements || !isReady} id="submit" className="btn btn-primary btn-full">
+            <button
+                disabled={isLoading || !stripe || !elements || !isReady}
+                id="submit"
+                className="btn btn-primary btn-full"
+            >
                 {isLoading ? (
                     <div className="spinner-inline" />
                 ) : (
