@@ -145,7 +145,7 @@ export interface Booking {
     createdAt: any;
 }
 
-export type GalleryCategory = 'cooking-classes' | 'cakes' | 'cookies' | 'breads';
+export type GalleryCategory = 'cooking-classes' | 'personal-gallery';
 
 export interface GalleryImage {
     id: string;

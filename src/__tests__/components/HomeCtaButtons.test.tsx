@@ -55,16 +55,16 @@ describe('HeroCtas', () => {
 describe('BannerCtas', () => {
     beforeEach(() => { vi.clearAllMocks(); });
 
-    it('logged-out: "Explore Classes" links to /classes', () => {
+    it('logged-out: "Find a Class" links to /classes', () => {
         asLoggedOut();
         render(<BannerCtas />);
-        expect(screen.getByRole('link', { name: /explore classes/i })).toHaveAttribute('href', '/classes');
+        expect(screen.getByRole('link', { name: /find a class/i })).toHaveAttribute('href', '/classes');
     });
 
-    it('logged-out: shows Register Now link', () => {
+    it('logged-out: shows Register Free link to /auth/signup', () => {
         asLoggedOut();
         render(<BannerCtas />);
-        expect(screen.getByRole('link', { name: /register now/i })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /register free/i })).toHaveAttribute('href', '/auth/signup');
     });
 
     it('logged-in: shows Find a Class and My Portal, no Register link', () => {

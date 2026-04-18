@@ -95,8 +95,8 @@ export default function HomePage() {
                         <p>
                             Through dynamic cooking sessions and hands-on learning, we foster essential life skills, culinary confidence, and creativity in each child. Join us in cultivating independence and healthier lifestyles, paving the way for future chefs to bloom!
                         </p>
-                        <Link href="/about" className={styles.learnMoreLink}>
-                            Get in touch <ArrowRight size={16} />
+                        <Link href="/contact" className={styles.learnMoreLink}>
+                            Contact Us <ArrowRight size={16} />
                         </Link>
                     </div>
                 </div>

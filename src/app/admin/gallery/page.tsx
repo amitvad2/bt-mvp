@@ -5,15 +5,9 @@ import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTi
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { GalleryImage, GalleryCategory } from '@/types';
+import { normalizeCategory, ADMIN_CATEGORIES, CATEGORY_LABELS } from '@/lib/gallery-categories';
 import { Image as ImageIcon, Plus, Edit2, Trash2, X, Upload, Loader2, AlertCircle } from 'lucide-react';
 import styles from './page.module.css';
-
-const CATEGORIES: { value: GalleryCategory, label: string }[] = [
-    { value: 'cooking-classes', label: 'Cooking Class Photos' },
-    { value: 'cakes', label: 'Cakes' },
-    { value: 'cookies', label: 'Cookies' },
-    { value: 'breads', label: 'Breads' }
-];
 
 export default function AdminGallery() {
     const [images, setImages] = useState<GalleryImage[]>([]);
@@ -51,7 +45,7 @@ export default function AdminGallery() {
                 description: img.description || '',
                 altText: img.altText || '',
                 order: img.order || 0,
-                category: img.category || 'cooking-classes'
+                category: normalizeCategory(img.category),
             });
         } else {
             setEditingImage(null);
@@ -206,7 +200,7 @@ export default function AdminGallery() {
                             <div className={styles.itemMeta}>
                                 <div className={styles.metaRow}>
                                     <span className={styles.orderBadge}>#{img.order}</span>
-                                    <span className={styles.categoryBadge}>{CATEGORIES.find(c => c.value === (img.category || 'cooking-classes'))?.label}</span>
+                                    <span className={styles.categoryBadge}>{CATEGORY_LABELS[normalizeCategory(img.category)]}</span>
                                 </div>
                                 <p>{img.description || 'No description'}</p>
                             </div>
@@ -284,7 +278,7 @@ export default function AdminGallery() {
                                     onChange={e => setFormData({ ...formData, category: e.target.value as GalleryCategory })}
                                     disabled={uploading}
                                 >
-                                    {CATEGORIES.map(c => (
+                                    {ADMIN_CATEGORIES.map(c => (
                                         <option key={c.value} value={c.value}>{c.label}</option>
                                     ))}
                                 </select>

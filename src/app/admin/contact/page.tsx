@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, query, getDocs, orderBy, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ContactMessage, ContactStatus } from '@/types';
@@ -109,9 +109,8 @@ export default function AdminContactPage() {
                                 const isExpanded = expandedId === m.id;
                                 const date = m.createdAt?.toDate ? m.createdAt.toDate() : new Date(m.createdAt);
                                 return (
-                                    <>
+                                    <React.Fragment key={m.id}>
                                         <tr
-                                            key={m.id}
                                             className={`${styles.row} ${m.status === 'new' ? styles.rowNew : ''}`}
                                         >
                                             <td className={styles.nameCell}>
@@ -152,7 +151,7 @@ export default function AdminContactPage() {
                                             </td>
                                         </tr>
                                         {isExpanded && (
-                                            <tr key={`${m.id}-detail`} className={styles.detailRow}>
+                                            <tr className={styles.detailRow}>
                                                 <td colSpan={6}>
                                                     <div className={styles.detailContent}>
                                                         <p className={styles.detailMessage}>{m.message}</p>
@@ -168,7 +167,7 @@ export default function AdminContactPage() {
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </React.Fragment>
                                 );
                             })}
                         </tbody>

@@ -4,15 +4,8 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { GalleryImage, GalleryCategory } from '@/types';
+import { normalizeCategory, PUBLIC_CATEGORIES } from '@/lib/gallery-categories';
 import styles from './page.module.css';
-
-const CATEGORIES: { value: GalleryCategory | 'all', label: string }[] = [
-    { value: 'all', label: 'All Photos' },
-    { value: 'cooking-classes', label: 'Cooking Classes' },
-    { value: 'cakes', label: 'Cakes' },
-    { value: 'cookies', label: 'Cookies' },
-    { value: 'breads', label: 'Breads' }
-];
 
 export default function GalleryClient() {
     const [images, setImages] = useState<GalleryImage[]>([]);
@@ -38,7 +31,7 @@ export default function GalleryClient() {
 
     const filteredImages = activeCategory === 'all'
         ? images
-        : images.filter(img => (img.category || 'cooking-classes') === activeCategory);
+        : images.filter(img => normalizeCategory(img.category) === activeCategory);
 
     return (
         <section className={`section ${styles.gallerySection}`}>
@@ -46,16 +39,19 @@ export default function GalleryClient() {
                 <div className="section-header">
                     <span className="eyebrow">Visual Journey</span>
                     <h2>Cooking in Action</h2>
-                    <p>Capturing the smiles, the skills, and the snacks from our recent sessions.</p>
+                    <p>
+                        Photos from our cooking classes and a showcase of the founder&apos;s own bakes
+                        and creations.
+                    </p>
                 </div>
 
                 <div className={styles.categoryNavigation}>
                     <div className={styles.tabGroup}>
-                        {CATEGORIES.map(category => (
+                        {PUBLIC_CATEGORIES.map(category => (
                             <button
                                 key={category.value}
                                 className={`${styles.tabButton} ${activeCategory === category.value ? styles.activeTab : ''}`}
-                                onClick={() => setActiveCategory(category.value)}
+                                onClick={() => setActiveCategory(category.value as GalleryCategory | 'all')}
                             >
                                 {category.label}
                             </button>
@@ -74,7 +70,7 @@ export default function GalleryClient() {
                     ))}
                     {filteredImages.length === 0 && (
                         <div className={styles.empty}>
-                            <p>No photos found for this category yet. Check back soon!</p>
+                            <p>No photos found in this category yet — check back soon!</p>
                         </div>
                     )}
                 </div>

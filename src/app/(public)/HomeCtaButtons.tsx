@@ -42,11 +42,11 @@ export function BannerCtas() {
                 </>
             ) : !loading ? (
                 <>
-                    <Link href="/auth/signup" className={styles.ctaPrimary}>
-                        Register Now <ArrowRight size={18} />
+                    <Link href="/classes" className={styles.ctaPrimary}>
+                        Find a Class <ArrowRight size={18} />
                     </Link>
-                    <Link href="/classes" className={styles.ctaSecondary}>
-                        Explore Classes
+                    <Link href="/auth/signup" className={styles.ctaSecondary}>
+                        Register Free
                     </Link>
                 </>
             ) : null}
