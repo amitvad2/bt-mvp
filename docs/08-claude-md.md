@@ -42,6 +42,7 @@ Repo: `bt-mvp` | Framework: Next.js 16 App Router | Language: TypeScript 5
 - **Loading states** — `useState<boolean>` named `loading`/`isLoading`; renders a `<div className={styles.spinner}>`.
 - **Types** — all shared interfaces in `src/types/index.ts`. Never define a type inline that belongs in types/index.ts.
 - **Context** — auth state via `useAuth()` hook from `AuthContext`. Booking state via `useBooking()` from `BookingContext`.
+- **Auth-aware public CTAs** — every public page CTA that points to `/auth/signup` must be wrapped in a `'use client'` island using `useAuth()`. Logged-in users must never see "Register", "Register Free", "Register Now", or "Get Started → /auth/signup". Pattern: `if (user) { return <logged-in CTA> }; return <logged-out CTA>`. Existing islands: `HomeCtaButtons.tsx` (homepage hero + banner), `AboutCtaSection.tsx` (about page), `TestimoniesCtaButtons.tsx` (testimonies page). Footer uses `{!user && ...}` guard. Header uses `user ? logged_in : !loading ? logged_out : spinner`. When adding new public pages with a CTA, follow the same pattern.
 
 ---
 
@@ -158,3 +159,4 @@ Repo: `bt-mvp` | Framework: Next.js 16 App Router | Language: TypeScript 5
 - **Admin role is stored in Firestore `users/{uid}.role`**, not in Firebase custom claims. If you need middleware-level admin checks without a Firestore read, consider setting a Firebase custom claim.
 - **`sessionStorage` key pattern** for booking wizard: `booking_{sessionId}`. Cleared on confirmation.
 - **CSS Module class names** follow `.camelCase` convention (e.g. `.formGroup`, `.btnPrimary`).
+- **CSS custom property catalogue** — only use variables defined in `src/app/globals.css`. The design system defines two naming tiers: (1) core brand tokens (`--bt-coral`, `--bt-orange`, `--bt-berry`, `--bt-sky`, `--bt-leaf`, `--bt-citrus`, `--bt-cream`, `--bt-charcoal`, `--bt-muted`, `--bt-border`) and (2) extended tokens added later (`--bt-amber`, `--bt-amber-dark`, `--bt-amber-light`, `--bt-green-light`, `--bt-warm-white`, `--bt-gray-50` through `--bt-gray-900`, `--bt-accent`, `--bt-accent-light`). Using an undefined CSS variable in a `linear-gradient()` silently makes the entire `background` invalid — text can become invisible. Always verify a variable is defined in globals.css before using it in a CSS Module.

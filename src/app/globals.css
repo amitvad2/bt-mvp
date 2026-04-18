@@ -39,6 +39,27 @@
   --bt-danger: #D11124;
   --bt-success: #21A344;
 
+  /* Amber / Warm Accent Palette */
+  --bt-amber: #F59E0B;
+  --bt-amber-dark: #D97706;
+  --bt-amber-light: #FEF3C7;
+  --bt-green-light: #DCFCE7;
+  --bt-warm-white: #FFFDF8;
+
+  /* Neutral Gray Scale */
+  --bt-gray-50: #F9FAFB;
+  --bt-gray-100: #F3F4F6;
+  --bt-gray-200: #E5E7EB;
+  --bt-gray-400: #9CA3AF;
+  --bt-gray-600: #6B7280;
+  --bt-gray-700: #374151;
+  --bt-gray-800: #1F2937;
+  --bt-gray-900: #111827;
+
+  /* Accent alias (used by auth & public page modules) */
+  --bt-accent: var(--bt-coral);
+  --bt-accent-light: var(--bt-coral-light);
+
   /* Semantic Mappings */
   --bt-primary: var(--bt-charcoal);
   --bt-secondary: var(--bt-coral);

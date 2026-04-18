@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Star, Sparkles, Heart, BookOpen, Shield, Flame, Leaf } from 'lucide-react';
+import { ArrowRight, Star, Sparkles, Heart, BookOpen, Shield, Leaf } from 'lucide-react';
 import styles from './page.module.css';
 import SessionMapSection from '@/components/home/SessionMapSection';
+import { HeroCtas, BannerCtas } from './HomeCtaButtons';
 
 export const metadata: Metadata = {
     title: 'Blooming Tastebuds | Kids & Young Adult Cooking Classes',
@@ -37,14 +38,7 @@ export default function HomePage() {
                     <p className={styles.heroSub}>
                         Where kids and teens learn confidence, creativity, and conscious eating — one delicious meal at a time. 🌱
                     </p>
-                    <div className={styles.heroCtas}>
-                        <Link href="/portal/find-class" className={styles.ctaPrimary}>
-                            <Flame size={20} /> Book a Class
-                        </Link>
-                        <Link href="/auth/signup" className={styles.ctaSecondary}>
-                            Register Free <ArrowRight size={18} />
-                        </Link>
-                    </div>
+                    <HeroCtas />
                 </div>
             </section>
 
@@ -134,7 +128,7 @@ export default function HomePage() {
                                     <li>Try new veggies</li>
                                     <li>Teamwork</li>
                                 </ul>
-                                <Link href="/portal/find-class?type=kidsAfterSchool" className={styles.cardCta}>
+                                <Link href="/classes?type=kidsAfterSchool" className={styles.cardCta}>
                                     Find Kids Classes <ArrowRight size={16} />
                                 </Link>
                             </div>
@@ -154,7 +148,7 @@ export default function HomePage() {
                                     <li>Knife skills</li>
                                     <li>Budget meals</li>
                                 </ul>
-                                <Link href="/portal/find-class?type=youngAdultWeekend" className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
+                                <Link href="/classes?type=youngAdultWeekend" className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
                                     Find Teen Workshops <ArrowRight size={16} />
                                 </Link>
                             </div>
@@ -268,14 +262,7 @@ export default function HomePage() {
                     <div className={styles.ctaBannerInner}>
                         <h2>Ready to start cooking? 🍽️</h2>
                         <p>Join hundreds of London families who&apos;ve discovered the joy of healthy homecooking.</p>
-                        <div className={styles.heroCtas}>
-                            <Link href="/auth/signup" className={styles.ctaPrimary}>
-                                Register Now <ArrowRight size={18} />
-                            </Link>
-                            <Link href="/portal/find-class" className={styles.ctaSecondary}>
-                                Explore Classes
-                            </Link>
-                        </div>
+                        <BannerCtas />
                     </div>
                 </div>
             </section>

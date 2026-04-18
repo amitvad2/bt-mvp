@@ -13,6 +13,7 @@ export default function Header() {
     const navLinks = [
         { href: '/', label: 'Home' },
         { href: '/about', label: 'About Us' },
+        { href: '/classes', label: 'Classes' },
         { href: '/gallery', label: 'Gallery' },
         { href: '/testimonies', label: 'Testimonies' },
     ];
@@ -104,7 +105,7 @@ export default function Header() {
                                 Login
                             </Link>
                             <Link href="/auth/signup" className="btn btn-primary btn-full" onClick={() => setMobileOpen(false)}>
-                                Register Free
+                                Register
                             </Link>
                         </>
                     ) : (

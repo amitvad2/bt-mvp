@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { Star, Shield, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Star, Shield } from 'lucide-react';
 import styles from './page.module.css';
 import ExpandableReview from './ExpandableReview';
+import { TestimoniesCtaButtons } from './TestimoniesCtaButtons';
 
 export const metadata: Metadata = {
     title: 'Testimonies | Blooming Tastebuds',
@@ -133,14 +133,7 @@ export default function TestimoniesPage() {
                 <div className="container text-center">
                     <h2>Ready to start your journey?</h2>
                     <p>Join hundreds of happy families learning to cook healthy meals.</p>
-                    <div className={styles.ctaButtons}>
-                        <Link href="/auth/signup" className="btn btn-primary btn-lg">
-                            Register Now
-                        </Link>
-                        <Link href="/portal/find-class" className="btn btn-ghost btn-lg">
-                            Find a Class <ArrowRight size={18} />
-                        </Link>
-                    </div>
+                    <TestimoniesCtaButtons />
                 </div>
             </section>
         </div>

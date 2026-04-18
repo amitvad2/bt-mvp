@@ -41,10 +41,10 @@ export default function Footer() {
                 <div className={styles.col}>
                     <h4>Our Classes</h4>
                     <ul>
-                        <li><Link href="/portal/find-class">After School Club (Ages 5–12)</Link></li>
-                        <li><Link href="/portal/find-class">Weekend Classes (Young Adults)</Link></li>
+                        <li><Link href="/classes?type=kidsAfterSchool">After School Club (Ages 5–12)</Link></li>
+                        <li><Link href="/classes?type=youngAdultWeekend">Weekend Classes (Young Adults)</Link></li>
                         {!user && <li><Link href="/auth/signup">Register Now</Link></li>}
-                        <li><Link href="/portal/find-class">Find a Class</Link></li>
+                        <li><Link href="/classes">Find a Class</Link></li>
                     </ul>
                 </div>
 

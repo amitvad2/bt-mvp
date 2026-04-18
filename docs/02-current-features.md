@@ -9,17 +9,21 @@ Status key: **Complete** | **Partial** | **Placeholder**
 ### 1.1 Homepage
 - **Status:** Complete
 - **File:** [src/app/(public)/page.tsx](../src/app/(public)/page.tsx)
-- **How it works:** Static/SSR page. Renders hero canvas section, features grid, session map (dynamic import via `SessionMapSection`), founder bio, and testimonials preview. `HeroCanvas` renders an animated particle/canvas effect. `MagicCursor` provides an interactive custom cursor overlay.
+- **How it works:** SSR server component. Renders hero section, credibility strip, session map (`SessionMapSection`), class journey cards, founder bio, testimonials, and a CTA banner. Hero and banner CTAs are auth-aware client islands (`HomeCtaButtons.tsx`):
+  - **Logged-out:** hero shows "Book a Class" + "Register Free → /auth/signup"; banner shows "Register Now → /auth/signup" + "Explore Classes".
+  - **Logged-in:** hero shows "Book a Class" + "My Portal → /portal/dashboard"; banner shows "Find a Class → /portal/find-class" + "My Portal → /portal/dashboard". Register prompts are hidden entirely.
 - **Relevant files:**
-  - `src/components/home/HeroCanvas.tsx`
-  - `src/components/home/HeroCanvasSection.tsx`
-  - `src/components/home/MagicCursor.tsx`
+  - `src/app/(public)/HomeCtaButtons.tsx` — auth-aware `HeroCtas` and `BannerCtas` client components
   - `src/components/home/SessionMapSection.tsx`
 
 ### 1.2 About Page
 - **Status:** Complete
 - **File:** [src/app/(public)/about/page.tsx](../src/app/(public)/about/page.tsx)
-- **How it works:** Static page with founder story, photo, and mission statement. Uses `public/founder.jpg` (alias `nisha-portrait.jpg`).
+- **How it works:** SSR server component. Sections: hero, founder bio (with photo from `public/nisha-portrait.jpg`), journey timeline, values grid, FAQ, CTA. The bottom CTA section is auth-aware via `AboutCtaSection.tsx` (client island):
+  - **Logged-out:** "Ready to Join the Blooming Tastebuds Family?" → "Get Started → /auth/signup"
+  - **Logged-in:** "Keep the Journey Going!" → "Find a Class → /portal/find-class"
+- **Relevant files:**
+  - `src/app/(public)/about/AboutCtaSection.tsx` — auth-aware CTA client component
 
 ### 1.3 Gallery Page
 - **Status:** Complete
@@ -29,7 +33,11 @@ Status key: **Complete** | **Partial** | **Placeholder**
 ### 1.4 Testimonials Page
 - **Status:** Complete
 - **File:** [src/app/(public)/testimonies/page.tsx](../src/app/(public)/testimonies/page.tsx)
-- **How it works:** Renders an array of hardcoded review objects through `ExpandableReview` components. Each review card can be expanded. Uses `onError` fallback to hide broken review images. Reviews are currently **static/hardcoded**, not pulled from a database.
+- **How it works:** SSR server component. Renders hardcoded reviews via `ExpandableReview` (expandable cards with `onError` image fallback). Reviews are static/hardcoded, not from a database. Bottom CTA is auth-aware via `TestimoniesCtaButtons.tsx` (client island):
+  - **Logged-out:** "Register Now → /auth/signup" + "Find a Class"
+  - **Logged-in:** "Find a Class → /portal/find-class" + "My Portal → /portal/dashboard"
+- **Relevant files:**
+  - `src/app/(public)/testimonies/TestimoniesCtaButtons.tsx` — auth-aware CTA client component
 
 ### 1.5 Terms & Conditions Page
 - **Status:** Complete

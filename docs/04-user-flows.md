@@ -5,7 +5,9 @@
 ## Flow 1: Visitor Browsing Site
 
 ### Current State in Code
-- `/` (homepage) — Hero + features + session map + founder + testimonials. Fully rendered.
+- `/` (homepage) — SSR server component. Hero and banner CTA buttons are auth-aware (`HomeCtaButtons.tsx`): logged-out users see "Register Free" / "Register Now"; logged-in users see "My Portal" instead. No register prompt is shown to logged-in users.
+- `/about` — SSR server component. Bottom CTA is auth-aware (`AboutCtaSection.tsx`): logged-out see "Get Started → /auth/signup"; logged-in see "Find a Class → /portal/find-class".
+- `/testimonies` — SSR server component. Bottom CTA buttons are auth-aware (`TestimoniesCtaButtons.tsx`): logged-out see "Register Now" + "Find a Class"; logged-in see "Find a Class" + "My Portal".
 - `/about` — Founder story and mission.
 - `/gallery` — Fetches `gallery` Firestore collection; renders category-filtered image grid.
 - `/testimonies` — Hardcoded reviews rendered via `ExpandableReview`.

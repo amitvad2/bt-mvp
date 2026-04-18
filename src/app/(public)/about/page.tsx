@@ -1,10 +1,9 @@
-import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import fs from 'fs';
 import path from 'path';
 import styles from './page.module.css';
+import { AboutCtaSection } from './AboutCtaSection';
 
 export const metadata: Metadata = {
     title: 'About Us | Blooming Tastebuds',
@@ -163,15 +162,7 @@ export default function AboutPage() {
             </section>
 
             {/* CTA */}
-            <section className={styles.cta}>
-                <div className="container">
-                    <h2>Ready to Join the Blooming Tastebuds Family?</h2>
-                    <p>Register today and book your first session in minutes.</p>
-                    <Link href="/auth/signup" className="btn btn-primary btn-lg">
-                        Get Started <ArrowRight size={18} />
-                    </Link>
-                </div>
-            </section>
+            <AboutCtaSection />
         </>
     );
 }

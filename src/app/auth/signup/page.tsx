@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,8 +25,18 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function SignUpPage() {
+    return (
+        <Suspense fallback={<div className="loading-screen"><div className="spinner" /></div>}>
+            <SignUpContent />
+        </Suspense>
+    );
+}
+
+function SignUpContent() {
     const { signUp, signInWithGoogle } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirect = searchParams.get('redirect') || '/portal/dashboard';
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -42,7 +52,7 @@ export default function SignUpPage() {
         setLoading(true);
         try {
             await signUp(data.email, data.password, data.firstName, data.lastName, data.role as UserRole);
-            router.push('/portal/dashboard');
+            router.push(redirect);
         } catch (e: any) {
             if (e.code === 'auth/email-already-in-use') {
                 setError('An account with this email already exists. Please log in.');
@@ -61,7 +71,7 @@ export default function SignUpPage() {
         setLoading(true);
         try {
             await signInWithGoogle(selectedRole as UserRole);
-            router.push('/portal/dashboard');
+            router.push(redirect);
         } catch (e: any) {
             console.error('Google Sign-up Error:', e);
             setError('Failed to sign up with Google. Please try again.');
