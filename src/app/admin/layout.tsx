@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import {
     ShieldCheck, LayoutDashboard, MapPin, ChefHat,
-    Calendar, BookOpen, Image, Users, LogOut, ExternalLink, Menu, UserCheck
+    Calendar, BookOpen, Image, Users, LogOut, ExternalLink, Menu, UserCheck, MessageSquare
 } from 'lucide-react';
 import styles from './admin.module.css';
 
@@ -43,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: '/admin/gallery', icon: Image, label: 'Gallery' },
         { href: '/admin/instructors', icon: UserCheck, label: 'Instructors' },
         { href: '/admin/bookings', icon: Users, label: 'Bookings' },
+        { href: '/admin/contact', icon: MessageSquare, label: 'Contact Inbox' },
     ];
 
     return (

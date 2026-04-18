@@ -81,6 +81,19 @@ service cloud.firestore {
 
 
     // =========================================================================
+    // CONTACT MESSAGES  — server-side writes only (Admin SDK bypasses rules)
+    // =========================================================================
+    //
+    // contact_messages/{docId} are created by the /api/contact route handler
+    // (server-side, Admin SDK). No client should ever create or delete them.
+    // Admins read/update status via the client SDK (admin inbox page).
+    match /contact_messages/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+
+    // =========================================================================
     // BOOKING DRAFTS  — server-side only (Admin SDK bypasses these rules)
     // =========================================================================
     //

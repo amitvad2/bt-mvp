@@ -102,9 +102,6 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* ── FIND A CLASS (Map Section) ── */}
-            <SessionMapSection />
-
             {/* ── CHOOSE YOUR JOURNEY ── */}
             <section className={styles.journeySection}>
                 <div className="container">
@@ -156,6 +153,9 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
+
+            {/* ── FIND A CLASS (Map Section) ── */}
+            <SessionMapSection />
 
             {/* ── WHAT THEY LEARN ── */}
             <section className={styles.learnSection}>

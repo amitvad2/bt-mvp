@@ -1,0 +1,197 @@
+.hero {
+    background: linear-gradient(135deg, var(--bt-coral) 0%, var(--bt-orange) 100%);
+    color: #fff;
+    padding: var(--space-20) 0 var(--space-16);
+    text-align: center;
+}
+
+.hero h1 {
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-bottom: var(--space-4);
+}
+
+.hero p {
+    font-size: 1.15rem;
+    opacity: 0.9;
+    max-width: 540px;
+    margin: 0 auto;
+}
+
+.content {
+    background: var(--bt-gray-50);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: var(--space-10);
+    align-items: start;
+}
+
+/* ── Form card ── */
+.formCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: var(--space-10);
+    box-shadow: var(--shadow);
+}
+
+.formTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+    margin-bottom: var(--space-2);
+}
+
+.formSub {
+    font-size: 0.95rem;
+    color: var(--bt-gray-500);
+    margin-bottom: var(--space-8);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.optional {
+    font-size: 0.8rem;
+    color: var(--bt-gray-400);
+    font-weight: 400;
+}
+
+.consentGroup {
+    margin-top: var(--space-2);
+}
+
+.consentLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--bt-gray-700);
+    line-height: 1.5;
+}
+
+.consentCheckbox {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--bt-accent);
+    cursor: pointer;
+}
+
+/* ── Success state ── */
+.success {
+    text-align: center;
+    padding: var(--space-12) var(--space-8);
+    background: #fff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+}
+
+.successIcon {
+    font-size: 3.5rem;
+    margin-bottom: var(--space-4);
+}
+
+.success h3 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+    margin-bottom: var(--space-3);
+}
+
+.success p {
+    font-size: 1rem;
+    color: var(--bt-gray-600);
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.sidebarCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebarCard h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+    margin-bottom: var(--space-5);
+}
+
+.contactList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.contactList li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: 0.95rem;
+    color: var(--bt-gray-700);
+}
+
+.contactList li svg {
+    color: var(--bt-accent);
+    flex-shrink: 0;
+}
+
+.contactList a {
+    color: var(--bt-gray-700);
+    text-decoration: none;
+}
+
+.contactList a:hover {
+    color: var(--bt-accent);
+}
+
+.faqList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.faqList li strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bt-gray-800);
+    margin-bottom: var(--space-1);
+}
+
+.faqList li p {
+    font-size: 0.875rem;
+    color: var(--bt-gray-500);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        order: -1;
+    }
+}

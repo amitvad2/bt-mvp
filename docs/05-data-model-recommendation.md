@@ -265,6 +265,42 @@ All collections live in **Firebase Firestore**. The TypeScript types that define
 
 ---
 
+### 10. `contact_messages`
+
+**Purpose:** Stores contact/feedback submissions from the public `/contact` page. Written exclusively via the Admin SDK (no direct client writes). Reviewed by admin via the `/admin/contact` inbox.
+
+**Collection:** `contact_messages/{id}`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | string | Auto-generated Firestore ID |
+| `name` | string | Submitter's full name |
+| `email` | string | Submitter's email address |
+| `phone` | string? | Optional phone number |
+| `category` | `ContactCategory` | `'general' \| 'booking' \| 'feedback' \| 'technical' \| 'other'` |
+| `message` | string | Message body (min 10 chars) |
+| `consentToReply` | boolean | Submitter gave consent to be contacted |
+| `source` | `'contact-page'` | Origin of submission (for future multi-source support) |
+| `status` | `ContactStatus` | `'new' \| 'read' \| 'replied' \| 'closed'` — managed by admin |
+| `userId` | string? | Firebase Auth UID if the submitter was logged in |
+| `createdAt` | Timestamp | Server-set creation time |
+
+**TypeScript types:** `ContactCategory`, `ContactStatus`, `ContactMessage` — defined in `src/types/index.ts`.
+
+**Firestore rules:**
+```
+match /contact_messages/{docId} {
+  allow create, delete: if false;  // all creates via Admin SDK
+  allow read, update: if isAdmin();
+}
+```
+
+**Relationships:** Optional link to `users/{userId}` if the submitter was authenticated.
+
+**Status:** Exists in code. Implemented Apr 2026.
+
+---
+
 ## Recommended New Entities (not yet in codebase)
 
 ---
@@ -317,8 +353,9 @@ venues (1) ──── (n) classes
                     recipes (1) ┘
                     instructors (1) ┘
 
-gallery       ← standalone
-testimonials  ← standalone (new)
+gallery           ← standalone
+testimonials      ← standalone (new)
+contact_messages  ← standalone; optional soft-link to users/{userId}
 ```
 
 ---

@@ -17,6 +17,7 @@ Legend:
 | Footer with YouTube, Facebook, Instagram, LinkedIn | Yes | `src/components/layout/Footer.tsx` — all four social links present | Verify actual URLs are correct/live | Low | Update href values with real social URLs |
 | Dedicated Courses page describing the two class types | **No** | No `/courses` route exists | Full page with visual descriptions, schedules, pricing, FAQs for each course type | High | Add `src/app/(public)/courses/page.tsx` as a static page |
 | Testimonials page | Yes | `src/app/(public)/testimonies/page.tsx` | Reviews are hardcoded — not managed via CMS/Firestore | Medium | Add `testimonials` Firestore collection + admin CRUD |
+| Contact / feedback page | **Yes** ✓ | `src/app/(public)/contact/page.tsx` — combined Contact & Feedback with form, sidebar, and FAQ | — | — | Implemented Apr 2026 |
 
 ---
 
@@ -85,6 +86,7 @@ Legend:
 | Instructor master (CRUD) | Yes | `admin/instructors/page.tsx` | — | — | — |
 | Bookings view | Partial | `admin/bookings/page.tsx` — read-only | No cancel/refund action; no export | High | Add cancel action + Stripe refund; add CSV export |
 | Testimonials master (CRUD) | **No** | Testimonials are hardcoded in the public page | New admin section + Firestore collection | Medium | Add `admin/testimonials/page.tsx` + `testimonials` collection |
+| Contact / feedback inbox | **Yes** ✓ | `admin/contact/page.tsx` — lists `contact_messages`, status filter, expandable rows, status updates | — | — | Implemented Apr 2026 |
 | Admin stats / analytics | Partial | `admin/dashboard/page.tsx` — basic counts | No revenue chart, no booking trend, no export | Low | Add charting library (Recharts) + aggregate queries |
 
 ---
@@ -110,6 +112,7 @@ Legend:
 | Cancellation email | Partial | Template exists in email route | No trigger path from admin/user cancellation UI | Medium | Wire up when cancellation UI is built |
 | Pre-class reminder email | **No** | No scheduler | Scheduled job (Vercel Cron / Cloud Scheduler) needed | Medium | Use Vercel Cron Jobs + `/api/reminders/route.ts` |
 | Password reset email | Yes | Firebase Auth handles this natively | — | — | — |
+| Contact / feedback form with admin notification | **Yes** ✓ | `src/app/(public)/contact/page.tsx` + `POST /api/contact` — writes to Firestore `contact_messages`, sends admin email via Resend | — | — | Implemented Apr 2026 |
 
 ---
 

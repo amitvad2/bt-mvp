@@ -36,7 +36,7 @@ Repo: `bt-mvp` | Framework: Next.js 16 App Router | Language: TypeScript 5
 - **CSS Modules** — every page/component has a co-located `.module.css` file. No global utility classes except in `globals.css`.
 - **Client components** — marked `"use client"` at top. Server components are the default (no annotation).
 - **Path alias** — `@/*` maps to `src/*`. Always use `@/` imports, not relative `../../`.
-- **Firestore writes** — direct client SDK calls from components for standard CRUD (no custom REST layer). Use `setDoc`, `addDoc`, `updateDoc`, `deleteDoc` from `firebase/firestore`. **Exception: booking creation is server-side only** — the Stripe webhook handler (`/api/webhooks/stripe`) is the sole writer to the `bookings` collection and the sole decrementer of `sessions.spotsAvailable`. Never add client-side booking creation back.
+- **Firestore writes** — direct client SDK calls from components for standard CRUD (no custom REST layer). Use `setDoc`, `addDoc`, `updateDoc`, `deleteDoc` from `firebase/firestore`. **Exceptions — server-side only collections:** (1) `bookings` — the Stripe webhook handler (`/api/webhooks/stripe`) is the sole writer; never add client-side booking creation back. (2) `contact_messages` — written exclusively via Firebase Admin SDK in `/api/contact`; Firestore rules deny all client `create`/`delete` on this collection.
 - **Forms** — React Hook Form + Zod schema validation. Pattern: `const { register, handleSubmit, formState } = useForm<FormType>({ resolver: zodResolver(schema) })`.
 - **Error states** — inline `useState` for error/success messages, not toast libraries.
 - **Loading states** — `useState<boolean>` named `loading`/`isLoading`; renders a `<div className={styles.spinner}>`.
@@ -61,6 +61,10 @@ Repo: `bt-mvp` | Framework: Next.js 16 App Router | Language: TypeScript 5
 | `src/app/api/payments/create-intent/route.ts` | Stripe PaymentIntent + `booking_drafts` write |
 | `src/app/api/webhooks/stripe/route.ts` | Stripe webhook — authoritative booking creation |
 | `src/app/api/emails/send/route.ts` | Resend email API (called from webhook, not browser) |
+| `src/app/api/contact/route.ts` | Contact form API — Firestore write + admin email (no auth) |
+| `src/app/(public)/contact/page.tsx` | Public Contact / Feedback page (server component shell) |
+| `src/app/(public)/contact/ContactForm.tsx` | Contact form client island (React Hook Form + Zod) |
+| `src/app/admin/contact/page.tsx` | Admin contact inbox — lists `contact_messages`, status management |
 | `src/app/book/[sessionId]/payment/CheckoutForm.tsx` | Stripe Elements UI (no Firestore writes) |
 | `firestore.rules` | Firestore security rules (ready to deploy) |
 | `src/components/layout/Header.tsx` | Main nav |
@@ -95,11 +99,11 @@ Repo: `bt-mvp` | Framework: Next.js 16 App Router | Language: TypeScript 5
 
 ## MVP Scope (build now)
 
-- [x] Homepage, About, Gallery, Testimonials, Terms pages
+- [x] Homepage, About, Gallery, Testimonials, Terms, Contact pages
 - [x] Auth: sign-up, login, forgot password
 - [x] User portal: dashboard, find-class, my-classes, my-payments, my-students, account
 - [x] Booking wizard: student → medical → questionnaire → terms → payment → confirmation
-- [x] Admin: venues, classes, sessions, recipes, gallery, instructors, bookings
+- [x] Admin: venues, classes, sessions, recipes, gallery, instructors, bookings, contact inbox
 - [x] Stripe payment (PaymentIntent + Elements)
 - [x] Confirmation emails via Resend
 - [x] **Firestore security rules** (`firestore.rules`) — file exists, **awaiting `firebase deploy --only firestore:rules`**

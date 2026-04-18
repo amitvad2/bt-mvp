@@ -313,3 +313,55 @@ Implemented in `src/app/book/[sessionId]/confirmation/page.tsx`.
 ### Suggested Implementation
 1. Add a `bookingId` URL param to confirmation page; hydrate from Firestore if BookingContext is empty.
 2. Generate a downloadable `.ics` calendar event using the session date/time/venue.
+
+---
+
+## Flow 14: Contact / Feedback Submission
+
+### Current State in Code
+```
+/contact  (public — no auth required)
+  → Visitor fills in ContactForm:
+      - name (required)
+      - email (required)
+      - phone (optional)
+      - category / enquiry type (required select):
+          'general' | 'booking' | 'feedback' | 'technical' | 'other'
+      - message (required, min 10 chars)
+      - consentToReply checkbox (required)
+  → React Hook Form + Zod validates client-side
+  → On submit: POST /api/contact
+      - Zod validates server-side
+      - Firebase Admin SDK writes contact_messages/{id} document:
+          { name, email, phone?, category, message, consentToReply,
+            source: 'contact-page', status: 'new', userId? (if logged in), createdAt }
+      - Resend sends admin notification email to RESEND_ADMIN_EMAIL
+          (non-fatal — submission succeeds even if email send fails)
+      - Returns { success: true, id }
+  → ContactForm shows inline success state (no page navigation)
+  → On error: Returns { error, issues } → inline error message shown
+
+Admin review:
+/admin/contact
+  → Lists contact_messages ordered by createdAt desc
+  → Status filter tabs: all / new / read / replied / closed
+  → "N new" badge on tab and sidebar icon
+  → Expandable row reveals full message body
+  → Status dropdown per row → updateDoc({ status: newValue }) on change
+```
+
+Implemented in:
+- `src/app/(public)/contact/page.tsx` — server component layout
+- `src/app/(public)/contact/ContactForm.tsx` — `'use client'` form island
+- `src/app/api/contact/route.ts` — API handler (no auth required)
+- `src/app/admin/contact/page.tsx` — admin inbox
+
+### Missing Steps
+- No auto-reply email to the submitter (only admin notification).
+- No rate limiting on `POST /api/contact` (could be spammed by bots).
+- Messages not surfaced on the admin dashboard count cards.
+
+### Suggested Implementation
+1. Add a confirmation auto-reply email to the submitter using Resend (`type: 'contact-confirmation'`).
+2. Add CAPTCHA or honeypot field to the contact form to deter spam submissions.
+3. Include a "New contact messages" count card on the admin dashboard.

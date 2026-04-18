@@ -26,7 +26,7 @@ function SessionBrowserContent({ onBook }: Props) {
     const [venues, setVenues] = useState<Venue[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(false);
-    const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+    const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
     const [filters, setFilters] = useState({
         venueId: 'all',
         type: searchParams.get('type') || 'all',

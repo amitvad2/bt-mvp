@@ -33,6 +33,7 @@ export default function Footer() {
                         <li><Link href="/">Home</Link></li>
                         <li><Link href="/about">About Us</Link></li>
                         <li><Link href="/gallery">Gallery</Link></li>
+                        <li><Link href="/contact">Contact Us</Link></li>
                         <li><Link href="/terms">Terms & Conditions</Link></li>
                     </ul>
                 </div>

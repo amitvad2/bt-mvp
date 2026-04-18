@@ -170,6 +170,36 @@ export interface Instructor {
     createdAt: any;
 }
 
+// ============================================================
+// Contact / Feedback
+// ============================================================
+
+export type ContactCategory =
+    | 'general'
+    | 'class-info'
+    | 'booking-help'
+    | 'dietary-allergy'
+    | 'private-event'
+    | 'technical'
+    | 'feedback';
+
+export type ContactStatus = 'new' | 'read' | 'replied' | 'closed';
+
+export interface ContactMessage {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    category: ContactCategory;
+    message: string;
+    consentToReply: boolean;
+    source: 'contact-page';
+    status: ContactStatus;
+    userId?: string;
+    createdAt: any;
+}
+
+// ============================================================
 // Booking wizard state
 export interface BookingWizardState {
     sessionId: string;

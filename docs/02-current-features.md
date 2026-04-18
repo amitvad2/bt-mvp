@@ -39,20 +39,30 @@ Status key: **Complete** | **Partial** | **Placeholder**
 - **Relevant files:**
   - `src/app/(public)/testimonies/TestimoniesCtaButtons.tsx` — auth-aware CTA client component
 
-### 1.5 Terms & Conditions Page
+### 1.5 Contact / Feedback Page
+- **Status:** Complete
+- **File:** [src/app/(public)/contact/page.tsx](../src/app/(public)/contact/page.tsx), [ContactForm.tsx](../src/app/(public)/contact/ContactForm.tsx)
+- **How it works:** Server component shell with a `'use client'` form island (`ContactForm.tsx`). Accessible without authentication. Three-panel layout: contact form, contact details sidebar, and FAQ section.
+  - **Form fields:** name (required), email (required), phone (optional), enquiry category (required select), message (required, min 10 chars), consent checkbox (required)
+  - **Validation:** React Hook Form + Zod schema
+  - **Submission:** `POST /api/contact` — writes to Firestore `contact_messages` via Admin SDK, sends admin email notification via Resend
+  - **States:** loading spinner during submit, inline success state on completion, inline error message on failure
+- **Navigation:** "Contact" link added to header `navLinks` (after Testimonies); "Contact Us" link added to Footer Quick Links
+
+### 1.6 Terms & Conditions Page
 - **Status:** Complete
 - **File:** [src/app/(public)/terms/page.tsx](../src/app/(public)/terms/page.tsx)
 - **How it works:** Static page rendering the full T&C text for Blooming Tastebuds.
 
-### 1.6 Header / Navigation
+### 1.7 Header / Navigation
 - **Status:** Complete
 - **File:** [src/components/layout/Header.tsx](../src/components/layout/Header.tsx)
-- **How it works:** Responsive nav bar with logo, page links, and auth-aware CTA (shows "Login / Sign Up" or "My Portal" based on auth state). Includes hamburger menu for mobile.
+- **How it works:** Responsive nav bar with logo, page links, and auth-aware CTA (shows "Login / Sign Up" or "My Portal" based on auth state). Includes hamburger menu for mobile. Nav links: Home, About, Gallery, Testimonies, Contact.
 
-### 1.7 Footer
+### 1.8 Footer
 - **Status:** Complete
 - **File:** [src/components/layout/Footer.tsx](../src/components/layout/Footer.tsx)
-- **How it works:** Static footer with social links (YouTube, Facebook, Instagram, LinkedIn), quick links, and contact information.
+- **How it works:** Static footer with social links (YouTube, Facebook, Instagram, LinkedIn), quick links (including "Contact Us → /contact"), and contact information.
 
 ---
 
@@ -225,6 +235,16 @@ Status key: **Complete** | **Partial** | **Placeholder**
 - **Status:** Partial
 - **File:** [src/app/admin/bookings/page.tsx](../src/app/admin/bookings/page.tsx)
 - **How it works:** Read-only view of all bookings. Filters by session and status. No cancellation or refund action buttons wired up.
+
+### 5.9 Contact Inbox
+- **Status:** Complete
+- **File:** [src/app/admin/contact/page.tsx](../src/app/admin/contact/page.tsx)
+- **How it works:** Lists all contact/feedback submissions from the `contact_messages` Firestore collection, ordered by date descending. Features:
+  - Expandable rows to view the full message body
+  - Status filter tabs (all / new / read / replied / closed)
+  - Status dropdown per message that calls `updateDoc` on change
+  - "N new" badge showing count of unread messages
+  - Sidebar navigation entry with `MessageSquare` icon
 
 ---
 

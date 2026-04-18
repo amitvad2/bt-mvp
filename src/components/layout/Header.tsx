@@ -16,6 +16,7 @@ export default function Header() {
         { href: '/classes', label: 'Classes' },
         { href: '/gallery', label: 'Gallery' },
         { href: '/testimonies', label: 'Testimonies' },
+        { href: '/contact', label: 'Contact' },
     ];
 
     return (

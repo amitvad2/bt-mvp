@@ -24,6 +24,31 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Auth:** None enforced at route level (internal use only).
 - **Notes:** Uses `resend.emails.send()`. HTML templates are inline in the route handler. Graceful degradation — email failure does not block booking creation.
 
+### `POST /api/contact`
+- **Status:** Detected
+- **File:** [src/app/api/contact/route.ts](../src/app/api/contact/route.ts)
+- **Purpose:** Accepts contact/feedback form submissions from the public `/contact` page. No authentication required.
+- **Auth:** None — publicly accessible.
+- **Input (JSON body):**
+  ```json
+  {
+    "name": "string (required)",
+    "email": "string (required, valid email)",
+    "phone": "string (optional)",
+    "category": "'general' | 'booking' | 'feedback' | 'technical' | 'other' (required)",
+    "message": "string (required, min 10 chars)",
+    "consentToReply": "boolean (required, must be true)"
+  }
+  ```
+- **Output (success):** `{ success: true, id: "<firestoreDocId>" }`
+- **Output (validation error):** `{ error: "Validation failed", issues: [...] }` (HTTP 400)
+- **Output (server error):** `{ error: "Failed to submit message" }` (HTTP 500)
+- **Side effects:**
+  1. Validates request body with Zod server-side.
+  2. Writes a `contact_messages/{id}` document via Firebase Admin SDK with fields: `name`, `email`, `phone?`, `category`, `message`, `consentToReply`, `source: 'contact-page'`, `status: 'new'`, `userId?` (if caller is authenticated), `createdAt`.
+  3. Sends an admin notification email via Resend to `RESEND_ADMIN_EMAIL` (falls back to `bloomingtastebuds@gmail.com`). Email failure is **non-fatal** — the Firestore write is not rolled back.
+- **Environment variable:** `RESEND_ADMIN_EMAIL` (optional; defaults to `bloomingtastebuds@gmail.com`)
+
 ### `POST /api/webhooks/stripe`
 - **Status:** Detected
 - **File:** [src/app/api/webhooks/stripe/route.ts](../src/app/api/webhooks/stripe/route.ts)
@@ -69,7 +94,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Status:** Detected
 - **File:** `src/lib/firebase.ts` — `getFirestore(app)` exported as `db`
 - **Access pattern:** Direct client-SDK reads/writes from React components and server components. API routes use Firebase Admin SDK (`adminDb`). No ORM or abstraction layer.
-- **Collections:** `users`, `students`, `venues`, `classes`, `sessions`, `recipes`, `bookings`, `gallery`, `instructors`, `booking_drafts`
+- **Collections:** `users`, `students`, `venues`, `classes`, `sessions`, `recipes`, `bookings`, `gallery`, `instructors`, `booking_drafts`, `contact_messages`
 - **Security rules:** `firestore.rules` present in repo root — per-collection access control implemented. **Awaiting deployment:** `firebase deploy --only firestore:rules`. See [firestore-rules-notes.md](./firestore-rules-notes.md).
 
 ### Firebase Storage
@@ -114,8 +139,9 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Files:** [src/lib/resend.ts](../src/lib/resend.ts), [src/app/api/emails/send/route.ts](../src/app/api/emails/send/route.ts)
 - **SDK Version:** resend@6.9.2
 - **From address:** Reads `RESEND_FROM_EMAIL` env var; defaults to `onboarding@resend.dev` (test address — must be changed for production).
-- **Email types:** `confirmation`, `cancellation`
-- **HTML templates:** Inline in route handler (not file-based)
+- **Email types:** `confirmation`, `cancellation` (booking emails via `/api/emails/send`); admin contact notification (inline in `/api/contact`)
+- **Admin notification recipient:** `RESEND_ADMIN_EMAIL` env var; defaults to `bloomingtastebuds@gmail.com`
+- **HTML templates:** Inline in route handlers (not file-based)
 - **Notes:** A verified sending domain must be configured in Resend dashboard for production use.
 
 ### Firebase Auth Emails
@@ -194,7 +220,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 | Firebase Admin SDK | Server-side auth + DB | Detected | — |
 | Stripe | Payment processing | Detected | Refund flow |
 | Stripe Webhooks | Async payment events / booking creation | **Detected** | Register production endpoint in Stripe Dashboard |
-| Resend | Transactional emails | Detected | Production sending domain (`RESEND_FROM_EMAIL`) |
+| Resend | Transactional emails + contact admin notifications | Detected | Production sending domain (`RESEND_FROM_EMAIL`); set `RESEND_ADMIN_EMAIL` |
 | Leaflet / React-Leaflet | Session maps | Detected | — |
 | Vercel | Hosting / deployment | Partially Detected | Env vars must be set |
 | PayPal | Alternate payment | Not Found | Full integration needed |
