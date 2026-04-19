@@ -15,7 +15,21 @@ export default function HomePage() {
         <>
             {/* ── HERO ── */}
             <section className={styles.hero}>
-                <div className={styles.heroBg}></div>
+                {/* Static image — shown before video loads or when reduced-motion is on */}
+                <div className={styles.heroBg} aria-hidden="true"></div>
+                {/* Looping background video. Hidden via CSS when prefers-reduced-motion is set. */}
+                <video
+                    className={styles.heroBgVideo}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    poster="/images/hero-dynamic.png"
+                    aria-hidden="true"
+                >
+                    <source src="/videos/hero-loop.mp4" type="video/mp4" />
+                </video>
                 {/* Floating food emojis */}
                 <div className={styles.floatingEmojis} aria-hidden="true">
                     <span className={styles.floater} style={{ left: '5%', animationDelay: '0s', animationDuration: '6s' }}>🥕</span>
