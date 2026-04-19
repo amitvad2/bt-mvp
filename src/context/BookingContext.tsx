@@ -1,5 +1,17 @@
 'use client';
 
+/**
+ * BookingContext — multi-step booking wizard state.
+ *
+ * State is persisted to sessionStorage under the key `booking_<sessionId>` so
+ * that a hard refresh mid-wizard (or a Stripe redirect back) does not lose the
+ * user's progress. State is cleared from both React and sessionStorage when the
+ * user reaches the confirmation page (via `clearState`).
+ *
+ * `BookingProvider` is mounted at the `/book/[sessionId]` layout level, so a
+ * separate context instance exists per session being booked.
+ */
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -23,7 +35,7 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
     const [state, setState] = useState<BookingWizardState>({ sessionId });
     const [loading, setLoading] = useState(true);
 
-    // Initial load from sessionStorage
+    // Restore previously saved wizard state from sessionStorage on mount.
     useEffect(() => {
         const savedState = sessionStorage.getItem(`booking_${sessionId}`);
         if (savedState) {
@@ -35,13 +47,15 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
         }
     }, [sessionId]);
 
-    // Save to sessionStorage whenever state changes
+    // Persist to sessionStorage on every state change, but only once the wizard
+    // has progressed past the initial empty state (more than just sessionId).
     useEffect(() => {
-        if (Object.keys(state).length > 1) { // Only save if more than just sessionId
+        if (Object.keys(state).length > 1) {
             sessionStorage.setItem(`booking_${sessionId}`, JSON.stringify(state));
         }
     }, [state, sessionId]);
 
+    // Fetch the session document to populate price, dates, and other display data.
     useEffect(() => {
         const fetchSession = async () => {
             try {
@@ -59,11 +73,21 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
     }, [sessionId]);
 
     const setSession = useCallback((session: Session) => setState(prev => ({ ...prev, session })), []);
-    const setStudent = useCallback((student: Student | 'self') => setState(prev => ({ ...prev, student, studentId: student === 'self' ? undefined : student.id })), []);
+
+    // `student` is either a Student document or the sentinel value 'self'.
+    // 'self' means the booking is for the young adult making the booking —
+    // no separate student profile is linked, and studentId is left undefined.
+    const setStudent = useCallback((student: Student | 'self') => setState(prev => ({
+        ...prev,
+        student,
+        studentId: student === 'self' ? undefined : student.id,
+    })), []);
+
     const setMedicalInfo = useCallback((medicalInfo: MedicalInfo) => setState(prev => ({ ...prev, medicalInfo })), []);
     const setEmergencyContact = useCallback((emergencyContact: EmergencyContact) => setState(prev => ({ ...prev, emergencyContact })), []);
     const setQuestionnaire = useCallback((questionnaire: Questionnaire) => setState(prev => ({ ...prev, questionnaire })), []);
     const setTermsAccepted = useCallback((termsAccepted: boolean) => setState(prev => ({ ...prev, termsAccepted })), []);
+
     const clearState = useCallback(() => {
         setState({ sessionId });
         sessionStorage.removeItem(`booking_${sessionId}`);
@@ -81,6 +105,10 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
     );
 }
 
+/**
+ * Returns the booking wizard context for the current session.
+ * Must be called inside a component wrapped by BookingProvider.
+ */
 export function useBooking() {
     const ctx = useContext(BookingContext);
     if (!ctx) throw new Error('useBooking must be used within BookingProvider');

@@ -69,7 +69,6 @@ export default function AboutPage() {
                             <ul className={styles.volunteerList}>
                                 <li><strong>Bags of Taste:</strong> Teaching vulnerable individuals the art of home cooking through online mentoring.</li>
                                 <li><strong>FoodCycle:</strong> Supporting the delivery of community meals to those in need.</li>
-                                <li><strong>Sue Ryder:</strong> Contributing to meaningful causes while building connections through work in their charity shop.</li>
                                 <li><strong>Girlguiding:</strong> Assisting in running activities that help young girls build confidence, teamwork, and essential life skills.</li>
                             </ul>
 

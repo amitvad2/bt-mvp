@@ -1,0 +1,188 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header h1 {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-1);
+}
+
+.header p {
+    color: var(--bt-text-muted);
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--space-6);
+    align-items: flex-start;
+}
+
+/* Contact card — top-left */
+.contactCard {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.contactIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--bt-green-50, #f0fdf4);
+    color: var(--bt-green-600, #16a34a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contactCard h3 {
+    font-family: var(--font-body);
+    font-size: 1.2rem;
+}
+
+.contactCard p {
+    font-size: 0.9rem;
+    color: var(--bt-text-muted);
+    max-width: 28ch;
+    line-height: 1.5;
+}
+
+.emailNote {
+    font-size: 0.8rem;
+    color: var(--bt-text-muted);
+}
+
+.emailNote a {
+    color: var(--bt-green-600, #16a34a);
+    text-decoration: underline;
+}
+
+/* Quick links card — top-right */
+.quickLinksCard h3 {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+}
+
+.subText {
+    font-size: 0.85rem;
+    color: var(--bt-text-muted);
+    margin-bottom: var(--space-4);
+}
+
+.linkList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.linkList li a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--radius);
+    color: var(--bt-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+}
+
+.linkList li a:hover {
+    background: var(--bt-gray-50);
+    color: var(--bt-green-700, #15803d);
+}
+
+.linkList li a span {
+    flex: 1;
+}
+
+.chevron {
+    color: var(--bt-text-muted);
+}
+
+/* FAQ card — full width bottom row */
+.faqCard {
+    grid-column: 1 / -1;
+}
+
+.faqCard h3 {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    margin-bottom: var(--space-5);
+}
+
+.faqList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.faqItem {
+    border: 1px solid var(--bt-gray-100);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.faqItem summary {
+    padding: var(--space-4) var(--space-5);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.faqItem summary::-webkit-details-marker {
+    display: none;
+}
+
+.faqItem summary::after {
+    content: '+';
+    float: right;
+    color: var(--bt-text-muted);
+    font-weight: 400;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.faqItem[open] summary::after {
+    content: '−';
+}
+
+.faqItem[open] summary {
+    border-bottom: 1px solid var(--bt-gray-100);
+    background: var(--bt-gray-50);
+}
+
+.faqItem p {
+    padding: var(--space-4) var(--space-5);
+    font-size: 0.875rem;
+    color: var(--bt-text-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.faqItem p a {
+    color: var(--bt-green-600, #16a34a);
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .faqCard {
+        grid-column: 1;
+    }
+}

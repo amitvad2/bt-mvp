@@ -1,22 +1,33 @@
+/**
+ * Edge middleware — UX-layer route protection.
+ *
+ * This middleware is a convenience fence, NOT a security boundary.
+ * It redirects unauthenticated users away from protected routes based on the
+ * presence of the `bt_session` cookie, which is a plain boolean set by
+ * AuthContext. Edge middleware cannot call the Firebase Admin SDK to verify
+ * ID tokens, so the cookie is trusted without cryptographic verification.
+ *
+ * Real security is enforced by Firestore security rules and server-side
+ * API route guards (adminInitError checks, etc.).
+ */
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Routes that require authentication (server-side check via cookie)
-// NOTE: /portal is NOT listed here — it is protected client-side by PortalLayout
+// /portal is intentionally absent — it is guarded client-side by PortalLayout,
+// which can read btUser.role. Middleware cannot distinguish roles from the cookie.
 const protectedRoutes = ['/book', '/admin'];
-// Routes that require admin role (checked client-side too)
-const adminRoutes = ['/admin'];
-// Routes that redirect to dashboard if already logged in
+
+// Routes that redirect authenticated users to the dashboard (no re-login needed).
 const authRoutes = ['/auth/login', '/auth/signup', '/auth/forgot-password'];
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Check for Firebase auth session cookie
     const sessionCookie = request.cookies.get('bt_session')?.value;
     const isAuthenticated = !!sessionCookie;
 
-    // Redirect authenticated users away from auth pages
+    // Send authenticated users away from login/signup pages.
     if (authRoutes.some((route) => pathname.startsWith(route))) {
         if (isAuthenticated) {
             return NextResponse.redirect(new URL('/portal/dashboard', request.url));
@@ -24,7 +35,7 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Protect portal, book, and admin routes
+    // Redirect unauthenticated users to login, preserving the intended destination.
     if (protectedRoutes.some((route) => pathname.startsWith(route))) {
         if (!isAuthenticated) {
             const loginUrl = new URL('/auth/login', request.url);

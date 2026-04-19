@@ -101,7 +101,9 @@ export async function POST(req: Request) {
                 studentId: studentId ?? 'self',
                 bookedByUid,
                 className: className ?? '',
-                env: 'test', // reminder that this is test mode
+                // Stripe metadata is informational only — the webhook reads from the
+                // booking_draft document, not from PaymentIntent metadata.
+                env: process.env.NODE_ENV ?? 'development',
             },
         });
 

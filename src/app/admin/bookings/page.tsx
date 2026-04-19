@@ -1,5 +1,19 @@
 'use client';
 
+/**
+ * Admin bookings list — read-only view of all confirmed bookings.
+ *
+ * All booking documents are created exclusively by the Stripe webhook handler
+ * (/api/webhooks/stripe). No booking is ever created client-side.
+ *
+ * Booking document IDs are Stripe PaymentIntent IDs (pi_xxx…), which allows
+ * direct cross-referencing with the Stripe Dashboard.
+ *
+ * Deleting a record here removes the Firestore document only — it does NOT
+ * cancel the session spot or issue a Stripe refund. Refunds must be processed
+ * separately in the Stripe Dashboard.
+ */
+
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';

@@ -116,7 +116,9 @@ export default function CheckoutForm() {
             </div>
 
             <button
-                disabled={isLoading || !stripe || !elements || !isReady}
+                // isReady guards against submitting before PaymentElement has fully mounted —
+            // calling stripe.confirmPayment before the element is ready throws an error.
+            disabled={isLoading || !stripe || !elements || !isReady}
                 id="submit"
                 className="btn btn-primary btn-full"
             >
