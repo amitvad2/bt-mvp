@@ -12,7 +12,7 @@ const schema = z.object({
     email: z.string().email('Enter a valid email address'),
     phone: z.string().optional(),
     category: z.enum(['general', 'class-info', 'booking-help', 'dietary-allergy', 'private-event', 'technical', 'feedback'] as const, {
-        errorMap: () => ({ message: 'Please select an enquiry type' }),
+        message: 'Please select an enquiry type',
     }),
     message: z.string().min(10, 'Please enter at least 10 characters'),
     consentToReply: z.boolean().refine(v => v === true, { message: 'Please consent to being contacted back' }),
