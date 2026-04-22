@@ -113,17 +113,27 @@ service cloud.firestore {
     // =========================================================================
 
     match /users/{uid} {
-      // Each user may read and update their own profile.
-      // (AuthContext reads this on every login; AccountPage writes it.)
-      allow read, update: if isOwner(uid);
+      // Read: own profile (AuthContext on every login) or admin dashboard.
+      allow read: if isOwner(uid) || isAdmin();
 
-      // User creation: only the user themselves may create their own document.
-      // (AuthContext.signUp and signInWithGoogle both write users/{uid}.)
-      allow create: if isOwner(uid);
+      // Create: user creates their own profile at sign-up.
+      //   - document uid must match the authenticated uid (prevents spoofing)
+      //   - role must be a non-admin role; 'admin' accounts can only be created
+      //     server-side via the Firebase Admin SDK or Firebase Console
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role in ['parent', 'youngAdult'];
 
-      // Admins may read all user profiles (e.g. admin dashboard stats).
-      // Admins may NOT update or delete user accounts from the client SDK.
-      allow read: if isAdmin();
+      // Update: owner may only change safe display fields.
+      //   - affectedKeys check ensures no other field can be touched in one call
+      //   - explicit equality guards defend against full-document overwrites
+      //     (setDoc without merge) that carry unchanged privileged values
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['firstName', 'lastName', 'phone', 'updatedAt'])
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.uid  == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt;
     }
 
 
@@ -132,31 +142,31 @@ service cloud.firestore {
     // =========================================================================
 
     match /students/{studentId} {
-      // A parent can read their own students.
-      // Query pattern: where('parentUid', '==', user.uid) — Firestore validates
-      // this constraint matches the rule, so collection scans are safe.
-      allow read: if isSignedIn()
-        && resource.data.parentUid == request.auth.uid;
+      // Read: own parent (query uses where('parentUid', '==', user.uid)) or admin.
+      // Firestore validates the query constraint matches the rule, so collection
+      // scans are safe for the parentUid == uid pattern.
+      allow read: if isOwner(resource.data.parentUid) || isAdmin();
 
-      // A parent may create a student only if they set themselves as the owner.
+      // Create: parent sets themselves as owner; only expected fields allowed.
+      // medicalInfo/emergencyContact/questionnaire are written exclusively by the
+      // Stripe webhook (Admin SDK) — no client should set them at creation time.
       allow create: if isSignedIn()
-        && request.resource.data.parentUid == request.auth.uid;
+        && request.resource.data.parentUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(
+             ['firstName', 'lastName', 'dateOfBirth', 'parentUid', 'createdAt']);
 
-      // A parent may update any field on their own student EXCEPT parentUid.
-      // Covers:
-      //   (a) my-students page — firstName, lastName, dateOfBirth
-      //   (Note: medicalInfo/emergencyContact/questionnaire write-back has
-      //   moved to the webhook — no longer written client-side from CheckoutForm)
+      // Update: owner may only change display fields; parentUid and createdAt
+      // are immutable. medicalInfo/emergencyContact/questionnaire are owned by
+      // the webhook — the affectedKeys guard blocks any client-side write to them.
       allow update: if isSignedIn()
         && resource.data.parentUid == request.auth.uid
-        && request.resource.data.parentUid == resource.data.parentUid;
+        && request.resource.data.parentUid == resource.data.parentUid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['firstName', 'lastName', 'dateOfBirth', 'updatedAt']);
 
-      // A parent may delete only their own students.
+      // Delete: owner only.
       allow delete: if isSignedIn()
         && resource.data.parentUid == request.auth.uid;
-
-      // Admins may read all student profiles.
-      allow read: if isAdmin();
     }
 
 

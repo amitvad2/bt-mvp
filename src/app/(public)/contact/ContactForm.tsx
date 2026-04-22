@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/context/AuthContext';
 import styles from './page.module.css';
 
 const schema = z.object({
@@ -31,7 +30,6 @@ const CATEGORIES: { value: FormData['category']; label: string }[] = [
 ];
 
 export default function ContactForm() {
-    const { user } = useAuth();
     const [serverError, setServerError] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -47,7 +45,7 @@ export default function ContactForm() {
             const res = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...data, userId: user?.uid ?? undefined }),
+                body: JSON.stringify(data),
             });
             const json = await res.json();
             if (!res.ok) {

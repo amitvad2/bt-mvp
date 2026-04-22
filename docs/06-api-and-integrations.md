@@ -95,7 +95,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **File:** `src/lib/firebase.ts` — `getFirestore(app)` exported as `db`
 - **Access pattern:** Direct client-SDK reads/writes from React components and server components. API routes use Firebase Admin SDK (`adminDb`). No ORM or abstraction layer.
 - **Collections:** `users`, `students`, `venues`, `classes`, `sessions`, `recipes`, `bookings`, `gallery`, `instructors`, `booking_drafts`, `contact_messages`
-- **Security rules:** `firestore.rules` present in repo root — per-collection access control implemented. **Awaiting deployment:** `firebase deploy --only firestore:rules`. See [firestore-rules-notes.md](./firestore-rules-notes.md).
+- **Security rules:** `firestore.rules` present in repo root — per-collection access control implemented and deployed to `bt-mvp-d057f`. To redeploy after changes: `firebase deploy --only firestore:rules`. See [firestore-rules-notes.md](./firestore-rules-notes.md).
 
 ### Firebase Storage
 - **Status:** Detected
@@ -166,7 +166,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Status:** Detected
 - **Files:** `src/app/admin/*/page.tsx` (7 admin pages)
 - **Pattern:** Each admin page directly uses the Firebase client SDK to CRUD Firestore documents and Firebase Storage (for file uploads).
-- **No dedicated admin API layer** — admin pages interact with Firestore directly via the client SDK. This is acceptable given Firestore security rules would enforce admin-only writes (once rules are implemented).
+- **No dedicated admin API layer** — admin pages interact with Firestore directly via the client SDK. Firestore security rules enforce admin-only writes (`isAdmin()` helper in `firestore.rules`).
 
 ---
 
@@ -188,7 +188,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Status:** Detected
 - **File:** [src/components/layout/Footer.tsx](../src/components/layout/Footer.tsx)
 - **Platforms linked:** YouTube, Facebook, Instagram, LinkedIn
-- **Note:** Links use placeholder/static `href` values. Actual social profile URLs must be confirmed and updated.
+- **URLs:** All confirmed live. LinkedIn updated to `https://www.linkedin.com/in/nisha-vadhel-383624230/` (Apr 2026).
 
 ### YouTube Embed
 - **Status:** Not Found
@@ -215,7 +215,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 | Integration | Purpose | Status | Missing |
 |-------------|---------|--------|---------|
 | Firebase Auth | Authentication, session management | Detected | Email verification not called after sign-up |
-| Firebase Firestore | Primary database | Detected | Rules file exists — needs deployment |
+| Firebase Firestore | Primary database | Detected | — |
 | Firebase Storage | Image file storage | Detected | — |
 | Firebase Admin SDK | Server-side auth + DB | Detected | — |
 | Stripe | Payment processing | Detected | Refund flow |

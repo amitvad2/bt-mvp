@@ -10,11 +10,13 @@ Status key: **Complete** | **Partial** | **Placeholder**
 - **Status:** Complete
 - **File:** [src/app/(public)/page.tsx](../src/app/(public)/page.tsx)
 - **How it works:** SSR server component. Renders hero section, credibility strip, session map (`SessionMapSection`), class journey cards, founder bio, testimonials, and a CTA banner. Hero and banner CTAs are auth-aware client islands (`HomeCtaButtons.tsx`):
-  - **Logged-out:** hero shows "Book a Class" + "Register Free → /auth/signup"; banner shows "Register Now → /auth/signup" + "Explore Classes".
+  - **Logged-out:** hero shows "Book a Class" + "Register Free → /auth/signup"; banner shows "Find a Class → /classes" + "Register Free → /auth/signup".
   - **Logged-in:** hero shows "Book a Class" + "My Portal → /portal/dashboard"; banner shows "Find a Class → /portal/find-class" + "My Portal → /portal/dashboard". Register prompts are hidden entirely.
+- **Hero background:** Looping muted video (`/videos/hero-loop.mp4`) with `poster="/images/hero-dynamic.png"` as fallback. Static image shown for `prefers-reduced-motion` users. Dark gradient overlay ensures text readability over video.
 - **Relevant files:**
   - `src/app/(public)/HomeCtaButtons.tsx` — auth-aware `HeroCtas` and `BannerCtas` client components
   - `src/components/home/SessionMapSection.tsx`
+  - `public/videos/hero-loop.mp4` — hero background video
 
 ### 1.2 About Page
 - **Status:** Complete
@@ -28,7 +30,7 @@ Status key: **Complete** | **Partial** | **Placeholder**
 ### 1.3 Gallery Page
 - **Status:** Complete
 - **File:** [src/app/(public)/gallery/page.tsx](../src/app/(public)/gallery/page.tsx), [GalleryClient.tsx](../src/app/(public)/gallery/GalleryClient.tsx)
-- **How it works:** Server component fetches `gallery` collection from Firestore. Passes images to client component which renders them in a masonry/grid layout with category filters (`cooking-classes`, `cakes`, `cookies`, `breads`).
+- **How it works:** Server component fetches `gallery` collection from Firestore. Passes images to client component which renders them in a masonry/grid layout with category filters (`cooking-classes`, `personal-gallery`). Legacy Firestore values (`cakes`, `cookies`, `breads`) are normalised to `personal-gallery` at read time via `normalizeCategory()` in `src/lib/gallery-categories.ts` — no data migration required.
 
 ### 1.4 Testimonials Page
 - **Status:** Complete
@@ -140,6 +142,11 @@ Status key: **Complete** | **Partial** | **Placeholder**
 - **File:** [src/app/portal/account/page.tsx](../src/app/portal/account/page.tsx)
 - **How it works:** Displays current user name and email from `btUser`. Edit functionality present but may not persist changes back to Firestore. Password change not wired through the UI.
 
+### 3.7 Support & Help
+- **Status:** Complete
+- **File:** [src/app/portal/support/page.tsx](../src/app/portal/support/page.tsx)
+- **How it works:** Static server component. Two-column layout: contact card (links to `/contact`) + quick links to key portal pages. Full-width FAQ section below using native `<details>`/`<summary>` — no JS required. Six FAQ items covering: booking process, refunds, missing bookings, student profiles, food allergies, account/email changes.
+
 ---
 
 ## 4. Booking Wizard
@@ -224,7 +231,7 @@ Status key: **Complete** | **Partial** | **Placeholder**
 ### 5.6 Gallery Management
 - **Status:** Complete
 - **File:** [src/app/admin/gallery/page.tsx](../src/app/admin/gallery/page.tsx)
-- **How it works:** Upload images to Firebase Storage, create `gallery` documents with `imageUrl`, `description`, `altText`, `order`, `category`. Sort/reorder support.
+- **How it works:** Upload images to Firebase Storage, create `gallery` documents with `imageUrl`, `description`, `altText`, `order`, `category`. Sort/reorder support. Categories are `cooking-classes` and `personal-gallery` (legacy values normalised on load via `normalizeCategory()`).
 
 ### 5.7 Instructor Management
 - **Status:** Complete
@@ -315,7 +322,7 @@ Status key: **Complete** | **Partial** | **Placeholder**
 - **Status:** Complete
 - **Collections:** `users`, `students`, `venues`, `classes`, `sessions`, `recipes`, `bookings`, `gallery`, `instructors`, `booking_drafts`
 - **`booking_drafts`:** Server-side only (Admin SDK). Holds full booking wizard state keyed by `paymentIntentId`. Written by `create-intent`, read and deleted by the Stripe webhook. Firestore rules deny all client access.
-- **Security rules:** `firestore.rules` is present in the repository root with per-collection access control. **Awaiting deployment:** `firebase deploy --only firestore:rules`.
+- **Security rules:** `firestore.rules` is present in the repository root with per-collection access control. Deployed to Firebase project `bt-mvp-d057f`. To redeploy after rule changes: `firebase deploy --only firestore:rules`.
 
 ---
 
@@ -334,5 +341,4 @@ Status key: **Complete** | **Partial** | **Placeholder**
 | Password change in account page | UI incomplete |
 | Email reminders | No scheduler or cron |
 | PayPal payment option | Only Stripe is wired; PayPal not present |
-| Firestore rules deployment | `firestore.rules` file exists but must be deployed: `firebase deploy --only firestore:rules` |
 | Production Stripe webhook endpoint | Must be registered in Stripe Dashboard before go-live |

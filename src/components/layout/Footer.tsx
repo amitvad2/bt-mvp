@@ -22,7 +22,7 @@ export default function Footer() {
                         <a href="https://www.youtube.com/@bloomingtastebuds" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><Youtube size={20} /></a>
                         <a href="https://www.facebook.com/nishavadhel4" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><Facebook size={20} /></a>
                         <a href="https://www.instagram.com/blooming_tastebuds/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={20} /></a>
-                        <a href="https://www.linkedin.com/in/nisha-vadhel-a55a121a0/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={20} /></a>
+                        <a href="https://www.linkedin.com/in/nisha-vadhel-383624230/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={20} /></a>
                     </div>
                 </div>
 

@@ -22,8 +22,6 @@ export async function POST(req: Request) {
         const body = await req.json();
 
         const {
-            // Payment
-            amount,
             // Session identity
             sessionId,
             // User (from AuthContext in the client)
@@ -46,6 +44,8 @@ export async function POST(req: Request) {
             questionnaire,
             termsAccepted,
         } = body;
+        // NOTE: `amount` is intentionally NOT taken from the client body.
+        // It is read from Firestore below to prevent price manipulation.
 
         // --- Firebase Admin health check ---
         // Fail fast before creating a PaymentIntent if the Admin SDK is broken,
@@ -64,14 +64,13 @@ export async function POST(req: Request) {
         }
 
         // --- Basic validation ---
-        if (!sessionId || !amount || !bookedByUid) {
+        if (!sessionId || !bookedByUid) {
             console.error('[create-intent] Missing required fields:', {
                 sessionId: !!sessionId,
-                amount: !!amount,
                 bookedByUid: !!bookedByUid,
             });
             return NextResponse.json(
-                { error: 'Missing required fields: sessionId, amount, bookedByUid' },
+                { error: 'Missing required fields: sessionId, bookedByUid' },
                 { status: 400 }
             );
         }
@@ -80,6 +79,36 @@ export async function POST(req: Request) {
             console.error('[create-intent] STRIPE_SECRET_KEY is not configured');
             return NextResponse.json(
                 { error: 'Payment service is not configured. Please contact support.' },
+                { status: 500 }
+            );
+        }
+
+        // --- Server-side session lookup: authoritative price + availability ---
+        // Never trust the client-supplied amount — always read from Firestore.
+        const sessionDoc = await adminDb.doc(`sessions/${sessionId}`).get();
+        if (!sessionDoc.exists) {
+            return NextResponse.json({ error: 'Session not found.' }, { status: 400 });
+        }
+        const sessionData = sessionDoc.data()!;
+
+        if (sessionData.status !== 'open') {
+            return NextResponse.json(
+                { error: 'This session is no longer accepting bookings.' },
+                { status: 400 }
+            );
+        }
+        if (typeof sessionData.spotsAvailable === 'number' && sessionData.spotsAvailable <= 0) {
+            return NextResponse.json(
+                { error: 'Sorry, this session is now full.' },
+                { status: 400 }
+            );
+        }
+
+        const amount: number = sessionData.price;
+        if (!amount || typeof amount !== 'number' || amount <= 0) {
+            console.error('[create-intent] Session has invalid price:', { sessionId, price: sessionData.price });
+            return NextResponse.json(
+                { error: 'Session pricing is unavailable. Please contact support.' },
                 { status: 500 }
             );
         }

@@ -68,7 +68,8 @@ bt-mvp/
 │   │   │   ├── my-classes/page.tsx
 │   │   │   ├── my-payments/page.tsx
 │   │   │   ├── my-students/page.tsx
-│   │   │   └── account/page.tsx
+│   │   │   ├── account/page.tsx
+│   │   │   └── support/page.tsx
 │   │   │
 │   │   ├── book/[sessionId]/        # Dynamic booking wizard
 │   │   │   ├── layout.tsx           # Progress bar layout
@@ -86,6 +87,7 @@ bt-mvp/
 │   │   │   ├── dashboard/page.tsx
 │   │   │   ├── bookings/page.tsx
 │   │   │   ├── classes/page.tsx
+│   │   │   ├── contact/page.tsx
 │   │   │   ├── gallery/page.tsx
 │   │   │   ├── instructors/page.tsx
 │   │   │   ├── recipes/page.tsx
@@ -94,7 +96,9 @@ bt-mvp/
 │   │   │
 │   │   ├── api/
 │   │   │   ├── payments/create-intent/route.ts
-│   │   │   └── emails/send/route.ts
+│   │   │   ├── emails/send/route.ts
+│   │   │   ├── contact/route.ts
+│   │   │   └── webhooks/stripe/route.ts
 │   │   │
 │   │   ├── layout.tsx               # Root layout — AuthProvider wrapper
 │   │   └── globals.css
@@ -120,7 +124,8 @@ bt-mvp/
 │   │   ├── firebase.ts              # Firebase client SDK init
 │   │   ├── firebase-admin.ts        # Firebase Admin SDK init
 │   │   ├── stripe.ts                # Stripe server-side client
-│   │   └── resend.ts                # Resend email client
+│   │   ├── resend.ts                # Resend email client
+│   │   └── gallery-categories.ts   # normalizeCategory() + shared category constants
 │   │
 │   ├── types/
 │   │   └── index.ts                 # All shared TypeScript interfaces
@@ -130,7 +135,8 @@ bt-mvp/
 ├── public/
 │   ├── blooming_tastebuds_favicon.ico
 │   ├── founder.jpg (nisha-portrait.jpg)
-│   └── images/                      # Hero, gallery, and review photos
+│   ├── images/                      # Hero, gallery, and review photos
+│   └── videos/                      # Hero background video (hero-loop.mp4)
 │
 ├── .env.local.example               # Environment variable template
 ├── storage.rules                    # Firebase Storage security rules
@@ -182,6 +188,7 @@ Next.js App Router with **route groups** and a **dynamic segment** for bookings.
 | `/portal/my-payments` | `src/app/portal/my-payments/page.tsx` |
 | `/portal/my-students` | `src/app/portal/my-students/page.tsx` |
 | `/portal/account` | `src/app/portal/account/page.tsx` |
+| `/portal/support` | `src/app/portal/support/page.tsx` |
 
 ### Booking Wizard (auth required, dynamic `[sessionId]`)
 | Route | File |
@@ -204,12 +211,15 @@ Next.js App Router with **route groups** and a **dynamic segment** for bookings.
 | `/admin/gallery` | `src/app/admin/gallery/page.tsx` |
 | `/admin/instructors` | `src/app/admin/instructors/page.tsx` |
 | `/admin/bookings` | `src/app/admin/bookings/page.tsx` |
+| `/admin/contact` | `src/app/admin/contact/page.tsx` |
 
 ### API Routes
 | Route | File | Method |
 |-------|------|--------|
 | `/api/payments/create-intent` | `src/app/api/payments/create-intent/route.ts` | POST |
 | `/api/emails/send` | `src/app/api/emails/send/route.ts` | POST |
+| `/api/contact` | `src/app/api/contact/route.ts` | POST |
+| `/api/webhooks/stripe` | `src/app/api/webhooks/stripe/route.ts` | POST |
 
 ---
 
@@ -257,9 +267,9 @@ All data operations go through the Firebase client SDK (no custom REST API layer
 | Read session (single) | `sessions/{id}` | `BookingContext` |
 | Read students | `students` | `book/.../student` |
 | Write student | `students` | `book/.../student`, `portal/my-students` |
-| Write booking | `bookings` | `CheckoutForm.tsx` |
-| Decrement spots | `sessions/{id}` | `CheckoutForm.tsx` (Firestore transaction) |
-| Read bookings | `bookings` | `portal/my-classes`, `portal/my-payments` |
+| Write booking | `bookings` | Stripe webhook handler only (Admin SDK) — never client-side |
+| Decrement spots | `sessions/{id}` | Stripe webhook handler only (Admin SDK Firestore transaction) |
+| Read bookings | `bookings` | `portal/my-classes`, `portal/my-payments`, `book/.../confirmation` |
 | Read/write gallery | `gallery` | `portal/gallery` (admin), `(public)/gallery` |
 | Read/write venues | `venues` | `admin/venues` |
 | Read/write classes | `classes` | `admin/classes` |
@@ -277,6 +287,9 @@ All data operations go through the Firebase client SDK (no custom REST API layer
 | `next.config.ts` | Minimal Next.js config |
 | `tsconfig.json` | Strict TypeScript; path alias `@/*` → `src/*` |
 | `storage.rules` | Firebase Storage: public read, authenticated write |
+| `firestore.rules` | Firestore security rules — deployed to `bt-mvp-d057f` |
+| `firebase.json` | Firebase CLI config — points rules files for deployment |
+| `.firebaserc` | Firebase project alias (`default` → `bt-mvp-d057f`) |
 | `eslint.config.mjs` | ESLint (default Next.js config) |
 
 ### Required Environment Variables

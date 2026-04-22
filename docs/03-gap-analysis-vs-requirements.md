@@ -14,7 +14,7 @@ Legend:
 | Homepage describing mission and classes | Yes | `src/app/(public)/page.tsx` — hero, features grid, founder section | None significant | — | — |
 | About Us page with founder story | Yes | `src/app/(public)/about/page.tsx`, `public/founder.jpg` | Photo gallery section on About Us could be richer | Low | Add a small in-page gallery component |
 | Photo gallery | Yes | `src/app/(public)/gallery/page.tsx` + `GalleryClient.tsx` — pulls from Firestore `gallery` collection | — | — | — |
-| Footer with YouTube, Facebook, Instagram, LinkedIn | Yes | `src/components/layout/Footer.tsx` — all four social links present | Verify actual URLs are correct/live | Low | Update href values with real social URLs |
+| Footer with YouTube, Facebook, Instagram, LinkedIn | Yes | `src/components/layout/Footer.tsx` — all four social links present | — | — | LinkedIn URL updated to `linkedin.com/in/nisha-vadhel-383624230/` Apr 2026 |
 | Dedicated Courses page describing the two class types | **No** | No `/courses` route exists | Full page with visual descriptions, schedules, pricing, FAQs for each course type | High | Add `src/app/(public)/courses/page.tsx` as a static page |
 | Testimonials page | Yes | `src/app/(public)/testimonies/page.tsx` | Reviews are hardcoded — not managed via CMS/Firestore | Medium | Add `testimonials` Firestore collection + admin CRUD |
 | Contact / feedback page | **Yes** ✓ | `src/app/(public)/contact/page.tsx` — combined Contact & Feedback with form, sidebar, and FAQ | — | — | Implemented Apr 2026 |
@@ -98,7 +98,7 @@ Legend:
 | Stripe payment at booking time | Yes | Full Stripe Elements flow in booking wizard | — | — | — |
 | Payment status tracked | Yes | `booking.payment.status` field; `receiptUrl` stored | — | — | — |
 | Payment history for users | Yes | `portal/my-payments/page.tsx` | — | — | — |
-| Stripe webhook handler | **No** | `STRIPE_WEBHOOK_SECRET` env var present but no route | Cannot reliably track async payment events (failures, disputes) | High | Add `/api/webhooks/stripe/route.ts` with signature verification |
+| Stripe webhook handler | **Yes** ✓ | `src/app/api/webhooks/stripe/route.ts` — signature-verified, handles `payment_intent.succeeded` + `payment_intent.payment_failed`; all booking creation is server-side via webhook | Register production endpoint in Stripe Dashboard before go-live | — | Implemented Apr 2026 |
 | Refunds (admin-initiated) | **No** | No refund route or UI | Admin cannot issue refunds from within the app | High | Add Stripe `refunds.create()` call tied to booking cancellation |
 | PayPal support | **No** | Not present | Full PayPal SDK integration or Stripe PayPal payment method | Medium | Evaluate Stripe's PayPal gateway vs. native PayPal JS SDK |
 
@@ -122,7 +122,7 @@ Legend:
 |-------------|---------|-----------------|----------------|----------|---------------------|
 | Mobile-responsive design | Yes | CSS Modules with responsive layouts; mobile menu in Header | — | — | — |
 | Route protection (auth) | Yes | `src/middleware.ts` — protects `/book/*` and `/admin/*` | — | — | — |
-| Firestore security rules | **No** | `storage.rules` present; no `firestore.rules` file | All Firestore access is unrestricted without rules | Critical | Add `firestore.rules` with proper collection-level access control |
+| Firestore security rules | **Yes** ✓ | `firestore.rules` — per-collection access control for all collections; deployed to `bt-mvp-d057f` | — | — | Implemented and deployed Apr 2026 |
 | Input validation | Yes | Zod schemas + React Hook Form on all forms | — | — | — |
 | Error handling on API routes | Partial | Try/catch in API routes; client error states in forms | No global error boundary | Low | Add Next.js `error.tsx` pages |
 | Loading states | Yes | Spinner components used throughout portal and booking wizard | — | — | — |

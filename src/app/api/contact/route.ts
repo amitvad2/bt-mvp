@@ -11,8 +11,18 @@ const schema = z.object({
     category: z.enum(['general', 'class-info', 'booking-help', 'dietary-allergy', 'private-event', 'technical', 'feedback']),
     message: z.string().min(10, 'Please enter at least 10 characters'),
     consentToReply: z.boolean().refine(v => v === true, { message: 'Consent is required' }),
-    userId: z.string().optional(),
+    // userId is intentionally absent — client-supplied UIDs cannot be trusted.
+    // User association can be added later via server-side token verification.
 });
+
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 export async function POST(req: Request) {
     try {
@@ -31,9 +41,9 @@ export async function POST(req: Request) {
             );
         }
 
-        const { name, email, phone, category, message, consentToReply, userId } = result.data;
+        const { name, email, phone, category, message, consentToReply } = result.data;
 
-        const docData: Record<string, any> = {
+        const docData: Record<string, unknown> = {
             name,
             email,
             category,
@@ -44,7 +54,6 @@ export async function POST(req: Request) {
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
         if (phone) docData.phone = phone;
-        if (userId) docData.userId = userId;
 
         const ref = await adminDb.collection('contact_messages').add(docData);
         console.log('[contact] Saved message:', ref.id);
@@ -65,6 +74,11 @@ export async function POST(req: Request) {
             const submittedAt = new Date().toLocaleString('en-GB', {
                 dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/London',
             });
+            const safeName = escapeHtml(name);
+            const safeEmail = escapeHtml(email);
+            const safePhone = phone ? escapeHtml(phone) : null;
+            const safeMessage = escapeHtml(message);
+            const safeCategoryLabel = escapeHtml(categoryLabel[category] ?? category);
             await resend.emails.send({
                 from: `Blooming Tastebuds <${fromEmail}>`,
                 to: [adminEmail],
@@ -74,18 +88,18 @@ export async function POST(req: Request) {
                     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
                         <h2 style="color:#FF6B6B;margin-top:0;">New Contact Form Submission</h2>
                         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-                            <tr><td style="padding:6px 0;color:#6b7280;width:130px;">From</td><td style="padding:6px 0;font-weight:600;">${name}</td></tr>
-                            <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;"><a href="mailto:${email}" style="color:#FF6B6B;">${email}</a></td></tr>
-                            ${phone ? `<tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">${phone}</td></tr>` : ''}
-                            <tr><td style="padding:6px 0;color:#6b7280;">Category</td><td style="padding:6px 0;">${categoryLabel[category] ?? category}</td></tr>
+                            <tr><td style="padding:6px 0;color:#6b7280;width:130px;">From</td><td style="padding:6px 0;font-weight:600;">${safeName}</td></tr>
+                            <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;"><a href="mailto:${safeEmail}" style="color:#FF6B6B;">${safeEmail}</a></td></tr>
+                            ${safePhone ? `<tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;">${safePhone}</td></tr>` : ''}
+                            <tr><td style="padding:6px 0;color:#6b7280;">Category</td><td style="padding:6px 0;">${safeCategoryLabel}</td></tr>
                             <tr><td style="padding:6px 0;color:#6b7280;">Consent to reply</td><td style="padding:6px 0;">${consentToReply ? '✓ Yes' : '✗ No'}</td></tr>
                             <tr><td style="padding:6px 0;color:#6b7280;">Submitted</td><td style="padding:6px 0;">${submittedAt}</td></tr>
                         </table>
                         <div style="background:#f9fafb;padding:16px;border-radius:8px;margin-bottom:16px;">
-                            <p style="margin:0;white-space:pre-wrap;color:#111827;">${message}</p>
+                            <p style="margin:0;white-space:pre-wrap;color:#111827;">${safeMessage}</p>
                         </div>
                         <p style="color:#9ca3af;font-size:12px;margin:0;">
-                            Reply to this email to respond directly to ${name}. Or review in the
+                            Reply to this email to respond directly to ${safeName}. Or review in the
                             <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/admin/contact" style="color:#FF6B6B;">admin inbox</a>.
                         </p>
                     </div>
