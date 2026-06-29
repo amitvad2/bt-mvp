@@ -185,8 +185,13 @@ service cloud.firestore {
     match /bookings/{bookingId} {
       // A user may read their own bookings.
       // (my-classes, my-payments, and confirmation page all use this path.)
+      //
+      // resource == null means the document doesn't exist yet. Allowing this
+      // case lets the confirmation page poll with getDoc() and receive
+      // snap.exists() === false rather than a permission-denied error.
+      // Once the webhook creates the document, the bookedByUid guard applies.
       allow read: if isSignedIn()
-        && resource.data.bookedByUid == request.auth.uid;
+        && (resource == null || resource.data.bookedByUid == request.auth.uid);
 
       // A user may cancel their own booking.
       // my-classes/page.tsx sends: { status: 'cancelled', cancelledAt: new Date() }

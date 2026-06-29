@@ -5,7 +5,37 @@
       "Bash(firebase login:list)",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(Object.keys\\(p.devDependencies\\).filter\\(k=>k.includes\\('test'\\)||k.includes\\('vitest'\\)||k.includes\\('testing-library'\\)\\)\\)\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.devDependencies, null, 2\\)\\)\")",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(npm -v)",
+      "Bash(npm run *)",
+      "Bash(break)",
+      "Bash(/bin/sleep 1)",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(/bin/sleep 2)",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(kill 51541 51863)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(pkill -f \"start-server.js\")",
+      "Bash(pkill -9 -f \"next dev\")",
+      "Bash(pkill -9 -f \"start-server.js\")",
+      "Bash(command -v nvm)",
+      "Bash([ -s \"$HOME/.nvm/nvm.sh\" ])",
+      "Bash(command -v fnm)",
+      "Bash(command -v volta)",
+      "Bash(command -v n)",
+      "Bash(node -p \"require\\('./node_modules/next/package.json'\\).engines\")",
+      "Bash(node -p \"require\\('./package.json'\\).engines || 'none declared'\")",
+      "Bash(node -p \"require\\('./node_modules/next/package.json'\\).version\")",
+      "Read(//private/tmp/**)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('next:', d['dependencies'].get\\('next', 'N/A'\\)\\); print\\('scripts:', json.dumps\\(d['scripts'], indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('actual version:', d['version']\\)\")",
+      "Bash(rm -rf /Users/amit.vadhel/Library/CloudStorage/OneDrive-Accenture/Documents/blooming_tastebuds/bloomingtastebuds-mvp/bt-mvp/.next)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('stripe version:', d['version']\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('stripe-js:', d['version']\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('react-stripe-js:', d['version']\\)\")"
+    ],
+    "additionalDirectories": [
+      "/Users/amit.vadhel/Library/CloudStorage/OneDrive-Accenture/Documents/blooming_tastebuds/bloomingtastebuds-mvp/bt-mvp/.next"
     ]
   }
 }

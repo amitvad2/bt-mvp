@@ -1,8 +1,34 @@
 import { NextResponse } from 'next/server';
 import { resend } from '@/lib/resend';
+import { adminAuth, adminInitError } from '@/lib/firebase-admin';
+
+function escapeHtml(str: unknown): string {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 export async function POST(req: Request) {
     try {
+        if (adminInitError) {
+            return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 500 });
+        }
+
+        const authHeader = req.headers.get('Authorization');
+        const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+        }
+        try {
+            await adminAuth.verifyIdToken(token);
+        } catch {
+            return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+        }
+
         const { to, subject, type, data } = await req.json();
 
         if (!to || !subject || !type) {
@@ -15,18 +41,22 @@ export async function POST(req: Request) {
         let html = '';
 
         if (type === 'confirmation') {
+            const safeClassName = escapeHtml(data?.className);
+            const safeSessionDate = escapeHtml(data?.sessionDate);
+            const safeVenueName = escapeHtml(data?.venueName);
+            const safeStudentName = escapeHtml(data?.studentName);
             html = `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
                     <h1 style="color: #0066CC; font-size: 24px; margin-bottom: 8px;">Booking Confirmed!</h1>
                     <p style="color: #666; font-size: 16px; margin-bottom: 24px;">Your cooking session at Blooming Tastebuds is all set. We can't wait to see you there!</p>
-                    
+
                     <div style="background: #F5F5F7; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
                         <h2 style="font-size: 18px; margin-top: 0;">Session Details</h2>
                         <ul style="list-style: none; padding: 0; margin: 0; color: #333;">
-                            <li style="margin-bottom: 8px;"><strong>Class:</strong> ${data.className}</li>
-                            <li style="margin-bottom: 8px;"><strong>Date:</strong> ${data.sessionDate}</li>
-                            <li style="margin-bottom: 8px;"><strong>Venue:</strong> ${data.venueName}</li>
-                            <li style="margin-bottom: 8px;"><strong>Participant:</strong> ${data.studentName}</li>
+                            <li style="margin-bottom: 8px;"><strong>Class:</strong> ${safeClassName}</li>
+                            <li style="margin-bottom: 8px;"><strong>Date:</strong> ${safeSessionDate}</li>
+                            <li style="margin-bottom: 8px;"><strong>Venue:</strong> ${safeVenueName}</li>
+                            <li style="margin-bottom: 8px;"><strong>Participant:</strong> ${safeStudentName}</li>
                         </ul>
                     </div>
 
@@ -41,17 +71,20 @@ export async function POST(req: Request) {
                 </div>
             `;
         } else if (type === 'cancellation') {
+            const safeClassName = escapeHtml(data?.className);
+            const safeSessionDate = escapeHtml(data?.sessionDate);
+            const safeVenueName = escapeHtml(data?.venueName);
             html = `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
                     <h1 style="color: #D11124; font-size: 24px; margin-bottom: 8px;">Booking Cancelled</h1>
-                    <p style="color: #666; font-size: 16px; margin-bottom: 24px;">This is to confirm that your booking for <strong>${data.className}</strong> has been successfully cancelled.</p>
-                    
+                    <p style="color: #666; font-size: 16px; margin-bottom: 24px;">This is to confirm that your booking for <strong>${safeClassName}</strong> has been successfully cancelled.</p>
+
                     <div style="background: #F5F5F7; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
                         <h2 style="font-size: 18px; margin-top: 0;">Details</h2>
                         <ul style="list-style: none; padding: 0; margin: 0; color: #333;">
-                            <li style="margin-bottom: 8px;"><strong>Class:</strong> ${data.className}</li>
-                            <li style="margin-bottom: 8px;"><strong>Original Date:</strong> ${data.sessionDate}</li>
-                            <li style="margin-bottom: 8px;"><strong>Venue:</strong> ${data.venueName}</li>
+                            <li style="margin-bottom: 8px;"><strong>Class:</strong> ${safeClassName}</li>
+                            <li style="margin-bottom: 8px;"><strong>Original Date:</strong> ${safeSessionDate}</li>
+                            <li style="margin-bottom: 8px;"><strong>Venue:</strong> ${safeVenueName}</li>
                         </ul>
                     </div>
 

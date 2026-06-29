@@ -14,7 +14,7 @@
 
 import { NextResponse } from 'next/server';
 import stripe from '@/lib/stripe';
-import { adminDb, adminInitError } from '@/lib/firebase-admin';
+import { adminDb, adminAuth, adminInitError } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 
 export async function POST(req: Request) {
@@ -24,8 +24,7 @@ export async function POST(req: Request) {
         const {
             // Session identity
             sessionId,
-            // User (from AuthContext in the client)
-            bookedByUid,
+            // User display fields — UID is taken from the verified token
             bookedByName,
             bookedByEmail,
             // Student
@@ -47,6 +46,20 @@ export async function POST(req: Request) {
         // NOTE: `amount` is intentionally NOT taken from the client body.
         // It is read from Firestore below to prevent price manipulation.
 
+        // --- Verify caller is authenticated ---
+        const authHeader = req.headers.get('Authorization');
+        const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+        }
+        let verifiedUid: string;
+        try {
+            const decoded = await adminAuth.verifyIdToken(token);
+            verifiedUid = decoded.uid;
+        } catch {
+            return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
+        }
+
         // --- Firebase Admin health check ---
         // Fail fast before creating a PaymentIntent if the Admin SDK is broken,
         // so the user gets a clear message instead of a cryptic Firestore 403.
@@ -64,15 +77,16 @@ export async function POST(req: Request) {
         }
 
         // --- Basic validation ---
-        if (!sessionId || !bookedByUid) {
-            console.error('[create-intent] Missing required fields:', {
-                sessionId: !!sessionId,
-                bookedByUid: !!bookedByUid,
-            });
-            return NextResponse.json(
-                { error: 'Missing required fields: sessionId, bookedByUid' },
-                { status: 400 }
-            );
+        if (!sessionId) {
+            return NextResponse.json({ error: 'Missing required field: sessionId' }, { status: 400 });
+        }
+
+        // --- Validate studentId belongs to the authenticated user ---
+        if (studentId) {
+            const studentDoc = await adminDb.doc(`students/${studentId}`).get();
+            if (!studentDoc.exists || studentDoc.data()?.parentUid !== verifiedUid) {
+                return NextResponse.json({ error: 'Invalid student selection.' }, { status: 403 });
+            }
         }
 
         if (!process.env.STRIPE_SECRET_KEY) {
@@ -116,7 +130,7 @@ export async function POST(req: Request) {
         console.log('[create-intent] Creating PaymentIntent:', {
             sessionId,
             amount,
-            bookedByUid,
+            bookedByUid: verifiedUid,
         });
 
         // --- Create Stripe PaymentIntent ---
@@ -128,7 +142,7 @@ export async function POST(req: Request) {
             metadata: {
                 sessionId,
                 studentId: studentId ?? 'self',
-                bookedByUid,
+                bookedByUid: verifiedUid,
                 className: className ?? '',
                 // Stripe metadata is informational only — the webhook reads from the
                 // booking_draft document, not from PaymentIntent metadata.
@@ -153,8 +167,8 @@ export async function POST(req: Request) {
             startTime: startTime ?? null,
             endTime: endTime ?? null,
             classType: classType ?? null,
-            // User
-            bookedByUid,
+            // User — UID is taken from the verified token, not the request body
+            bookedByUid: verifiedUid,
             bookedByName: bookedByName ?? null,
             bookedByEmail: bookedByEmail ?? null,
             // Student

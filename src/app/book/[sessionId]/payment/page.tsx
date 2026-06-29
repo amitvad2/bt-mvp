@@ -44,56 +44,58 @@ export default function PaymentPage() {
 
         setError(null);
 
-        // Compute the student name the same way CheckoutForm used to
+        // Capture session into a local variable so TypeScript can narrow it
+        // as non-null inside the async callback below.
+        const session = state.session!;
         const studentName =
             state.student === 'self'
                 ? `${btUser.firstName} ${btUser.lastName}`
                 : `${(state.student as Student)?.firstName ?? ''} ${(state.student as Student)?.lastName ?? ''}`.trim();
 
-        // Send the full booking wizard state to create-intent.
-        // The route writes a booking_draft document (keyed by PaymentIntent ID)
-        // so the Stripe webhook can reconstruct the booking server-side.
-        fetch('/api/payments/create-intent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                // Payment
-                amount: state.session.price,
-                // Session
-                sessionId: state.sessionId,
-                sessionDate: state.session.date,
-                className: state.session.className,
-                venueName: state.session.venueName,
-                startTime: state.session.startTime,
-                endTime: state.session.endTime,
-                classType: state.session.classType,
-                // User (from AuthContext — never trust client-supplied bookedByUid)
-                bookedByUid: user.uid,
-                bookedByName: `${btUser.firstName} ${btUser.lastName}`,
-                bookedByEmail: user.email,
-                // Student
-                studentId: state.studentId ?? null,
-                studentName,
-                // Booking data
-                medicalInfo: state.medicalInfo ?? null,
-                emergencyContact: state.emergencyContact ?? null,
-                questionnaire: state.questionnaire ?? null,
-                termsAccepted: state.termsAccepted,
-            }),
-        })
-            .then(async (res) => {
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed to initialise payment');
-                return data;
-            })
-            .then((data) => {
-                console.log('Payment initialised. PI prefix:', data.clientSecret?.substring(0, 10));
-                setClientSecret(data.clientSecret);
-            })
-            .catch((err) => {
-                console.error('Payment init error:', err);
-                setError(err.message);
+        const createIntent = async () => {
+            const idToken = await user.getIdToken();
+
+            // Send the full booking wizard state to create-intent.
+            // The route writes a booking_draft document (keyed by PaymentIntent ID)
+            // so the Stripe webhook can reconstruct the booking server-side.
+            const res = await fetch('/api/payments/create-intent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    // Session
+                    sessionId: state.sessionId,
+                    sessionDate: session.date,
+                    className: session.className,
+                    venueName: session.venueName,
+                    startTime: session.startTime,
+                    endTime: session.endTime,
+                    classType: session.classType,
+                    // User display fields — UID is verified server-side from the token
+                    bookedByName: `${btUser.firstName} ${btUser.lastName}`,
+                    bookedByEmail: user.email,
+                    // Student
+                    studentId: state.studentId ?? null,
+                    studentName,
+                    // Booking data
+                    medicalInfo: state.medicalInfo ?? null,
+                    emergencyContact: state.emergencyContact ?? null,
+                    questionnaire: state.questionnaire ?? null,
+                    termsAccepted: state.termsAccepted,
+                }),
             });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to initialise payment');
+            console.log('Payment initialised. PI prefix:', data.clientSecret?.substring(0, 10));
+            setClientSecret(data.clientSecret);
+        };
+
+        createIntent().catch((err) => {
+            console.error('Payment init error:', err);
+            setError(err.message);
+        });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isReady]);
     // Intentionally omit individual state fields — we only want to create one

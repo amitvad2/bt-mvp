@@ -51,20 +51,25 @@ export default function MyClassesPage() {
             });
 
             // Trigger Cancellation Email
-            fetch('/api/emails/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    to: user?.email,
-                    subject: `Booking Cancelled: ${booking.className}`,
-                    type: 'cancellation',
-                    data: {
-                        className: booking.className,
-                        sessionDate: booking.sessionDate ? new Date(booking.sessionDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : 'N/A',
-                        venueName: booking.venueName,
-                    }
+            user?.getIdToken().then(idToken =>
+                fetch('/api/emails/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({
+                        to: user?.email,
+                        subject: `Booking Cancelled: ${booking.className}`,
+                        type: 'cancellation',
+                        data: {
+                            className: booking.className,
+                            sessionDate: booking.sessionDate ? new Date(booking.sessionDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : 'N/A',
+                            venueName: booking.venueName,
+                        }
+                    })
                 })
-            }).catch(err => console.error('Failed to send cancellation email:', err));
+            ).catch(err => console.error('Failed to send cancellation email:', err));
 
             setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'cancelled' } : b));
             alert('Booking cancelled successfully.');
