@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, BTClass, Recipe, Instructor } from '@/types';
+import { Session, BTClass, Recipe, Instructor, BTClassType } from '@/types';
 import { Calendar, Plus, Edit2, Trash2, X, Clock, ChefHat, MapPin, UserCheck } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -12,6 +12,7 @@ export default function AdminSessions() {
     const [classes, setClasses] = useState<BTClass[]>([]);
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [instructors, setInstructors] = useState<Instructor[]>([]);
+    const [classTypes, setClassTypes] = useState<BTClassType[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingSession, setEditingSession] = useState<Session | null>(null);
@@ -32,11 +33,13 @@ export default function AdminSessions() {
                 const classesSnap = await getDocs(collection(db, 'classes'));
                 const recipesSnap = await getDocs(collection(db, 'recipes'));
                 const instructorsSnap = await getDocs(collection(db, 'instructors'));
+                const classTypesSnap = await getDocs(query(collection(db, 'class_types'), orderBy('order')));
 
                 setSessions(sessionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Session)));
                 setClasses(classesSnap.docs.map(d => ({ id: d.id, ...d.data() } as BTClass)));
                 setRecipes(recipesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Recipe)));
                 setInstructors(instructorsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Instructor)));
+                setClassTypes(classTypesSnap.docs.map(d => ({ id: d.id, ...d.data() } as BTClassType)));
             } catch (e) {
                 console.error(e);
             } finally {
@@ -69,11 +72,12 @@ export default function AdminSessions() {
         const parentClass = classes.find(c => c.id === formData.classId);
         const recipe = recipes.find(r => r.id === formData.recipeId);
         const instructor = instructors.find(i => i.id === formData.instructorId);
+        const classType = classTypes.find(ct => ct.slug === parentClass?.type);
 
         const data = {
             ...formData,
-            className: parentClass?.type === 'kidsAfterSchool' ? 'Kids After School Club' : 'Weekend Workshop',
-            classType: parentClass?.type || 'kidsAfterSchool',
+            className: classType?.displayName || parentClass?.type || 'Unknown',
+            classType: parentClass?.type || '',
             venueId: parentClass?.venueId || '',
             venueName: parentClass?.venueName || '',
             recipeName: recipe?.name || '',
@@ -159,7 +163,19 @@ export default function AdminSessions() {
                             {sessions.map(s => (
                                 <tr key={s.id}>
                                     <td><strong>{s.date ? new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</strong></td>
-                                    <td>{s.className}</td>
+                                    <td>
+                                        {(() => {
+                                            const ct = classTypes.find(t => t.slug === s.classType);
+                                            return (
+                                                <>
+                                                    <span className={`badge badge-${ct?.badgeColor || 'gray'}`}>
+                                                        {ct?.shortLabel || s.classType || 'Unknown'}
+                                                    </span>
+                                                    {' '}{s.className}
+                                                </>
+                                            );
+                                        })()}
+                                    </td>
                                     <td className={styles.mutedText}>{s.venueName}</td>
                                     <td>
                                         <span className={`badge ${s.spotsAvailable > 5 ? 'badge-green' : s.spotsAvailable > 0 ? 'badge-amber' : 'badge-red'}`}>

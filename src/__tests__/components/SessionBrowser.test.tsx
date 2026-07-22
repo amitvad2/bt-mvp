@@ -13,6 +13,7 @@ vi.mock('firebase/firestore', () => ({
     query: vi.fn(),
     getDocs: vi.fn().mockResolvedValue({ docs: [] }),
     where: vi.fn(),
+    orderBy: vi.fn(),
 }));
 
 // Leaflet / map component requires browser APIs not available in jsdom

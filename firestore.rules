@@ -79,6 +79,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Class types — dynamic programme configuration.
+    // Readable by any authenticated user (admin pages, booking wizard, public session browser).
+    // Writable only by admins.
+    match /class_types/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
 
     // =========================================================================
     // CONTACT MESSAGES  — server-side writes only (Admin SDK bypasses rules)

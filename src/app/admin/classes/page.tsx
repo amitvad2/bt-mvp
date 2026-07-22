@@ -1,21 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { BTClass, Venue, ClassType } from '@/types';
+import { BTClass, Venue, BTClassType } from '@/types';
 import { ChefHat, Plus, Edit2, Trash2, X, Clock, Users, MapPin } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminClasses() {
     const [classes, setClasses] = useState<BTClass[]>([]);
     const [venues, setVenues] = useState<Venue[]>([]);
+    const [classTypes, setClassTypes] = useState<BTClassType[]>([]);
+    const [classTypesError, setClassTypesError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingClass, setEditingClass] = useState<BTClass | null>(null);
 
     const [formData, setFormData] = useState({
-        type: 'kidsAfterSchool' as ClassType,
+        type: '',
         dayOfWeek: 'Monday',
         startTime: '15:30',
         endTime: '16:30',
@@ -36,12 +38,35 @@ export default function AdminClasses() {
                 setVenues(venuesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Venue)));
             } catch (e) {
                 console.error(e);
-            } finally {
-                setLoading(false);
             }
+
+            try {
+                const classTypesSnap = await getDocs(query(collection(db, 'class_types'), orderBy('order')));
+                const types = classTypesSnap.docs.map(d => ({ id: d.id, ...d.data() } as BTClassType));
+                setClassTypes(types);
+                setClassTypesError(null);
+            } catch (e) {
+                console.error('Failed to fetch class types:', e);
+                setClassTypesError('Failed to load class types. The type dropdown is unavailable.');
+            }
+
+            setLoading(false);
         };
         fetchData();
     }, []);
+
+    const getClassTypeBadge = (slug: string) => {
+        const ct = classTypes.find(t => t.slug === slug);
+        if (ct) {
+            return { label: ct.shortLabel, color: ct.badgeColor };
+        }
+        return { label: slug, color: 'gray' as const };
+    };
+
+    const getClassTypeDisplayName = (slug: string) => {
+        const ct = classTypes.find(t => t.slug === slug);
+        return ct?.displayName || slug;
+    };
 
     const handleOpenModal = (c?: BTClass) => {
         if (c) {
@@ -60,8 +85,9 @@ export default function AdminClasses() {
             });
         } else {
             setEditingClass(null);
+            const defaultType = classTypes.length > 0 ? classTypes[0].slug : '';
             setFormData({
-                type: 'kidsAfterSchool', dayOfWeek: 'Monday', startTime: '15:30',
+                type: defaultType, dayOfWeek: 'Monday', startTime: '15:30',
                 endTime: '16:30', ageMin: 5, ageMax: 12, maxSize: 15,
                 instructor: '', venueId: '', price: 1500
             });
@@ -105,37 +131,40 @@ export default function AdminClasses() {
                 <div className="spinner" />
             ) : (
                 <div className={styles.grid}>
-                    {classes.map(c => (
-                        <div key={c.id} className={`card ${styles.classCard}`}>
-                            <div className={styles.classHeader}>
-                                <span className={`badge ${c.type === 'kidsAfterSchool' ? 'badge-amber' : 'badge-green'}`}>
-                                    {c.type === 'kidsAfterSchool' ? 'Kids' : 'Young Adult'}
-                                </span>
-                                <div className={styles.classActions}>
-                                    <div className="flex gap-2">
-                                        <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(c)}>
-                                            <Edit2 size={16} strokeWidth={1.5} />
-                                        </button>
-                                        <button className="btn btn-ghost btn-sm text-danger" onClick={async () => {
-                                            if (confirm('Delete class type?')) {
-                                                await deleteDoc(doc(db, 'classes', c.id));
-                                                setClasses(prev => prev.filter(item => item.id !== c.id));
-                                            }
-                                        }}>
-                                            <Trash2 size={16} strokeWidth={1.5} />
-                                        </button>
+                    {classes.map(c => {
+                        const badge = getClassTypeBadge(c.type);
+                        return (
+                            <div key={c.id} className={`card ${styles.classCard}`}>
+                                <div className={styles.classHeader}>
+                                    <span className={`badge badge-${badge.color}`}>
+                                        {badge.label}
+                                    </span>
+                                    <div className={styles.classActions}>
+                                        <div className="flex gap-2">
+                                            <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(c)}>
+                                                <Edit2 size={16} strokeWidth={1.5} />
+                                            </button>
+                                            <button className="btn btn-ghost btn-sm text-danger" onClick={async () => {
+                                                if (confirm('Delete class type?')) {
+                                                    await deleteDoc(doc(db, 'classes', c.id));
+                                                    setClasses(prev => prev.filter(item => item.id !== c.id));
+                                                }
+                                            }}>
+                                                <Trash2 size={16} strokeWidth={1.5} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+                                <h3>{getClassTypeDisplayName(c.type)}</h3>
+                                <div className={styles.classMeta}>
+                                    <p><Clock size={14} strokeWidth={1.5} /> {c.dayOfWeek}, {c.startTime}–{c.endTime}</p>
+                                    <p><MapPin size={14} strokeWidth={1.5} /> {c.venueName}</p>
+                                    <p><Users size={14} strokeWidth={1.5} /> Ages {c.ageMin}–{c.ageMax} • Max {c.maxSize}</p>
+                                    <p><strong>Price: £{(c.price / 100).toFixed(2)}</strong></p>
+                                </div>
                             </div>
-                            <h3>{c.type === 'kidsAfterSchool' ? 'Kids After School Club' : 'Weekend Workshop'}</h3>
-                            <div className={styles.classMeta}>
-                                <p><Clock size={14} strokeWidth={1.5} /> {c.dayOfWeek}, {c.startTime}–{c.endTime}</p>
-                                <p><MapPin size={14} strokeWidth={1.5} /> {c.venueName}</p>
-                                <p><Users size={14} strokeWidth={1.5} /> Ages {c.ageMin}–{c.ageMax} • Max {c.maxSize}</p>
-                                <p><strong>Price: £{(c.price / 100).toFixed(2)}</strong></p>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
@@ -150,10 +179,21 @@ export default function AdminClasses() {
                             <div className="form-row">
                                 <div className="form-group">
                                     <label className="form-label">Type</label>
-                                    <select className="form-select" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as any })}>
-                                        <option value="kidsAfterSchool">Kids After School Club</option>
-                                        <option value="youngAdultWeekend">Young Adults Weekend</option>
-                                    </select>
+                                    {classTypesError ? (
+                                        <div>
+                                            <select className="form-select" disabled>
+                                                <option>Unable to load class types</option>
+                                            </select>
+                                            <p className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>{classTypesError}</p>
+                                        </div>
+                                    ) : (
+                                        <select className="form-select" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
+                                            <option value="">Select Class Type...</option>
+                                            {classTypes.map(ct => (
+                                                <option key={ct.slug} value={ct.slug}>{ct.displayName}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Day of Week</label>

@@ -5,24 +5,25 @@ import { usePathname, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { BookingProvider, useBooking } from '@/context/BookingContext';
 import { ChefHat } from 'lucide-react';
+import { BTClassType } from '@/types';
 import styles from './layout.module.css';
 
 const steps = [
     { id: 'student', label: 'Student', path: '/student' },
     { id: 'medical', label: 'Medical', path: '/medical' },
-    { id: 'questionnaire', label: 'Questions', path: '/questionnaire', condition: (state: any) => state.session?.classType === 'kidsAfterSchool' },
+    { id: 'questionnaire', label: 'Questions', path: '/questionnaire', condition: (_state: any, classTypeRecord: BTClassType | null) => classTypeRecord === null || classTypeRecord.skipQuestionnaire === false },
     { id: 'terms', label: 'Terms', path: '/terms' },
     { id: 'payment', label: 'Payment', path: '/payment' },
     { id: 'confirmation', label: 'Done', path: '/confirmation' },
 ];
 
 function WizardLayoutInner({ children }: { children: React.ReactNode }) {
-    const { state, loading } = useBooking();
+    const { state, loading, classTypeRecord } = useBooking();
     const pathname = usePathname();
 
     if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
 
-    const filteredSteps = steps.filter(s => !s.condition || s.condition(state));
+    const filteredSteps = steps.filter(s => !s.condition || s.condition(state, classTypeRecord));
 
     const sessionDate = state.session?.date ? new Date(state.session.date) : null;
     const dateString = sessionDate && !isNaN(sessionDate.getTime())

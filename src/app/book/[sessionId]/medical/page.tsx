@@ -13,8 +13,8 @@ type FormData = MedicalInfo & { emergencyContact?: EmergencyContact };
 export default function MedicalInfoPage() {
     const router = useRouter();
     const { btUser } = useAuth();
-    const { state, setMedicalInfo, setEmergencyContact } = useBooking();
-    const isKid = state.session?.classType === 'kidsAfterSchool';
+    const { state, classTypeRecord, setMedicalInfo, setEmergencyContact } = useBooking();
+    const showEmergencyContact = classTypeRecord?.requireEmergencyContact ?? false;
 
     const initialMedicalInfo = state.medicalInfo || (state.student !== 'self' ? state.student?.medicalInfo : undefined);
     const initialEmergencyContact = state.emergencyContact || (state.student !== 'self' ? state.student?.emergencyContact : undefined);
@@ -26,15 +26,17 @@ export default function MedicalInfoPage() {
         }
     });
 
+    const skipQuestionnaire = classTypeRecord?.skipQuestionnaire ?? false;
+
     const onSubmit = (data: FormData) => {
         const { emergencyContact, ...medicalInfo } = data;
         setMedicalInfo(medicalInfo);
-        if (isKid && emergencyContact) {
+        if (showEmergencyContact && emergencyContact) {
             setEmergencyContact(emergencyContact);
         }
 
-        // Step Skip Logic
-        if (isKid) {
+        // Step Skip Logic — driven by classTypeRecord flags
+        if (!skipQuestionnaire) {
             router.push(`/book/${state.sessionId}/questionnaire`);
         } else {
             router.push(`/book/${state.sessionId}/terms`);
@@ -93,7 +95,7 @@ export default function MedicalInfoPage() {
                     />
                 </div>
 
-                {isKid && (
+                {showEmergencyContact && (
                     <div className={styles.emergencySection}>
                         <div className={styles.sectionHeader}>
                             <Phone className={styles.icon} size={24} strokeWidth={1.5} />

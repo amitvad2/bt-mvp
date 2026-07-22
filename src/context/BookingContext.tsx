@@ -13,13 +13,14 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, Student, BookingWizardState, MedicalInfo, EmergencyContact, Questionnaire } from '@/types';
+import { Session, Student, BookingWizardState, MedicalInfo, EmergencyContact, Questionnaire, BTClassType } from '@/types';
 
 interface BookingContextType {
     state: BookingWizardState;
     loading: boolean;
+    classTypeRecord: BTClassType | null;
     setSession: (session: Session) => void;
     setStudent: (student: Student | 'self') => void;
     setMedicalInfo: (info: MedicalInfo) => void;
@@ -34,6 +35,7 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 export function BookingProvider({ sessionId, children }: { sessionId: string; children: React.ReactNode }) {
     const [state, setState] = useState<BookingWizardState>({ sessionId });
     const [loading, setLoading] = useState(true);
+    const [classTypeRecord, setClassTypeRecord] = useState<BTClassType | null>(null);
 
     // Restore previously saved wizard state from sessionStorage on mount.
     useEffect(() => {
@@ -72,6 +74,22 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
         fetchSession();
     }, [sessionId]);
 
+    // Fetch the class type record matching the session's classType slug.
+    useEffect(() => {
+        if (!state.session?.classType) return;
+        const fetchClassType = async () => {
+            try {
+                const snap = await getDocs(collection(db, 'class_types'));
+                const types = snap.docs.map(d => ({ id: d.id, ...d.data() } as BTClassType));
+                const match = types.find(ct => ct.slug === state.session!.classType);
+                setClassTypeRecord(match || null);
+            } catch (e) {
+                console.error('Error fetching class type record:', e);
+            }
+        };
+        fetchClassType();
+    }, [state.session?.classType]);
+
     const setSession = useCallback((session: Session) => setState(prev => ({ ...prev, session })), []);
 
     // `student` is either a Student document or the sentinel value 'self'.
@@ -94,9 +112,9 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
     }, [sessionId]);
 
     const contextValue = useMemo(() => ({
-        state, loading, setSession, setStudent, setMedicalInfo,
+        state, loading, classTypeRecord, setSession, setStudent, setMedicalInfo,
         setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState
-    }), [state, loading, setSession, setStudent, setMedicalInfo, setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState]);
+    }), [state, loading, classTypeRecord, setSession, setStudent, setMedicalInfo, setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState]);
 
     return (
         <BookingContext.Provider value={contextValue}>

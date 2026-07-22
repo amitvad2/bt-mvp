@@ -65,11 +65,29 @@ export interface Venue {
     createdAt: any;
 }
 
-export type ClassType = 'kidsAfterSchool' | 'youngAdultWeekend';
+export type ClassType = string;
+
+export type BadgeColor = 'amber' | 'green' | 'indigo' | 'red' | 'gray';
+
+export interface BTClassType {
+    id: string;
+    slug: string;
+    displayName: string;
+    shortLabel: string;
+    badgeColor: BadgeColor;
+    skipQuestionnaire: boolean;
+    requireEmergencyContact: boolean;
+    defaultAgeMin: number;
+    defaultAgeMax: number;
+    defaultMaxSize: number;
+    defaultPrice: number; // integer, pence
+    order: number;
+    createdAt: any; // Firestore Timestamp
+}
 
 export interface BTClass {
     id: string;
-    type: ClassType;
+    type: string;
     name: string;
     dayOfWeek: string;
     startTime: string;
@@ -89,7 +107,7 @@ export interface Session {
     id: string;
     classId: string;
     className: string;
-    classType: ClassType;
+    classType: string;
     date: string;
     recipeId: string;
     recipeName?: string;

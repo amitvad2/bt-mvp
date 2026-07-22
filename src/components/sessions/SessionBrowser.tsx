@@ -2,9 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, Venue } from '@/types';
+import { Session, Venue, BTClassType } from '@/types';
 import { Calendar, MapPin, Clock, ChefHat, Map, List } from 'lucide-react';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import styles from './SessionBrowser.module.css';
@@ -24,6 +24,7 @@ export default function SessionBrowser({ onBook }: Props) {
 function SessionBrowserContent({ onBook }: Props) {
     const searchParams = useSearchParams();
     const [venues, setVenues] = useState<Venue[]>([]);
+    const [classTypes, setClassTypes] = useState<BTClassType[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
@@ -40,8 +41,23 @@ function SessionBrowserContent({ onBook }: Props) {
                 setVenues(snap.docs.map(d => ({ id: d.id, ...d.data() } as Venue)));
             } catch (e) { console.error(e); }
         };
+        const fetchClassTypes = async () => {
+            try {
+                const snap = await getDocs(query(collection(db, 'class_types'), orderBy('order')));
+                setClassTypes(snap.docs.map(d => ({ id: d.id, ...d.data() } as BTClassType)));
+            } catch (e) { console.error('Error fetching class types:', e); }
+        };
         fetchVenues();
+        fetchClassTypes();
     }, []);
+
+    const getClassTypeBadge = (slug: string) => {
+        const ct = classTypes.find(t => t.slug === slug);
+        if (ct) {
+            return { label: ct.shortLabel, displayName: ct.displayName, color: ct.badgeColor };
+        }
+        return { label: slug, displayName: slug, color: 'gray' as const };
+    };
 
     const handleSearch = async () => {
         setLoading(true);
@@ -155,8 +171,9 @@ function SessionBrowserContent({ onBook }: Props) {
                                     onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}
                                 >
                                     <option value="all">All Classes</option>
-                                    <option value="kidsAfterSchool">Kids (5–12)</option>
-                                    <option value="youngAdultWeekend">Young Adult</option>
+                                    {classTypes.map(ct => (
+                                        <option key={ct.id} value={ct.slug}>{ct.displayName}</option>
+                                    ))}
                                 </select>
                             </div>
                             <button
@@ -184,14 +201,12 @@ function SessionBrowserContent({ onBook }: Props) {
                         </div>
                     ) : (
                         <div className={styles.sessionGrid}>
-                            {sessions.map(s => (
+                            {sessions.map(s => {
+                                const badge = getClassTypeBadge(s.classType);
+                                return (
                                 <div key={s.id} className={`card ${styles.sessionCard}`}>
                                     <div className={styles.sessionHeader}>
-                                        <div className={styles.ageRange}>
-                                            {s.classType === 'kidsAfterSchool'
-                                                ? `Kids (Ages ${s.ageMin}–${s.ageMax})`
-                                                : `Teens (Ages ${s.ageMin}+)`}
-                                        </div>
+                                        <span className={`badge badge-${badge.color}`}>{badge.label}</span>
                                         <h3 className={styles.sessionName}>{s.className}</h3>
                                     </div>
 
@@ -224,7 +239,8 @@ function SessionBrowserContent({ onBook }: Props) {
                                         </p>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </>

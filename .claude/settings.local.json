@@ -32,7 +32,12 @@
       "Bash(rm -rf /Users/amit.vadhel/Library/CloudStorage/OneDrive-Accenture/Documents/blooming_tastebuds/bloomingtastebuds-mvp/bt-mvp/.next)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('stripe version:', d['version']\\)\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('stripe-js:', d['version']\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('react-stripe-js:', d['version']\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('react-stripe-js:', d['version']\\)\")",
+      "Bash(ls -la ~/.ssh/ 2>/dev/null || echo \"No .ssh directory found\")",
+      "Read(//Users/amit.vadhel/.ssh/**)",
+      "Bash(gh --version)",
+      "Bash(ssh-keygen -t ed25519 -C \"amit.vadhel@accenture.com\" -f ~/.ssh/id_ed25519 -N \"\")",
+      "Bash(pbcopy)"
     ],
     "additionalDirectories": [
       "/Users/amit.vadhel/Library/CloudStorage/OneDrive-Accenture/Documents/blooming_tastebuds/bloomingtastebuds-mvp/bt-mvp/.next"

@@ -552,6 +552,26 @@ p {
   color: var(--bt-leaf-dark);
 }
 
+.badge-amber {
+  background: var(--bt-amber-light);
+  color: var(--bt-amber-dark);
+}
+
+.badge-green {
+  background: var(--bt-green-light);
+  color: var(--bt-leaf-dark);
+}
+
+.badge-indigo {
+  background: #E8EAF6;
+  color: #3949AB;
+}
+
+.badge-red {
+  background: #FFEBEE;
+  color: var(--bt-danger);
+}
+
 .badge-gray {
   background: var(--bt-border);
   color: var(--bt-muted);
