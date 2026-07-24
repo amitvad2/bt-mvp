@@ -1,0 +1,139 @@
+/* BundleGroupCard — Grouped bundle booking card for portal My Classes */
+
+.card {
+  background: var(--bt-white);
+  border: 1px solid var(--bt-border);
+  border-left: 4px solid var(--bt-berry);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.bundleName {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--bt-charcoal);
+}
+
+.sessionCount {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--bt-berry-dark);
+  background: var(--bt-berry-light);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.sessionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  list-style: none;
+}
+
+.sessionItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bt-gray-50);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--bt-charcoal);
+}
+
+.sessionItem svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--bt-berry);
+}
+
+.dateText {
+  font-weight: 600;
+  color: var(--bt-gray-800);
+  min-width: 7rem;
+}
+
+.timeText {
+  color: var(--bt-text-muted);
+  min-width: 5rem;
+}
+
+.venueText {
+  color: var(--bt-text-muted);
+  margin-left: auto;
+}
+
+.cancelBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bt-danger);
+  background: transparent;
+  border: 1px solid var(--bt-danger);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: #FFEBEE;
+  transform: translateY(-1px);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelledBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #FFEBEE;
+  color: var(--bt-danger);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .sessionItem {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .venueText {
+    margin-left: 0;
+    width: 100%;
+    padding-left: calc(16px + var(--space-3));
+  }
+}

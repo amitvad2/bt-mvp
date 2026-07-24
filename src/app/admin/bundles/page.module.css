@@ -1,0 +1,137 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+}
+
+.tableCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    padding: 0;
+}
+
+/* Custom Table Styles for Admin Bundles */
+.tableCard :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tableCard :global(th) {
+    text-align: left;
+    padding: var(--space-4) var(--space-6);
+    background: var(--bt-gray-50);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bt-gray-500);
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.tableCard :global(td) {
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--bt-gray-100);
+    font-size: 0.95rem;
+    color: var(--bt-gray-800);
+}
+
+.tableCard :global(tr:last-child td) {
+    border-bottom: none;
+}
+
+.tableCard :global(strong) {
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+/* Status Badges */
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.statusActive {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.statusClosed {
+    background: var(--bt-border);
+    color: var(--bt-muted);
+}
+
+.statusCancelled {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Action Buttons */
+.actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.mutedText {
+    color: var(--bt-gray-500);
+    font-size: 0.85rem;
+}
+
+/* Form Styles (modal) */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--bt-gray-100);
+}
+
+/* Empty state */
+.empty {
+    padding: var(--space-12);
+    text-align: center;
+    color: var(--bt-gray-500);
+    font-style: italic;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    .tableCard {
+        overflow-x: auto;
+    }
+
+    .tableCard :global(table) {
+        min-width: 700px;
+    }
+}

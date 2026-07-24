@@ -98,6 +98,48 @@ export async function POST(req: Request) {
                     </p>
                 </div>
             `;
+        } else if (type === 'bundle-cancellation') {
+            const safeBundleName = escapeHtml(data?.bundleName);
+            const safeStudentName = escapeHtml(data?.studentName);
+            const sessions: Array<{ date: string; startTime: string; endTime: string; venueName: string }> = Array.isArray(data?.sessions) ? data.sessions : [];
+
+            // Sort sessions chronologically by date
+            const sortedSessions = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
+
+            const sessionListHtml = sortedSessions.map((session) => {
+                const safeDate = escapeHtml(session.date);
+                const safeStartTime = escapeHtml(session.startTime);
+                const safeEndTime = escapeHtml(session.endTime);
+                const safeVenue = escapeHtml(session.venueName);
+                return `<li style="margin-bottom: 12px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
+                    <strong>${safeDate}</strong><br/>
+                    <span style="color: #555;">${safeStartTime} – ${safeEndTime}</span><br/>
+                    <span style="color: #555;">Venue: ${safeVenue}</span>
+                </li>`;
+            }).join('');
+
+            html = `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
+                    <h1 style="color: #D11124; font-size: 24px; margin-bottom: 8px;">Bundle Cancellation Confirmed</h1>
+                    <p style="color: #666; font-size: 16px; margin-bottom: 24px;">This is to confirm that your bundle booking <strong>${safeBundleName}</strong> for <strong>${safeStudentName}</strong> has been successfully cancelled.</p>
+
+                    <div style="background: #F5F5F7; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                        <h2 style="font-size: 18px; margin-top: 0;">Cancelled Sessions</h2>
+                        <ul style="list-style: none; padding: 0; margin: 0; color: #333;">
+                            ${sessionListHtml}
+                        </ul>
+                    </div>
+
+                    <p style="color: #666; font-size: 14px; line-height: 1.5;">
+                        You can view your bookings and find new classes in your <a href="${process.env.NEXT_PUBLIC_APP_URL}/portal/my-classes" style="color: #0066CC;">My Classes</a> page.
+                    </p>
+                    
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;" />
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        Blooming Tastebuds — We hope to see you again soon!
+                    </p>
+                </div>
+            `;
         }
 
         if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_placeholder') {

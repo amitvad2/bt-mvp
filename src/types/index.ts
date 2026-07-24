@@ -160,6 +160,9 @@ export interface Booking {
         status: PaymentStatus;
         receiptUrl?: string;
     };
+    bundleId?: string;
+    bundleName?: string;
+    overbooking?: boolean;
     createdAt: any;
 }
 
@@ -224,6 +227,39 @@ export interface BookingWizardState {
     session?: Session;
     studentId?: string;
     student?: Student | 'self'; // 'self' for young adults
+    medicalInfo?: MedicalInfo;
+    emergencyContact?: EmergencyContact;
+    questionnaire?: Questionnaire;
+    termsAccepted?: boolean;
+}
+
+// ============================================================
+// Bundles
+// ============================================================
+
+export type BundleStatus = 'active' | 'closed' | 'cancelled';
+
+export interface Bundle {
+    id: string;
+    name: string;                    // 3–100 characters
+    classId: string;
+    className: string;
+    classType: string;
+    sessionIds: string[];            // 2–20 session IDs, all from same classId
+    bundlePrice: number;             // integer, pence (> 0, <= totalIndividualPrice)
+    totalIndividualPrice: number;    // sum of session prices in pence
+    status: BundleStatus;
+    venueId: string;
+    venueName: string;
+    createdAt: any;                  // Firestore Timestamp
+}
+
+export interface BundleBookingWizardState {
+    bundleId: string;
+    bundle?: Bundle;
+    sessions?: Session[];
+    studentId?: string;
+    student?: Student | 'self';
     medicalInfo?: MedicalInfo;
     emergencyContact?: EmergencyContact;
     questionnaire?: Questionnaire;

@@ -1,0 +1,173 @@
+/* BundleBrowser — Bundle card display for public/portal pages */
+
+.bundleBrowserContainer {
+  margin-bottom: var(--space-12);
+}
+
+.bundleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-8);
+}
+
+.bundleCard {
+  background: #fff;
+  padding: var(--space-10);
+  border-radius: var(--radius-xl);
+  border: none;
+  box-shadow: var(--shadow);
+  transition: transform var(--transition);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+}
+
+.bundleCard:hover {
+  transform: scale(1.02);
+}
+
+.bundleCard:focus-visible {
+  outline: 2px solid var(--bt-accent);
+  outline-offset: 2px;
+}
+
+.bundleCardDisabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.bundleCardDisabled:hover {
+  transform: none;
+}
+
+.bundleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.bundleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bundleName {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--bt-gray-900);
+  margin-bottom: var(--space-2);
+}
+
+.bundleMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+  color: var(--bt-gray-600);
+  margin-bottom: var(--space-6);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.metaItem svg {
+  color: var(--bt-gray-400);
+  flex-shrink: 0;
+}
+
+.sessionDates {
+  margin-bottom: var(--space-6);
+  flex: 1;
+}
+
+.datesLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--bt-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+.dateList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dateItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--bt-gray-600);
+  padding: var(--space-1) 0;
+}
+
+.dateItem svg {
+  color: var(--bt-gray-400);
+  flex-shrink: 0;
+}
+
+.availabilityBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--bt-leaf-light, #e8f5e9);
+  color: var(--bt-leaf-dark, #2e7d32);
+}
+
+.availabilityFull {
+  background: #FFEBEE;
+  color: var(--bt-danger);
+}
+
+.availabilityLimitedAvailability {
+  background: var(--bt-amber-light, #fff8e1);
+  color: var(--bt-amber-dark, #f57f17);
+}
+
+.availabilityAvailable {
+  background: var(--bt-leaf-light, #e8f5e9);
+  color: var(--bt-leaf-dark, #2e7d32);
+}
+
+.bundleFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.bundlePrice {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bt-gray-900);
+}
+
+@media (max-width: 900px) {
+  .bundleGrid {
+    grid-template-columns: 1fr;
+  }
+}

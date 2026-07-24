@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { Session, Venue, BTClassType } from '@/types';
 import { Calendar, MapPin, Clock, ChefHat, Map, List } from 'lucide-react';
 import SessionMapSection from '@/components/home/SessionMapSection';
+import BundleBrowser from '@/components/sessions/BundleBrowser';
 import styles from './SessionBrowser.module.css';
 
 interface Props {
@@ -138,6 +139,8 @@ function SessionBrowserContent({ onBook }: Props) {
                 </div>
             ) : (
                 <>
+                    <BundleBrowser onBook={onBook} />
+
                     <div className={`card ${styles.filters}`}>
                         <div className={styles.filterRow}>
                             <div className="form-group">

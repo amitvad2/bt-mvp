@@ -107,6 +107,13 @@ async function handlePaymentIntentSucceeded(
     }
 
     const draft = draftSnap.data()!;
+
+    // Branch: bundle vs single-session booking
+    if (draft.bundleId) {
+        await handleBundlePaymentSucceeded(paymentIntent, draft);
+        return;
+    }
+
     const sessionId: string = draft.sessionId;
 
     // 2. Atomic booking creation + capacity decrement
@@ -238,6 +245,160 @@ async function handlePaymentIntentFailed(
 }
 
 // ---------------------------------------------------------------------------
+// Bundle: payment_intent.succeeded
+// ---------------------------------------------------------------------------
+
+async function handleBundlePaymentSucceeded(
+    paymentIntent: Stripe.PaymentIntent,
+    draft: FirebaseFirestore.DocumentData
+) {
+    const piId = paymentIntent.id;
+    const bundleId: string = draft.bundleId;
+    const sessionIds: string[] = draft.sessionIds ?? [];
+    const sessions: Array<{
+        sessionId: string;
+        date: string;
+        startTime: string;
+        endTime: string;
+        venueName: string;
+    }> = draft.sessions ?? [];
+
+    console.log(
+        `[webhook] Bundle payment succeeded: PI=${piId}, bundleId=${bundleId}, sessions=${sessionIds.length}`
+    );
+
+    let alreadyFullyProcessed = false;
+
+    await adminDb.runTransaction(async (tx) => {
+        // For each session in the bundle, check idempotency and create booking
+        const bookingRefs = sessionIds.map((sid) =>
+            adminDb.doc(`bookings/${piId}_${sid}`)
+        );
+        const sessionRefs = sessionIds.map((sid) =>
+            adminDb.doc(`sessions/${sid}`)
+        );
+
+        // Read all existing bookings and sessions inside the transaction
+        const existingBookings = await Promise.all(
+            bookingRefs.map((ref) => tx.get(ref))
+        );
+        const sessionDocs = await Promise.all(
+            sessionRefs.map((ref) => tx.get(ref))
+        );
+
+        // Idempotency: if ALL booking docs already exist, skip entirely
+        const allExist = existingBookings.every((snap) => snap.exists);
+        if (allExist) {
+            console.log(
+                `[webhook] All ${sessionIds.length} bundle bookings already exist for PI=${piId} — duplicate event, skipping`
+            );
+            alreadyFullyProcessed = true;
+            return;
+        }
+
+        // Calculate per-session payment amount (informational split)
+        const perSessionAmount = Math.round(paymentIntent.amount / sessionIds.length);
+
+        // Create booking documents and decrement spots for each session
+        for (let i = 0; i < sessionIds.length; i++) {
+            const sessionId = sessionIds[i];
+            const bookingRef = bookingRefs[i];
+            const existingBooking = existingBookings[i];
+            const sessionDoc = sessionDocs[i];
+
+            // Skip if this specific booking already exists (partial idempotency)
+            if (existingBooking.exists) {
+                console.log(
+                    `[webhook] Booking ${piId}_${sessionId} already exists — skipping`
+                );
+                continue;
+            }
+
+            // Get per-session denormalized data from draft
+            const sessionInfo = sessions.find((s) => s.sessionId === sessionId);
+
+            // Build the booking document
+            const bookingDoc: Record<string, any> = {
+                sessionId,
+                sessionDate: sessionInfo?.date ?? '',
+                className: draft.className,
+                venueName: sessionInfo?.venueName ?? draft.venueName ?? '',
+                startTime: sessionInfo?.startTime ?? null,
+                endTime: sessionInfo?.endTime ?? null,
+                bookedByUid: draft.bookedByUid,
+                bookedByName: draft.bookedByName,
+                studentId: draft.studentId,
+                studentName: draft.studentName,
+                status: 'confirmed',
+                medicalInfo: draft.medicalInfo ?? null,
+                emergencyContact: draft.emergencyContact ?? null,
+                questionnaire: draft.questionnaire ?? null,
+                termsAccepted: draft.termsAccepted,
+                termsAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+                payment: {
+                    stripePaymentIntentId: piId,
+                    amount: perSessionAmount,
+                    currency: 'gbp',
+                    status: 'paid',
+                    receiptUrl: null,
+                },
+                bundleId,
+                bundleName: draft.bundleName ?? null,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+
+            // Check session availability for overbooking flag
+            if (!sessionDoc.exists) {
+                throw new Error(`Session ${sessionId} not found in Firestore`);
+            }
+
+            const sessionData = sessionDoc.data()!;
+
+            if (sessionData.spotsAvailable <= 0) {
+                // Overbooking: session was already full at webhook time
+                console.warn(
+                    `[webhook] Session ${sessionId} has 0 spots available. ` +
+                    `Overbooking detected for bundle booking.`
+                );
+                bookingDoc.overbooking = true;
+                tx.set(bookingRef, bookingDoc);
+                // Don't decrement spots below 0
+            } else {
+                bookingDoc.overbooking = false;
+                tx.set(bookingRef, bookingDoc);
+                tx.update(sessionRefs[i], {
+                    spotsAvailable: admin.firestore.FieldValue.increment(-1),
+                });
+            }
+        }
+    });
+
+    if (alreadyFullyProcessed) return;
+
+    // Send bundle confirmation email (best-effort, non-blocking)
+    if (draft.bookedByEmail) {
+        await sendBundleConfirmationEmail({
+            to: draft.bookedByEmail,
+            bundleName: draft.bundleName ?? 'Bundle',
+            studentName: draft.studentName,
+            totalAmount: paymentIntent.amount,
+            sessions,
+        });
+    }
+
+    // Delete the draft (cleanup — non-critical if this fails)
+    try {
+        await adminDb.doc(`booking_drafts/${piId}`).delete();
+    } catch (err) {
+        console.error(`[webhook] Failed to delete bundle booking draft ${piId}:`, err);
+    }
+
+    console.log(
+        `[webhook] Bundle bookings created successfully: PI=${piId}, bundleId=${bundleId}`
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -336,5 +497,91 @@ async function sendConfirmationEmail(params: {
         }
     } catch (err) {
         console.error('[webhook] Failed to send confirmation email:', err);
+    }
+}
+
+async function sendBundleConfirmationEmail(params: {
+    to: string;
+    bundleName: string;
+    studentName: string;
+    totalAmount: number; // in pence
+    sessions: Array<{
+        sessionId: string;
+        date: string;
+        startTime: string;
+        endTime: string;
+        venueName: string;
+    }>;
+}) {
+    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_placeholder') {
+        console.warn('[webhook] RESEND_API_KEY not set — skipping bundle confirmation email');
+        return;
+    }
+
+    const fromEmail =
+        process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+    // Sort sessions chronologically by date
+    const sortedSessions = [...params.sessions].sort(
+        (a, b) => a.date.localeCompare(b.date)
+    );
+
+    // Format total as £XX.XX
+    const formattedTotal = `£${(params.totalAmount / 100).toFixed(2)}`;
+
+    // Build session list HTML
+    const sessionListHtml = sortedSessions
+        .map((s) => {
+            const formattedDate = new Date(s.date).toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+            });
+            return `<li style="margin-bottom:8px;">${formattedDate} — ${s.startTime}–${s.endTime} at ${s.venueName}</li>`;
+        })
+        .join('');
+
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/my-classes`;
+
+    try {
+        const { error } = await resend.emails.send({
+            from: `Blooming Tastebuds <${fromEmail}>`,
+            to: [params.to],
+            subject: `Bundle Booking Confirmed: ${params.bundleName}`,
+            html: `
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
+                    <h1 style="color:#0066CC;font-size:24px;margin-bottom:8px;">Bundle Booking Confirmed!</h1>
+                    <p style="color:#666;font-size:16px;margin-bottom:24px;">
+                        Your bundle booking at Blooming Tastebuds is confirmed. You're all set for ${sortedSessions.length} sessions!
+                    </p>
+                    <div style="background:#F5F5F7;padding:20px;border-radius:12px;margin-bottom:24px;">
+                        <h2 style="font-size:18px;margin-top:0;">Bundle Details</h2>
+                        <ul style="list-style:none;padding:0;margin:0 0 16px 0;color:#333;">
+                            <li style="margin-bottom:8px;"><strong>Bundle:</strong> ${params.bundleName}</li>
+                            <li style="margin-bottom:8px;"><strong>Participant:</strong> ${params.studentName}</li>
+                            <li style="margin-bottom:8px;"><strong>Total Paid:</strong> ${formattedTotal}</li>
+                        </ul>
+                        <h3 style="font-size:16px;margin-bottom:8px;">Your Sessions</h3>
+                        <ul style="list-style:none;padding:0;margin:0;color:#333;">
+                            ${sessionListHtml}
+                        </ul>
+                    </div>
+                    <p style="color:#666;font-size:14px;line-height:1.5;">
+                        View and manage your bookings in your
+                        <a href="${portalUrl}" style="color:#0066CC;">My Classes</a> dashboard.
+                    </p>
+                    <hr style="border:0;border-top:1px solid #eee;margin:24px 0;" />
+                    <p style="color:#999;font-size:12px;text-align:center;">Blooming Tastebuds — Fun, hands-on cooking classes.</p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error('[webhook] Resend error (bundle confirmation):', error);
+        } else {
+            console.log(`[webhook] Bundle confirmation email sent to ${params.to}`);
+        }
+    } catch (err) {
+        console.error('[webhook] Failed to send bundle confirmation email:', err);
     }
 }

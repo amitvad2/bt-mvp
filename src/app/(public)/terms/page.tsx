@@ -102,7 +102,7 @@ export default function TermsPage() {
                             <p>If you have any questions about these Terms and Conditions, please contact us:</p>
                             <ul>
                                 <li><strong>Email:</strong> hello@bloomingtastebuds.com</li>
-                                <li><strong>Phone:</strong> +44 (0) 1234 567 890</li>
+                                <li><strong>Phone:</strong> +44 (0) 7809722517</li>
                                 <li><strong>Address:</strong> Blooming Tastebuds, England, United Kingdom</li>
                             </ul>
                             <p>Blooming Tastebuds is registered in England & Wales.</p>

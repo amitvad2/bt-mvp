@@ -87,6 +87,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Bundles — grouped session packages at a discounted price.
+    // Public read needed by the classes page and portal find-class (BundleBrowser).
+    // Contains no PII (same pattern as sessions, classes, venues).
+    // Writable only by admins via the admin bundles management page.
+    match /bundles/{bundleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
 
     // =========================================================================
     // CONTACT MESSAGES  — server-side writes only (Admin SDK bypasses rules)

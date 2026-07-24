@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, getDocs, orderBy, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { Booking, Session } from '@/types';
 import { Calendar, Clock, MapPin, ChefHat, AlertCircle, XCircle, CheckCircle } from 'lucide-react';
+import BundleGroupCard from '@/components/portal/BundleGroupCard';
 import styles from './page.module.css';
 
 export default function MyClassesPage() {
@@ -82,8 +83,126 @@ export default function MyClassesPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const upcomingBookings = bookings.filter(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
-    const pastBookings = bookings.filter(b => b.status === 'cancelled' || new Date(b.sessionDate!) < today);
+    // Separate bundle bookings from individual bookings
+    const bundleBookings = bookings.filter(b => !!b.bundleId);
+    const individualBookings = bookings.filter(b => !b.bundleId);
+
+    // Group bundle bookings by bundleId
+    const bundleGroups = useMemo(() => {
+        const groups = new Map<string, Booking[]>();
+        for (const booking of bundleBookings) {
+            const key = booking.bundleId!;
+            if (!groups.has(key)) {
+                groups.set(key, []);
+            }
+            groups.get(key)!.push(booking);
+        }
+        return groups;
+    }, [bundleBookings]);
+
+    // Separate upcoming/active bundle groups from past/cancelled ones
+    const upcomingBundleGroups = useMemo(() => {
+        const result: Map<string, Booking[]> = new Map();
+        for (const [bundleId, group] of bundleGroups) {
+            // A bundle group is "upcoming" if at least one booking is confirmed and has a future date
+            const hasUpcoming = group.some(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
+            if (hasUpcoming) {
+                result.set(bundleId, group);
+            }
+        }
+        return result;
+    }, [bundleGroups, today]);
+
+    const pastBundleGroups = useMemo(() => {
+        const result: Map<string, Booking[]> = new Map();
+        for (const [bundleId, group] of bundleGroups) {
+            const hasUpcoming = group.some(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
+            if (!hasUpcoming) {
+                result.set(bundleId, group);
+            }
+        }
+        return result;
+    }, [bundleGroups, today]);
+
+    const upcomingBookings = individualBookings.filter(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
+    const pastBookings = individualBookings.filter(b => b.status === 'cancelled' || new Date(b.sessionDate!) < today);
+
+    // TODO: Spots increment limitation — The client-side doesn't have permission to update
+    // session.spotsAvailable (that's admin-only). For the MVP, spots are NOT auto-incremented
+    // on cancellation from the client. The admin can manually adjust spots, or a server-side
+    // Cloud Function can be added later to listen for booking status changes and update spots.
+    const handleBundleCancel = async (bundleId: string) => {
+        // Get all bookings for this bundle from local state
+        const bundleBookingsToCancel = bookings.filter(b => b.bundleId === bundleId && b.status !== 'cancelled');
+
+        if (bundleBookingsToCancel.length === 0) return;
+
+        const bundleName = bundleBookingsToCancel[0]?.bundleName || 'Bundle';
+
+        if (!confirm(`Are you sure you want to cancel the entire "${bundleName}" bundle? This will cancel all ${bundleBookingsToCancel.length} session(s) in this bundle.`)) return;
+
+        try {
+            // Update all bundle bookings status to 'cancelled' (client-side updateDoc for each booking)
+            // Note: We can't do a true Firestore transaction from the client SDK, but since security
+            // rules only allow the owner to update status to 'cancelled', this is safe. If any update
+            // fails, we show an error.
+            const cancelPromises = bundleBookingsToCancel.map(booking =>
+                updateDoc(doc(db, 'bookings', booking.id), {
+                    status: 'cancelled',
+                    cancelledAt: new Date()
+                })
+            );
+
+            await Promise.all(cancelPromises);
+
+            // Update local state to mark all bundle bookings as cancelled
+            setBookings(prev => prev.map(b =>
+                b.bundleId === bundleId ? { ...b, status: 'cancelled' as const } : b
+            ));
+
+            // Send bundle cancellation email
+            const sortedCancelledBookings = [...bundleBookingsToCancel].sort((a, b) =>
+                a.sessionDate.localeCompare(b.sessionDate)
+            );
+
+            const sessionsData = sortedCancelledBookings.map(b => ({
+                date: b.sessionDate ? new Date(b.sessionDate).toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                }) : 'N/A',
+                startTime: (b as Booking & { startTime?: string }).startTime || '',
+                endTime: (b as Booking & { endTime?: string }).endTime || '',
+                venueName: b.venueName || ''
+            }));
+
+            user?.getIdToken().then(idToken =>
+                fetch('/api/emails/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({
+                        to: user?.email,
+                        subject: `Bundle Cancelled: ${bundleName}`,
+                        type: 'bundle-cancellation',
+                        data: {
+                            bundleName,
+                            studentName: bundleBookingsToCancel[0]?.studentName || 'Self',
+                            sessions: sessionsData
+                        }
+                    })
+                })
+            ).catch(err => console.error('Failed to send bundle cancellation email:', err));
+
+            alert('Bundle cancelled successfully. All sessions in this bundle have been cancelled.');
+        } catch (e) {
+            console.error('Bundle cancellation failed:', e);
+            alert('Error cancelling bundle. Please try again or contact support.');
+        }
+    };
 
     return (
         <div className={styles.page}>
@@ -108,6 +227,22 @@ export default function MyClassesPage() {
                 </div>
             ) : (
                 <div className={styles.sections}>
+                    {/* Upcoming Bundle Bookings */}
+                    {upcomingBundleGroups.size > 0 && (
+                        <section className={styles.section}>
+                            <h2 className={styles.sectionTitle}>Bundle Bookings</h2>
+                            <div className={styles.list}>
+                                {Array.from(upcomingBundleGroups.entries()).map(([bundleId, group]) => (
+                                    <BundleGroupCard
+                                        key={bundleId}
+                                        bookings={group}
+                                        onCancel={handleBundleCancel}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* Upcoming */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>Upcoming Sessions</h2>
@@ -152,6 +287,15 @@ export default function MyClassesPage() {
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>Past & Cancelled</h2>
                         <div className={styles.list}>
+                            {/* Past/cancelled bundle groups */}
+                            {Array.from(pastBundleGroups.entries()).map(([bundleId, group]) => (
+                                <BundleGroupCard
+                                    key={bundleId}
+                                    bookings={group}
+                                    onCancel={handleBundleCancel}
+                                />
+                            ))}
+                            {/* Individual past/cancelled bookings */}
                             {pastBookings.map(booking => (
                                 <div key={booking.id} className={`card ${styles.bookingCard} ${styles.pastCard}`}>
                                     <div className={styles.cardInfo}>
