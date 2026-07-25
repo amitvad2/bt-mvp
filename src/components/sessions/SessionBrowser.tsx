@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Session, Venue, BTClassType } from '@/types';
-import { Calendar, MapPin, Clock, ChefHat, Map, List } from 'lucide-react';
+import { Calendar, MapPin, Clock, ChefHat, Map, List, Users } from 'lucide-react';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import BundleBrowser from '@/components/sessions/BundleBrowser';
 import styles from './SessionBrowser.module.css';
@@ -222,6 +222,9 @@ function SessionBrowserContent({ onBook }: Props) {
                                         <div><MapPin size={18} strokeWidth={1.5} /> {s.venueName}</div>
                                         {s.instructorName && (
                                             <div><ChefHat size={18} strokeWidth={1.5} /> {s.instructorName}</div>
+                                        )}
+                                        {(s.ageMin != null && s.ageMax != null) && (
+                                            <div><Users size={18} strokeWidth={1.5} /> Ages {s.ageMin}–{s.ageMax}</div>
                                         )}
                                     </div>
 
