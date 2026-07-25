@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useBundleBooking } from '@/context/BundleBookingContext';
 import { useAuth } from '@/context/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -30,8 +30,13 @@ const MAX_ATTEMPTS = 10; // 10 attempts × 2s = up to ~20s total wait
 
 export default function BundleConfirmationPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { state, clearState } = useBundleBooking();
     const { user } = useAuth();
+
+    // Check redirect_status for redirect-based payment methods (Revolut Pay, Klarna, etc.)
+    const redirectStatus = searchParams.get('redirect_status');
+    const paymentFailed = redirectStatus !== null && redirectStatus !== 'succeeded';
 
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
@@ -113,6 +118,44 @@ export default function BundleConfirmationPage() {
     const sortedBookings = [...bookings].sort((a, b) =>
         a.sessionDate.localeCompare(b.sessionDate)
     );
+
+    // -----------------------------------------------------------------------
+    // Payment failed/cancelled (redirect-based methods like Revolut Pay, Klarna)
+    // -----------------------------------------------------------------------
+    if (paymentFailed) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.successHeader}>
+                    <div className={styles.checkIcon} style={{ background: '#FEF2F2', color: '#DC2626' }}>
+                        <Clock size={48} />
+                    </div>
+                    <h1>Payment Not Completed</h1>
+                    <p>
+                        Your payment was not completed. This may be because you cancelled on the payment
+                        provider&apos;s page, or the payment was declined.
+                    </p>
+                </div>
+                <div className={styles.infoBox}>
+                    <Clock size={18} style={{ flexShrink: 0 }} />
+                    <p>No charge has been made. You can try again or choose a different payment method.</p>
+                </div>
+                <div className={styles.actions}>
+                    <button
+                        className="btn btn-outline"
+                        onClick={() => router.push('/portal/find-class')}
+                    >
+                        Find a Class
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => router.back()}
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // -----------------------------------------------------------------------
     // Loading state — show spinner while polling

@@ -42,6 +42,10 @@ export default function ConfirmationPage() {
     const legacyBookingId = searchParams.get('bookingId');
     const lookupId = paymentIntentId ?? legacyBookingId;
 
+    // Check redirect_status for redirect-based payment methods (Revolut Pay, Klarna, etc.)
+    const redirectStatus = searchParams.get('redirect_status');
+    const paymentFailed = redirectStatus !== null && redirectStatus !== 'succeeded';
+
     const [booking, setBooking] = useState<Booking | null>(null);
     const [loading, setLoading] = useState(true);
     const [pollExhausted, setPollExhausted] = useState(false);
@@ -97,6 +101,43 @@ export default function ConfirmationPage() {
     // clearState is stable (useCallback), lookupId is stable for the lifetime of this page load
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lookupId]);
+
+    // -----------------------------------------------------------------------
+    // Payment failed/cancelled (redirect-based methods like Revolut Pay, Klarna)
+    // -----------------------------------------------------------------------
+    if (paymentFailed) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.successHeader}>
+                    <div className={styles.checkIcon} style={{ background: '#FEF2F2', color: '#DC2626' }}>
+                        <Clock size={48} />
+                    </div>
+                    <h1>Payment Not Completed</h1>
+                    <p>
+                        Your payment was not completed. This may be because you cancelled on the payment
+                        provider&apos;s page, or the payment was declined.
+                    </p>
+                </div>
+                <div className={styles.infoBox}>
+                    <p>No charge has been made. You can try again or choose a different payment method.</p>
+                </div>
+                <div className={styles.actions}>
+                    <button
+                        className="btn btn-outline"
+                        onClick={() => router.push('/portal/find-class')}
+                    >
+                        Find a Class
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => router.back()}
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // -----------------------------------------------------------------------
     // Loading state — show spinner while polling
