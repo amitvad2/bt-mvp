@@ -4,7 +4,7 @@ import ClassesClient from './ClassesClient';
 
 export const metadata: Metadata = {
     title: 'Find a Class | Blooming Tastebuds',
-    description: 'Browse upcoming vegetarian cooking sessions for kids aged 5–11 and young adults 12+. No account needed to explore — sign up when you\'re ready to book.',
+    description: 'Browse upcoming vegetarian cooking sessions for kids aged 5–11 and young adults 12–18. No account needed to explore — sign up when you\'re ready to book.',
 };
 
 export default function ClassesPage() {
@@ -15,7 +15,7 @@ export default function ClassesPage() {
                 <div className="container">
                     <span className="eyebrow">Available Sessions</span>
                     <h1>Find a Class</h1>
-                    <p>Hands-on vegetarian cooking for ages 5–16. Browse sessions near you and book your spot in minutes.</p>
+                    <p>Hands-on vegetarian cooking for ages 5–18. Browse sessions near you and book your spot in minutes.</p>
                 </div>
             </section>
 
@@ -26,7 +26,7 @@ export default function ClassesPage() {
                         <div className={styles.pathCard}>
                             <span className={styles.pathEmoji}>🍳</span>
                             <div>
-                                <h3>Little Chefs After-School Club</h3>
+                                <h3>Kids Cooking Classes</h3>
                                 <span className={styles.pathAge}>Ages 5–11</span>
                             </div>
                             <p>A fun, safe introduction to healthy cooking. Kids explore fresh ingredients, basic kitchen skills, and the joy of making food from scratch in a supportive group setting.</p>
@@ -34,8 +34,8 @@ export default function ClassesPage() {
                         <div className={`${styles.pathCard} ${styles.pathCardTeen}`}>
                             <span className={styles.pathEmoji}>🔥</span>
                             <div>
-                                <h3>Weekend Workshops</h3>
-                                <span className={`${styles.pathAge} ${styles.pathAgeTeen}`}>Ages 12+</span>
+                                <h3>Young Adult Workshops</h3>
+                                <span className={`${styles.pathAge} ${styles.pathAgeTeen}`}>Ages 12–18</span>
                             </div>
                             <p>Real-world cooking skills for growing independence. From knife technique to budget meal planning — ideal for Duke of Edinburgh and life beyond the family kitchen.</p>
                         </div>
