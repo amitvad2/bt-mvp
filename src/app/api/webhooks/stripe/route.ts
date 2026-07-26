@@ -199,6 +199,8 @@ async function handlePaymentIntentSucceeded(
             to: draft.bookedByEmail,
             className: draft.className,
             sessionDate: draft.sessionDate,
+            startTime: draft.startTime,
+            endTime: draft.endTime,
             venueName: draft.venueName,
             studentName: draft.studentName,
         });
@@ -443,6 +445,8 @@ async function sendConfirmationEmail(params: {
     to: string;
     className: string;
     sessionDate: string;
+    startTime?: string;
+    endTime?: string;
     venueName: string;
     studentName: string;
 }) {
@@ -456,6 +460,10 @@ async function sendConfirmationEmail(params: {
         day: 'numeric',
         month: 'long',
     });
+
+    const timeStr = params.startTime && params.endTime
+        ? `${params.startTime} – ${params.endTime}`
+        : null;
 
     const fromEmail =
         process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
@@ -476,6 +484,7 @@ async function sendConfirmationEmail(params: {
                         <ul style="list-style:none;padding:0;margin:0;color:#333;">
                             <li style="margin-bottom:8px;"><strong>Class:</strong> ${params.className}</li>
                             <li style="margin-bottom:8px;"><strong>Date:</strong> ${formattedDate}</li>
+                            ${timeStr ? `<li style="margin-bottom:8px;"><strong>Time:</strong> ${timeStr}</li>` : ''}
                             <li style="margin-bottom:8px;"><strong>Venue:</strong> ${params.venueName}</li>
                             <li style="margin-bottom:8px;"><strong>Participant:</strong> ${params.studentName}</li>
                         </ul>
