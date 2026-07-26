@@ -8,10 +8,10 @@ This document lists everything needed to keep bloomingtastebuds.com running. Use
 
 | Service | Purpose | Account |
 |---------|---------|---------|
-| GoDaddy | Domain registrar (bloomingtastebuds.com) | — |
+| GoDaddy | Domain registrar (bloomingtastebuds.com) | BloomingTastebuds |
 | Vercel | App hosting & deployment (Next.js) | amitvad2 |
-| Firebase | Auth, Firestore DB, Storage | blooming-tastebuds project |
-| Stripe | Payments (live mode) | Blooming Tastebuds |
+| Firebase | Auth, Firestore DB, Storage | amitvad |
+| Stripe | Payments (live mode) | anpkriti |
 | Resend | Transactional emails | amitvad2@gmail.com |
 | GitHub | Source code repo | amitvad2/bt-mvp |
 
