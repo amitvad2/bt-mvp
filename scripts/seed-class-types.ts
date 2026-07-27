@@ -94,8 +94,8 @@ interface ClassTypeSeed {
 
 const seedData: ClassTypeSeed[] = [
   {
-    slug: 'kidsAfterSchool',
-    displayName: 'Kids After School Club',
+    slug: 'kids-weekend',
+    displayName: 'Kids Weekend Class',
     shortLabel: 'Kids',
     badgeColor: 'amber',
     skipQuestionnaire: false,
@@ -107,8 +107,8 @@ const seedData: ClassTypeSeed[] = [
     order: 1,
   },
   {
-    slug: 'youngAdultWeekend',
-    displayName: 'Weekend Workshop',
+    slug: 'young-weekend',
+    displayName: 'Young Adults Weekend Workshop',
     shortLabel: 'Young Adult',
     badgeColor: 'green',
     skipQuestionnaire: true,

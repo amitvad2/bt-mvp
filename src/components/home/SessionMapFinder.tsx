@@ -207,8 +207,8 @@ export default function SessionMapFinder() {
                                     {results.map(s => (
                                         <div key={s.id} className={styles.sessionCard}>
                                             <div className={styles.cardHeader}>
-                                                <span className={`badge ${s.classType === 'kidsAfterSchool' ? 'badge-amber' : 'badge-indigo'}`}>
-                                                    {s.classType === 'kidsAfterSchool' ? `🧒 Kids (Ages ${s.ageMin}-${s.ageMax})` : `🎓 Young Adults (Ages ${s.ageMin}-${s.ageMax})`}
+                                                <span className={`badge ${s.classType === 'kids-weekend' ? 'badge-amber' : 'badge-indigo'}`}>
+                                                    {s.classType === 'kids-weekend' ? `🧒 Kids (Ages ${s.ageMin}-${s.ageMax})` : `🎓 Young Adults (Ages ${s.ageMin}-${s.ageMax})`}
                                                 </span>
                                                 <span className={styles.distancePill}>
                                                     <MapPin size={12} /> {s.distanceMiles.toFixed(1)} mi

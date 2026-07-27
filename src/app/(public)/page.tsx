@@ -139,7 +139,7 @@ export default function HomePage() {
                                     <li>Try new veggies</li>
                                     <li>Teamwork</li>
                                 </ul>
-                                <Link href="/classes?type=kidsAfterSchool" className={styles.cardCta}>
+                                <Link href="/classes?type=kids-weekend" className={styles.cardCta}>
                                     Find Kids Classes <ArrowRight size={16} />
                                 </Link>
                             </div>
@@ -159,7 +159,7 @@ export default function HomePage() {
                                     <li>Knife skills</li>
                                     <li>Budget meals</li>
                                 </ul>
-                                <Link href="/classes?type=youngAdultWeekend" className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
+                                <Link href="/classes?type=young-weekend" className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
                                     Find Young Adult Workshops <ArrowRight size={16} />
                                 </Link>
                             </div>
