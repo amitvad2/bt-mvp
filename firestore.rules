@@ -80,10 +80,11 @@ service cloud.firestore {
     }
 
     // Class types — dynamic programme configuration.
-    // Readable by any authenticated user (admin pages, booking wizard, public session browser).
+    // Public read needed by the classes page filter dropdown and session badges.
+    // Contains no PII (same pattern as sessions, classes, venues).
     // Writable only by admins.
     match /class_types/{docId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isAdmin();
     }
 
