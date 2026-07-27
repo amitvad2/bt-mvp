@@ -50,7 +50,7 @@ export default function HomePage() {
                         <span className={styles.heroGradient}>Blooming Tastebuds</span>
                     </h1>
                     <p className={styles.heroSub}>
-                        Where kids and teens learn confidence, creativity, and conscious eating — one delicious meal at a time. 🌱
+                        Where kids and young adults learn confidence, creativity, and conscious eating — one delicious meal at a time. 🌱
                     </p>
                     <HeroCtas />
                 </div>
@@ -102,7 +102,7 @@ export default function HomePage() {
                             <Heart size={16} /> Our Story
                         </div>
                         <h2>Nurturing Confident Cooks</h2>
-                        <p className={styles.nurturingSubhead}>Cooking adventures for kids and teens</p>
+                        <p className={styles.nurturingSubhead}>Cooking adventures for kids and young adults</p>
                         <p>
                             At Blooming Tastebuds, we inspire young minds to explore the joys of healthy cooking. Our passionate Cooking Instructor brings over 2 years of experience in teaching school students how to whip up delicious and nutritious vegetarian dishes.
                         </p>
