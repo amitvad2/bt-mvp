@@ -206,6 +206,18 @@ async function handlePaymentIntentSucceeded(
         });
     }
 
+    // 4b. Notify admin of new booking (best-effort, non-blocking)
+    await sendAdminBookingNotification({
+        className: draft.className,
+        sessionDate: draft.sessionDate,
+        startTime: draft.startTime,
+        endTime: draft.endTime,
+        venueName: draft.venueName,
+        studentName: draft.studentName,
+        bookedByName: draft.bookedByName,
+        bookedByEmail: draft.bookedByEmail,
+    });
+
     // 5. Delete the draft (cleanup — non-critical if this fails)
     try {
         await draftRef.delete();
@@ -387,6 +399,20 @@ async function handleBundlePaymentSucceeded(
             sessions,
         });
     }
+
+    // Notify admin of new bundle booking (best-effort, non-blocking)
+    await sendAdminBookingNotification({
+        className: draft.className,
+        sessionDate: sessions[0]?.date ?? '',
+        startTime: sessions[0]?.startTime,
+        endTime: sessions[0]?.endTime,
+        venueName: sessions[0]?.venueName ?? '',
+        studentName: draft.studentName,
+        bookedByName: draft.bookedByName,
+        bookedByEmail: draft.bookedByEmail,
+        bundleName: draft.bundleName,
+        sessionCount: sessions.length,
+    });
 
     // Delete the draft (cleanup — non-critical if this fails)
     try {
@@ -592,5 +618,83 @@ async function sendBundleConfirmationEmail(params: {
         }
     } catch (err) {
         console.error('[webhook] Failed to send bundle confirmation email:', err);
+    }
+}
+
+async function sendAdminBookingNotification(params: {
+    className: string;
+    sessionDate: string;
+    startTime?: string;
+    endTime?: string;
+    venueName: string;
+    studentName: string;
+    bookedByName: string;
+    bookedByEmail: string;
+    bundleName?: string;
+    sessionCount?: number;
+}) {
+    const adminEmail = process.env.RESEND_ADMIN_EMAIL;
+    if (!adminEmail) {
+        console.warn('[webhook] RESEND_ADMIN_EMAIL not set — skipping admin notification');
+        return;
+    }
+
+    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_placeholder') {
+        return;
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+    const formattedDate = params.sessionDate
+        ? new Date(params.sessionDate).toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        })
+        : 'N/A';
+
+    const timeStr = params.startTime && params.endTime
+        ? `${params.startTime} – ${params.endTime}`
+        : '';
+
+    const isBundle = !!params.bundleName;
+    const subject = isBundle
+        ? `New Bundle Booking: ${params.bundleName} (${params.sessionCount} sessions)`
+        : `New Booking: ${params.className} — ${formattedDate}`;
+
+    try {
+        const { error } = await resend.emails.send({
+            from: `Blooming Tastebuds <${fromEmail}>`,
+            to: [adminEmail],
+            subject,
+            html: `
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
+                    <h1 style="color:#16a34a;font-size:20px;margin-bottom:8px;">🎉 New Booking Received!</h1>
+                    <div style="background:#F5F5F7;padding:16px;border-radius:12px;margin:16px 0;">
+                        <ul style="list-style:none;padding:0;margin:0;color:#333;">
+                            ${isBundle ? `<li style="margin-bottom:8px;"><strong>Bundle:</strong> ${params.bundleName} (${params.sessionCount} sessions)</li>` : ''}
+                            <li style="margin-bottom:8px;"><strong>Class:</strong> ${params.className}</li>
+                            <li style="margin-bottom:8px;"><strong>Date:</strong> ${formattedDate}</li>
+                            ${timeStr ? `<li style="margin-bottom:8px;"><strong>Time:</strong> ${timeStr}</li>` : ''}
+                            <li style="margin-bottom:8px;"><strong>Venue:</strong> ${params.venueName}</li>
+                            <li style="margin-bottom:8px;"><strong>Student:</strong> ${params.studentName}</li>
+                            <li style="margin-bottom:8px;"><strong>Booked by:</strong> ${params.bookedByName} (${params.bookedByEmail})</li>
+                        </ul>
+                    </div>
+                    <p style="color:#666;font-size:13px;">
+                        View all bookings in the <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/bookings" style="color:#0066CC;">admin panel</a>.
+                    </p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error('[webhook] Admin notification error:', error);
+        } else {
+            console.log(`[webhook] Admin booking notification sent to ${adminEmail}`);
+        }
+    } catch (err) {
+        console.error('[webhook] Failed to send admin notification:', err);
     }
 }
