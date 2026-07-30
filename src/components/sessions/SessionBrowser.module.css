@@ -110,6 +110,15 @@
     color: var(--bt-gray-600);
 }
 
+.sessionDate {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
 .sessionDetails svg {
     color: var(--bt-gray-400);
     flex-shrink: 0;

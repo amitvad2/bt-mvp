@@ -214,7 +214,7 @@ function SessionBrowserContent({ onBook }: Props) {
                                     </div>
 
                                     <div className={styles.sessionDetails}>
-                                        <div>
+                                        <div className={styles.sessionDate}>
                                             <Calendar size={18} strokeWidth={1.5} />
                                             {new Date(s.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
                                         </div>
