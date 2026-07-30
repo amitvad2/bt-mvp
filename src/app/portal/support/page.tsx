@@ -93,8 +93,7 @@ export default function SupportPage() {
                             <p>
                                 Refunds are handled on a case-by-case basis. Please{' '}
                                 <Link href="/contact">contact us</Link> with your booking reference and we&apos;ll
-                                review your request. Refunds are processed back to your original payment method
-                                via Stripe and typically take 5–10 business days.
+                                review your request.
                             </p>
                         </details>
 
