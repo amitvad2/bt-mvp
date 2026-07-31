@@ -19,7 +19,7 @@ export function HeroCtas() {
                 </Link>
             ) : !loading ? (
                 <Link href="/auth/signup" className={styles.ctaSecondary}>
-                    Register Free <ArrowRight size={18} />
+                    Register Here <ArrowRight size={18} />
                 </Link>
             ) : null}
         </div>
@@ -46,7 +46,7 @@ export function BannerCtas() {
                         Find a Class <ArrowRight size={18} />
                     </Link>
                     <Link href="/auth/signup" className={styles.ctaSecondary}>
-                        Register Free
+                        Register Here
                     </Link>
                 </>
             ) : null}

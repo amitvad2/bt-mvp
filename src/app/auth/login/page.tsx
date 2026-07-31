@@ -117,7 +117,7 @@ function LoginContent() {
             </form>
 
             <p className={styles.footer}>
-                Don't have an account? <Link href="/auth/signup">Register free</Link>
+                Don't have an account? <Link href="/auth/signup">Register here</Link>
             </p>
         </div>
     );
