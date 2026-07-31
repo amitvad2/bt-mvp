@@ -132,7 +132,7 @@ export default function HomePage() {
                                 <div className={styles.ageBubble}>Ages 5–11</div>
                             </div>
                             <div className={styles.journeyContent}>
-                                <h3>🍳 Kids Cooking Classes</h3>
+                                <h3>🍳 Junior Cooks</h3>
                                 <p>A fun, safe introduction to healthy cooking. Kids explore fresh ingredients, basic kitchen skills, and the joy of making food from scratch in a supportive group setting.</p>
                                 <ul className={styles.featureChips}>
                                     <li>Build confidence</li>
@@ -140,7 +140,7 @@ export default function HomePage() {
                                     <li>Teamwork</li>
                                 </ul>
                                 <Link href="/classes?type=kids-weekend" className={styles.cardCta}>
-                                    Find Kids Classes <ArrowRight size={16} />
+                                    Find Junior Cooks <ArrowRight size={16} />
                                 </Link>
                             </div>
                         </div>
@@ -152,7 +152,7 @@ export default function HomePage() {
                                 <div className={`${styles.ageBubble} ${styles.ageBubbleTeen}`}>Ages 12–18</div>
                             </div>
                             <div className={styles.journeyContent}>
-                                <h3>🔥 Young Chefs Workshop</h3>
+                                <h3>🔥 Teen Chefs</h3>
                                 <p>Real-world cooking skills for growing independence. From knife technique to budget meal planning — ideal for Duke of Edinburgh and life beyond the family kitchen.</p>
                                 <ul className={styles.featureChips}>
                                     <li>Duke of Edinburgh</li>
@@ -160,7 +160,7 @@ export default function HomePage() {
                                     <li>Budget meals</li>
                                 </ul>
                                 <Link href="/classes?type=young-weekend" className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
-                                    Find Young Chefs Workshop <ArrowRight size={16} />
+                                    Find Teen Chefs <ArrowRight size={16} />
                                 </Link>
                             </div>
                         </div>
