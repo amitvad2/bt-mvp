@@ -96,7 +96,7 @@ function SignUpContent() {
                             <input type="radio" value="parent" {...register('role')} />
                             <span className={styles.roleEmoji}>👨‍👩‍👧</span>
                             <strong>Parent / Guardian</strong>
-                            <span>Booking for my child (ages 5–12)</span>
+                            <span>Booking for my junior cook (ages 5–11)</span>
                         </label>
                         <label className={`${styles.roleOption} ${selectedRole === 'youngAdult' ? styles.roleSelected : ''}`}>
                             <input type="radio" value="youngAdult" {...register('role')} />
