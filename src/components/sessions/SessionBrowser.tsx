@@ -79,19 +79,45 @@ function SessionBrowserContent({ onBook }: Props) {
             const now = new Date();
             now.setHours(0, 0, 0, 0);
 
-            if (filters.dateRange === 'this-week') {
+            if (filters.dateRange === 'this-weekend') {
+                // Find next Saturday and Sunday
+                const dayOfWeek = now.getDay(); // 0=Sun, 6=Sat
+                const daysUntilSat = dayOfWeek === 6 ? 0 : (6 - dayOfWeek);
+                const saturday = new Date(now);
+                saturday.setDate(now.getDate() + daysUntilSat);
+                const sunday = new Date(saturday);
+                sunday.setDate(saturday.getDate() + 1);
+                sunday.setHours(23, 59, 59, 999);
+                results = results.filter(s => {
+                    const d = new Date(s.date);
+                    return d >= saturday && d <= sunday;
+                });
+            } else if (filters.dateRange === 'this-week') {
                 const nextWeek = new Date();
                 nextWeek.setDate(now.getDate() + 7);
                 results = results.filter(s => {
                     const d = new Date(s.date);
                     return d >= now && d <= nextWeek;
                 });
-            } else if (filters.dateRange === 'this-month') {
-                const nextMonth = new Date();
-                nextMonth.setMonth(now.getMonth() + 1);
+            } else if (filters.dateRange === 'next-2-weeks') {
+                const twoWeeks = new Date();
+                twoWeeks.setDate(now.getDate() + 14);
                 results = results.filter(s => {
                     const d = new Date(s.date);
-                    return d >= now && d <= nextMonth;
+                    return d >= now && d <= twoWeeks;
+                });
+            } else if (filters.dateRange === 'this-month') {
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                results = results.filter(s => {
+                    const d = new Date(s.date);
+                    return d >= now && d <= endOfMonth;
+                });
+            } else if (filters.dateRange === 'next-month') {
+                const startNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                const endNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+                results = results.filter(s => {
+                    const d = new Date(s.date);
+                    return d >= startNextMonth && d <= endNextMonth;
                 });
             } else {
                 results = results.filter(s => new Date(s.date) >= now);
@@ -162,8 +188,11 @@ function SessionBrowserContent({ onBook }: Props) {
                                     onChange={e => setFilters(f => ({ ...f, dateRange: e.target.value }))}
                                 >
                                     <option value="all">Anytime</option>
+                                    <option value="this-weekend">This Weekend</option>
                                     <option value="this-week">This Week</option>
+                                    <option value="next-2-weeks">Next 2 Weeks</option>
                                     <option value="this-month">This Month</option>
+                                    <option value="next-month">Next Month</option>
                                 </select>
                             </div>
                             <div className="form-group">
