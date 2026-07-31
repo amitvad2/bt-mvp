@@ -34,7 +34,7 @@ export default function ClassesPage() {
                         <div className={`${styles.pathCard} ${styles.pathCardTeen}`}>
                             <span className={styles.pathEmoji}>🔥</span>
                             <div>
-                                <h3>Young Adult Workshops</h3>
+                                <h3>Young Chefs Workshop</h3>
                                 <span className={`${styles.pathAge} ${styles.pathAgeTeen}`}>Ages 12–18</span>
                             </div>
                             <p>Real-world cooking skills for growing independence. From knife technique to budget meal planning — ideal for Duke of Edinburgh and life beyond the family kitchen.</p>
