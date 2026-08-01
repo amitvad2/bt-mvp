@@ -149,12 +149,29 @@ export async function POST(req: Request) {
 
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
-        const { data: resData, error } = await resend.emails.send({
+        // Determine CC recipients for cancellation emails
+        let cc: string[] | undefined;
+        if (type === 'cancellation' || type === 'bundle-cancellation') {
+            const adminEmail = process.env.RESEND_ADMIN_EMAIL;
+            if (adminEmail) {
+                cc = [adminEmail];
+            } else {
+                console.warn('RESEND_ADMIN_EMAIL not configured — cancellation email sent without admin CC');
+            }
+        }
+
+        // Build send options
+        const sendOptions: any = {
             from: `Blooming Tastebuds <${fromEmail}>`,
             to: [to],
             subject: subject,
             html: html,
-        });
+        };
+        if (cc) {
+            sendOptions.cc = cc;
+        }
+
+        const { data: resData, error } = await resend.emails.send(sendOptions);
 
         if (error) {
             console.error('Resend error:', error);
