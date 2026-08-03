@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "bt-mvp-d057f"
+    "default": "bt-mvp-d057f",
+    "dev": "bt-mvp-dev"
   }
 }
