@@ -46,6 +46,17 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
     return (
         <div className={styles.layout}>
+            {/* Mobile top bar */}
+            <div className={styles.mobileHeader}>
+                <Link href="/" className={styles.mobileHeaderLogo}>
+                    <ChefHat size={20} strokeWidth={1.5} />
+                    <span>Blooming Tastebuds</span>
+                </Link>
+                <button onClick={logOut} className={styles.mobileHeaderLogout} aria-label="Logout">
+                    <LogOut size={20} strokeWidth={1.5} />
+                </button>
+            </div>
+
             {/* Sidebar */}
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarTop}>
