@@ -89,7 +89,7 @@ export default function TermsPage() {
                         <section id="privacy">
                             <h2>8. Privacy & Data</h2>
                             <p>We collect and process personal data in accordance with our Privacy Policy and applicable data protection legislation, including the UK GDPR. Medical information is collected solely for the purpose of ensuring participant safety and is not shared with third parties except where required by law or in a medical emergency.</p>
-                            <p>You have the right to access, correct, or request deletion of your personal data at any time. Please contact us at hello@bloomingtastebuds.com to exercise these rights.</p>
+                            <p>You have the right to access, correct, or request deletion of your personal data at any time. Please contact us at bloomingtastebuds@gmail.com to exercise these rights.</p>
                         </section>
 
                         <section id="changes">
@@ -101,7 +101,7 @@ export default function TermsPage() {
                             <h2>10. Contact Us</h2>
                             <p>If you have any questions about these Terms and Conditions, please contact us:</p>
                             <ul>
-                                <li><strong>Email:</strong> hello@bloomingtastebuds.com</li>
+                                <li><strong>Email:</strong> bloomingtastebuds@gmail.com</li>
                                 <li><strong>Phone:</strong> +44 (0) 7809722517</li>
                                 <li><strong>Address:</strong> Blooming Tastebuds, England, United Kingdom</li>
                             </ul>
