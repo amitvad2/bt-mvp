@@ -155,12 +155,134 @@
     padding: var(--space-12);
 }
 
+.mobileHeader {
+    display: none;
+}
+
 @media (max-width: 1024px) {
     .layout {
         grid-template-columns: 1fr;
     }
 
     .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        height: auto;
+        flex-direction: row;
+        padding: 0;
+        z-index: 100;
+        border-top: 1px solid var(--bt-gray-200);
+        border-right: none;
+    }
+
+    .sidebarTop {
+        flex-direction: row;
+        padding: 0;
+        gap: 0;
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    .adminBrand,
+    .logo {
         display: none;
+    }
+
+    .nav {
+        flex-direction: row;
+        gap: 0;
+        width: 100%;
+    }
+
+    .navItem {
+        flex-direction: column;
+        gap: 4px;
+        font-size: 0.65rem;
+        padding: 0.6rem 0.4rem;
+        min-width: 3.5rem;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .navItem span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 4.5rem;
+    }
+
+    .sidebarBottom {
+        display: none;
+    }
+
+    .mobileHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: var(--bt-gray-50);
+        border-bottom: 1px solid var(--bt-gray-200);
+        position: sticky;
+        top: 0;
+        z-index: 101;
+    }
+
+    .mobileHeaderLogo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-heading);
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--bt-gray-900);
+        text-decoration: none;
+    }
+
+    .mobileHeaderActions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .mobileHeaderLink {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border-radius: var(--radius);
+        color: var(--bt-gray-600);
+        text-decoration: none;
+    }
+
+    .mobileHeaderLink:hover {
+        background: var(--bt-gray-200);
+    }
+
+    .mobileHeaderLogout {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border-radius: var(--radius);
+        border: none;
+        background: none;
+        color: var(--bt-danger);
+        cursor: pointer;
+    }
+
+    .mobileHeaderLogout:hover {
+        background: rgba(209, 17, 36, 0.05);
+    }
+
+    .topHeader {
+        display: none;
+    }
+
+    .content {
+        padding: var(--space-5) var(--space-4);
+        padding-bottom: 6rem;
     }
 }
