@@ -12,16 +12,16 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Purpose:** Server-side creation of a Stripe PaymentIntent and booking draft. Called from the client during the payment step of the booking wizard.
 - **Input:** Full booking payload — `{ sessionId, sessionDate, className, venueName, startTime, endTime, classType, amount, bookedByUid, bookedByName, bookedByEmail, studentId, studentName, medicalInfo, emergencyContact, questionnaire, termsAccepted, termsAcceptedAt }`
 - **Output:** `{ clientSecret: "pi_xxx_secret_yyy", paymentIntentId: "pi_xxx" }`
-- **Auth:** None enforced at the API route level (assumes authenticated client; middleware protects `/book/*`).
+- **Auth:** Required — Bearer Firebase ID token in `Authorization` header. Verified server-side via `adminAuth.verifyIdToken()`. Returns 401 if token is absent or invalid. Middleware protects `/book/*` as a UX gate only.
 - **Notes:** Creates a Stripe PaymentIntent with `automatic_payment_methods: { enabled: true }`. Writes `booking_drafts/{paymentIntentId}` via Firebase Admin SDK so the webhook can reconstruct the full booking without trusting browser state. If the Firestore write fails, the PaymentIntent is cancelled immediately so the user is never charged for an unrecoverable booking.
 
 ### `POST /api/emails/send`
 - **Status:** Detected
 - **File:** [src/app/api/emails/send/route.ts](../src/app/api/emails/send/route.ts)
 - **Purpose:** Sends transactional HTML emails via Resend.
-- **Input:** `{ to, subject, type: 'confirmation' | 'cancellation', data: { ... } }`
+- **Input:** `{ to, subject, type: 'confirmation' | 'cancellation' | 'bundle-cancellation', data: { ... } }`
 - **Output:** `{ success: true }` or error
-- **Auth:** None enforced at route level (internal use only).
+- **Auth:** Required — Bearer Firebase ID token in `Authorization` header. Verified server-side via `adminAuth.verifyIdToken()`. Returns 401 if token is absent or invalid.
 - **Notes:** Uses `resend.emails.send()`. HTML templates are inline in the route handler. Graceful degradation — email failure does not block booking creation.
 
 ### `POST /api/contact`
@@ -35,7 +35,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
     "name": "string (required)",
     "email": "string (required, valid email)",
     "phone": "string (optional)",
-    "category": "'general' | 'booking' | 'feedback' | 'technical' | 'other' (required)",
+    "category": "'general' | 'class-info' | 'booking-help' | 'dietary-allergy' | 'private-event' | 'technical' | 'feedback' (required)",
     "message": "string (required, min 10 chars)",
     "consentToReply": "boolean (required, must be true)"
   }
@@ -76,7 +76,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
   - `onAuthStateChanged` — auth state listener
   - `signOut` — logout
 - **Session management:** Firebase ID token stored in `bt_session` cookie for server-side middleware access.
-- **Role storage:** Role stored in Firestore `users/{uid}.role` (not Firebase custom claims). Middleware reads the cookie (JWT) then fetches the role from Firestore for admin checks.
+- **Role storage:** Role stored in Firestore `users/{uid}.role` (not Firebase custom claims). Middleware checks only for the presence of the `bt_session` cookie (a plain boolean string — not a JWT). Admin-role enforcement happens exclusively in `firestore.rules` via `isAdmin()`, which does a `get()` on `users/{uid}` per evaluated rule.
 
 ### Firebase Admin SDK
 - **Status:** Detected
@@ -94,7 +94,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Status:** Detected
 - **File:** `src/lib/firebase.ts` — `getFirestore(app)` exported as `db`
 - **Access pattern:** Direct client-SDK reads/writes from React components and server components. API routes use Firebase Admin SDK (`adminDb`). No ORM or abstraction layer.
-- **Collections:** `users`, `students`, `venues`, `classes`, `sessions`, `recipes`, `bookings`, `gallery`, `instructors`, `booking_drafts`, `contact_messages`
+- **Collections:** `users`, `students`, `venues`, `classes`, `sessions`, `recipes`, `bookings`, `gallery`, `instructors`, `class_types`, `bundles`, `booking_drafts`, `contact_messages`
 - **Security rules:** `firestore.rules` present in repo root — per-collection access control implemented and deployed to `bt-mvp-d057f`. To redeploy after changes: `firebase deploy --only firestore:rules`. See [firestore-rules-notes.md](./firestore-rules-notes.md).
 
 ### Firebase Storage
@@ -139,7 +139,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 - **Files:** [src/lib/resend.ts](../src/lib/resend.ts), [src/app/api/emails/send/route.ts](../src/app/api/emails/send/route.ts)
 - **SDK Version:** resend@6.9.2
 - **From address:** Reads `RESEND_FROM_EMAIL` env var; defaults to `onboarding@resend.dev` (test address — must be changed for production).
-- **Email types:** `confirmation`, `cancellation` (booking emails via `/api/emails/send`); admin contact notification (inline in `/api/contact`)
+- **Email types:** `confirmation`, `cancellation`, `bundle-cancellation` (booking emails via `/api/emails/send`); admin booking notification (inline in webhook handler); admin contact notification (inline in `/api/contact`)
 - **Admin notification recipient:** `RESEND_ADMIN_EMAIL` env var; defaults to `bloomingtastebuds@gmail.com`
 - **HTML templates:** Inline in route handlers (not file-based)
 - **Notes:** A verified sending domain must be configured in Resend dashboard for production use.
@@ -160,11 +160,11 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 ### Admin Route Protection
 - **Status:** Detected
 - **File:** [src/middleware.ts](../src/middleware.ts)
-- **How it works:** Middleware intercepts `/admin/*` routes. Checks `bt_session` cookie validity. Checks user role in Firestore is `admin`. Redirects non-admin users to `/portal/dashboard`.
+- **How it works:** Middleware intercepts `/admin/*` routes. Checks for the presence of the `bt_session` cookie (a plain boolean string — not a JWT). Redirects to `/auth/login` if the cookie is absent. The middleware does NOT check Firestore role or Firebase custom claims — admin-role enforcement is handled entirely by Firestore security rules.
 
 ### Admin Data Operations
 - **Status:** Detected
-- **Files:** `src/app/admin/*/page.tsx` (7 admin pages)
+- **Files:** `src/app/admin/*/page.tsx` (9 admin pages: venues, classes, sessions, recipes, gallery, instructors, bookings, bundles, class-types)
 - **Pattern:** Each admin page directly uses the Firebase client SDK to CRUD Firestore documents and Firebase Storage (for file uploads).
 - **No dedicated admin API layer** — admin pages interact with Firestore directly via the client SDK. Firestore security rules enforce admin-only writes (`isAdmin()` helper in `firestore.rules`).
 
@@ -220,7 +220,7 @@ Status key: **Detected** | **Partially Detected** | **Not Found**
 | Firebase Admin SDK | Server-side auth + DB | Detected | — |
 | Stripe | Payment processing | Detected | Refund flow |
 | Stripe Webhooks | Async payment events / booking creation | **Detected** | Register production endpoint in Stripe Dashboard |
-| Resend | Transactional emails + contact admin notifications | Detected | Production sending domain (`RESEND_FROM_EMAIL`); set `RESEND_ADMIN_EMAIL` |
+| Resend | Transactional emails (confirmation, cancellation, bundle-cancellation) + admin notifications | Detected | Production sending domain (`RESEND_FROM_EMAIL`); set `RESEND_ADMIN_EMAIL` |
 | Leaflet / React-Leaflet | Session maps | Detected | — |
 | Vercel | Hosting / deployment | Partially Detected | Env vars must be set |
 | PayPal | Alternate payment | Not Found | Full integration needed |

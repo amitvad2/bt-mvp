@@ -1,10 +1,12 @@
 # Firestore Rules — Design Notes
 
+> **Status note (2026-08):** `firestore.rules` has been implemented and deployed to project `bt-mvp-d057f`. The webhook-based booking architecture described in "Recommended next step" below has been completed. Several sections of this document describe historical state — see per-section notes.
+
 ---
 
 ## What Was Added
 
-`firestore.rules` was created at the repository root. It covers all nine Firestore collections used by the app.
+`firestore.rules` was created at the repository root. It covers all Firestore collections used by the app.
 
 ### Helper functions
 
@@ -24,14 +26,20 @@
 | Collection | Public read | Authenticated user read | Authenticated user write | Admin |
 |------------|------------|------------------------|--------------------------|-------|
 | `gallery` | Yes | — | — | Full CRUD |
-| `sessions` | Yes | — | Decrement `spotsAvailable` only | Full CRUD |
+| `sessions` | Yes | — | No client write (webhook-only for spotsAvailable) | Full CRUD |
 | `venues` | Yes | — | — | Full CRUD |
 | `classes` | Yes | — | — | Full CRUD |
 | `recipes` | Yes | — | — | Full CRUD |
 | `instructors` | Yes | — | — | Full CRUD |
+| `class_types` | Yes | — | — | Full CRUD |
+| `bundles` | Yes | — | — | Full CRUD |
 | `users` | No | Own doc only | Own doc only (no delete) | Read all |
 | `students` | No | Own (parentUid match) | Own only; parentUid locked | Read all |
-| `bookings` | No | Own (bookedByUid match) | Create (validated) + cancel | Full CRUD |
+| `bookings` | No | Own (bookedByUid match) | Cancel only (status update) | Full CRUD |
+| `booking_drafts` | No | No | No | Deny all (Admin SDK only) |
+| `contact_messages` | No | Admin only | Admin only (status update) | Full CRUD |
+
+> **Note:** The `sessions` `spotsAvailable` client-decrement rule has been removed. The `bookings` client-create rule has been removed. Both operations are exclusively performed by the Stripe webhook handler via Firebase Admin SDK, which bypasses security rules.
 
 ---
 
@@ -51,68 +59,39 @@
 
 ## The Booking Write Decision
 
-### The problem
+> **COMPLETED (2026-08):** The webhook-based booking architecture described below has been fully implemented. `CheckoutForm.tsx` no longer writes to Firestore. The `allow create` rule for `bookings` has been set to `false`, and the `spotsAvailable` client-update rule on `sessions` has been removed.
 
-`CheckoutForm.tsx` writes the booking document directly from the browser with the Firebase client SDK:
+### Historical context
 
-```typescript
-// src/app/book/[sessionId]/payment/CheckoutForm.tsx — line 80
-const docRef = await addDoc(collection(db, 'bookings'), bookingData);
+Previously, `CheckoutForm.tsx` wrote the booking document directly from the browser with the Firebase client SDK (`addDoc(collection(db, 'bookings'), bookingData)`) and decremented `spotsAvailable` via a separate `updateDoc`. This created race conditions and fraud risks.
+
+### Current architecture (implemented)
+
+All booking creation is exclusively server-side:
+
+1. `/api/payments/create-intent` — verifies Firebase ID token, reads authoritative price from Firestore, creates Stripe PaymentIntent, writes `booking_drafts/{piId}` via Admin SDK.
+2. `/api/webhooks/stripe` — on `payment_intent.succeeded`: reads draft, runs Firestore transaction (idempotency + capacity check + `bookings/{piId}` creation + `spotsAvailable` decrement), updates student profile, sends confirmation email, deletes draft.
+3. `CheckoutForm.tsx` — no Firestore writes; just handles Stripe Elements UI and navigation.
+
+The Firestore rules reflect this:
 ```
+// bookings — no client create; only admin can write
+allow create: if false;
 
-This happens after `stripe.confirmPayment()` succeeds but **before** any server-side verification that the Stripe charge actually completed.
+// sessions — no client spotsAvailable write
+// (user-update block removed entirely)
 
-**Risks of this approach:**
-- A user who inspects the code could call `addDoc` directly — creating a fake booking with fabricated payment data — unless the rules validate the fields.
-- If the user's network drops after Stripe charges their card but before the `addDoc` call completes, payment is taken but no booking exists in Firestore.
-- Decrementing `spotsAvailable` also happens client-side (a separate `updateDoc`), creating a window where payment succeeds but the spot is never decremented.
-
-### What the current rules do
-
-The create rule validates the minimum required invariants:
+// booking_drafts — deny all client access; Admin SDK bypasses rules
+match /booking_drafts/{docId} {
+  allow read, write: if false;
+}
 ```
-allow create: if isSignedIn()
-  && request.resource.data.bookedByUid == request.auth.uid  // can't book as someone else
-  && request.resource.data.termsAccepted == true             // T&Cs were accepted
-  && request.resource.data.status == 'confirmed'             // valid status
-  && request.resource.data.payment.status in ['pending', 'paid'];
-```
-
-**What this does NOT protect against:** A logged-in user can still create a booking document with a fabricated `stripePaymentIntentId`. The rules cannot call the Stripe API to verify the charge. This is the inherent limitation of client-side booking creation.
-
-### Why this approach is acceptable for now
-
-- The booking form is behind Firebase Auth — an anonymous user cannot write bookings.
-- The field constraints prevent the most obvious injection patterns.
-- For an MVP cooking class business with a low attack surface, this is a pragmatic trade-off.
-
-### Recommended next step — move booking creation server-side
-
-The proper fix closes the gap entirely:
-
-1. **Create `/api/webhooks/stripe/route.ts`** — a Next.js API route that:
-   - Verifies the Stripe webhook signature using `STRIPE_WEBHOOK_SECRET`
-   - On `payment_intent.succeeded`: writes the booking via `adminDb` (Firebase Admin SDK, which bypasses security rules)
-   - Decrements `spotsAvailable` in the same operation via a Firestore transaction
-   - Sends the confirmation email
-
-2. **In `CheckoutForm.tsx`** — remove the `addDoc`, `updateDoc`, and email calls. Just redirect to a "payment received — booking pending" page.
-
-3. **After step 1 is live** — tighten the Firestore rule:
-   ```
-   // Replace the current 'allow create' rule with:
-   allow create: if false;  // all booking writes go through the webhook
-   ```
-
-4. **Also tighten the `sessions` update rule** — once the webhook decrements `spotsAvailable` server-side, change:
-   ```
-   // Replace the spotsAvailable user-update rule with:
-   // (remove the second 'allow update' block on sessions entirely)
-   ```
 
 ---
 
-## Code Paths That Will Fail Under These Rules
+## Code Paths Verification
+
+> **Note (2026-08):** The two rows marked `OUTDATED` below describe code paths that no longer exist in the codebase. `CheckoutForm.tsx` no longer writes to `bookings` or `sessions` — all such writes go through the Stripe webhook handler via Firebase Admin SDK.
 
 None of the existing client code paths break — every operation in the codebase matches a rule. Below is the verification:
 
@@ -131,8 +110,8 @@ None of the existing client code paths break — every operation in the codebase
 | `BookingContext.fetch` | `getDoc(sessions/{id})` | `allow read: if true` ✓ |
 | `FindClassPage.fetch sessions` | `getDocs(sessions where status==open)` | `allow read: if true` ✓ |
 | `FindClassPage.fetch venues` | `getDocs(venues)` | `allow read: if true` ✓ |
-| `CheckoutForm.addDoc(bookings)` | Creates booking doc | `allow create: if isSignedIn && ...` ✓ |
-| `CheckoutForm.updateDoc(sessions)` | `{spotsAvailable: increment(-1)}` | `allow update: if isSignedIn && affectedKeys == ['spotsAvailable'] && ...` ✓ |
+| ~~`CheckoutForm.addDoc(bookings)`~~ | ~~Creates booking doc~~ | **OUTDATED** — CheckoutForm no longer writes to bookings; webhook handler uses Admin SDK |
+| ~~`CheckoutForm.updateDoc(sessions)`~~ | ~~`{spotsAvailable: increment(-1)}`~~ | **OUTDATED** — CheckoutForm no longer decrements spots; webhook handler uses Admin SDK |
 | `CheckoutForm.updateDoc(students)` | Updates medicalInfo/emergencyContact/questionnaire | `allow update: if parentUid==auth.uid && parentUid unchanged` ✓ |
 | `MyClassesPage.fetch` | `getDocs(bookings where bookedByUid==uid)` | `allow read: if bookedByUid==auth.uid` ✓ |
 | `MyClassesPage.cancel` | `updateDoc(bookings/{id}, {status, cancelledAt})` | `allow update: if bookedByUid==auth.uid && status==cancelled && affectedKeys==...` ✓ |
@@ -167,9 +146,9 @@ firebase deploy --only firestore:rules,storage --project YOUR_PROJECT_ID
 
 ---
 
-## Recommended Follow-up Tasks (in priority order)
+## Follow-up Tasks
 
-1. **Deploy these rules immediately** — the database has been open since the project started.
-2. **Add a Stripe webhook handler** (`/api/webhooks/stripe`) and move booking creation server-side. Once done, replace the client-create rule with `allow create: if false`.
-3. **Migrate admin role to Firebase custom claims** — eliminates the `get()` read on every admin operation and makes admin checks instant without a round-trip to Firestore.
-4. **Add a `firestore.indexes.json`** — the `bookings where bookedByUid == X` query and `sessions where status == open` query will need composite indexes if Firestore prompts for them in the console.
+1. ✅ **Deploy rules** — deployed to `bt-mvp-d057f`. Re-deploy after any rule changes: `firebase deploy --only firestore:rules --project bt-mvp-d057f`.
+2. ✅ **Add Stripe webhook handler** (`/api/webhooks/stripe`) and move booking creation server-side — completed. Client-create rule is now `allow create: if false`.
+3. 🔲 **Migrate admin role to Firebase custom claims** — eliminates the `get()` read on every admin operation and makes admin checks instant without a round-trip to Firestore.
+4. 🔲 **Add a `firestore.indexes.json`** — the `bookings where bookedByUid == X` query and `sessions where status == open` query will need composite indexes if Firestore prompts for them in the console.

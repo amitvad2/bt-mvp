@@ -18,7 +18,7 @@ The codebase is already highly functional — authentication, booking, payments,
 
 **Tasks:**
 1. ✅ Add `firestore.rules` — per-collection access control implemented (see [firestore-rules-notes.md](./firestore-rules-notes.md))
-2. 🔲 Deploy Firestore rules: `firebase deploy --only firestore:rules` — file exists, awaiting deployment
+2. ✅ Deploy Firestore rules: `firebase deploy --only firestore:rules` — deployed to project `bt-mvp-d057f`
 3. 🔲 Verify environment variables are set in the Vercel project dashboard
 4. 🔲 Confirm Stripe publishable and secret keys are switched to live mode before go-live
 5. 🔲 Set `RESEND_FROM_EMAIL` to a verified sending domain (not `onboarding@resend.dev`)
@@ -108,11 +108,13 @@ The codebase is already highly functional — authentication, booking, payments,
 
 4. 🔲 **Booking cancellation with Stripe refund** — Users can set `status: 'cancelled'` in Firestore but no `stripe.refunds.create()` call exists. Needs a `/api/bookings/cancel` server route.
 
-5. 🔲 **Session detail page** — `src/app/(public)/session/[sessionId]/page.tsx` or modal — show recipe, instructor bio, venue details before booking.
+5. ✅ **Session bundles** — Admin CRUD (`admin/bundles`), public bundle browser (`BundleBrowser`), full bundle booking wizard (`/book/bundle/[bundleId]/**`), bundle PaymentIntent creation, webhook fan-out creating N booking docs with IDs `{piId}_{sessionId}`, bundle confirmation email, and bundle cancellation email all implemented.
 
-6. 🔲 **Empty states** — Add "No sessions available" and "No bookings yet" empty states.
+7. 🔲 **Session detail page** — `src/app/(public)/session/[sessionId]/page.tsx` or modal — show recipe, instructor bio, venue details before booking.
 
-7. 🔲 **Register production webhook endpoint** — Must be done in Stripe Dashboard before go-live (see [stripe-webhook-notes.md](./stripe-webhook-notes.md)).
+8. 🔲 **Empty states** — Add "No sessions available" and "No bookings yet" empty states.
+
+9. 🔲 **Register production webhook endpoint** — Must be done in Stripe Dashboard before go-live (see [stripe-webhook-notes.md](./stripe-webhook-notes.md)).
 
 **Dependencies:** Phase 0 (Stripe keys, webhook secret configured).
 
@@ -166,7 +168,7 @@ The codebase is already highly functional — authentication, booking, payments,
 
 4. 🔲 **Payment receipt URL** — Expand `latest_charge` in webhook to store the Stripe receipt URL in `booking.payment.receiptUrl`.
 
-5. 🔲 **Spot availability pre-check** — In `create-intent`, verify `spotsAvailable > 0` and return a 409 if the session is full, preventing a PaymentIntent being created for a sold-out session.
+5. ✅ **Spot availability pre-check** — `create-intent` reads authoritative session data from Firestore and returns 400 if `spotsAvailable == 0` before creating a PaymentIntent.
 
 6. 🔲 **Orphaned draft cleanup** — Cron job (Vercel Cron or Cloud Scheduler) to delete `booking_drafts` documents older than 24 hours.
 
@@ -184,17 +186,19 @@ The codebase is already highly functional — authentication, booking, payments,
 
 **Tasks:**
 
-1. 🔲 **Testimonials admin** — `admin/testimonials/page.tsx` with publish/unpublish toggle.
+1. ✅ **Class type management** — `admin/class-types/page.tsx` — full CRUD for `class_types` Firestore collection; replaces the hardcoded `BTClassType` TypeScript enum with dynamic Firestore documents. React Hook Form + Zod schema validation.
 
-2. 🔲 **Recurring session generator** — Admin utility to bulk-create sessions for a class (e.g. every Monday for 10 weeks).
+3. 🔲 **Testimonials admin** — `admin/testimonials/page.tsx` with publish/unpublish toggle.
 
-3. 🔲 **Booking cancellation in admin** — (from Phase 5).
+4. 🔲 **Recurring session generator** — Admin utility to bulk-create sessions for a class (e.g. every Monday for 10 weeks).
 
-4. 🔲 **CSV export** — Export bookings list to CSV from admin bookings page.
+5. 🔲 **Booking cancellation in admin** — (from Phase 5).
 
-5. 🔲 **Admin dashboard stats** — Basic revenue summary, booking trends. Consider using `recharts` library.
+6. 🔲 **CSV export** — Export bookings list to CSV from admin bookings page.
 
-6. 🔲 **Instructor display on About page** — Wire `instructors` Firestore collection to the About page (currently static).
+7. 🔲 **Admin dashboard stats** — Basic revenue summary, booking trends. Consider using `recharts` library.
+
+8. 🔲 **Instructor display on About page** — Wire `instructors` Firestore collection to the About page (currently static).
 
 **Dependencies:** Phase 0–5.
 

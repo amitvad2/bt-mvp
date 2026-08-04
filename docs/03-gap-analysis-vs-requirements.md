@@ -59,8 +59,9 @@ Legend:
 | Payment via Stripe | Yes | `book/.../payment/page.tsx` + `CheckoutForm.tsx` + `/api/payments/create-intent` | — | — | — |
 | Payment via PayPal | **No** | Only Stripe is integrated | Entire PayPal integration absent | Medium | Add PayPal SDK or use Stripe's PayPal option via `payment_method_types: ['paypal']` |
 | Booking confirmation | Yes | `book/.../confirmation/page.tsx` + confirmation email via Resend | — | — | — |
-| Prevent double-booking same session | Partial | `spotsAvailable` decremented on success, but no pre-check before payment | Race condition possible | High | Add Firestore transaction check before creating PaymentIntent |
-| Booking cancellation by user | **No** | No UI or API route for user-initiated cancellations | Cancel button, refund flow, Stripe refund API call, email | High | Add cancel endpoint + Stripe `refunds.create()` + update booking status |
+| Prevent double-booking same session | Yes | `create-intent` checks `spotsAvailable > 0` before creating PaymentIntent; webhook transaction also checks capacity with overbooking flag if sold out between intent creation and webhook | Race condition edge case handled via `overbooking: true` flag | — | — |
+| Booking cancellation by user (status update) | **Partial** | `portal/my-classes/page.tsx` `handleCancel` function: `updateDoc(bookings/{id}, {status:'cancelled'})` + sends cancellation email via Resend | No Stripe refund; no spots restoration | Medium | Add Stripe `refunds.create()` call + increment `spotsAvailable` server-side |
+| Session bundles | **Yes** | Full bundle flow: admin CRUD (`admin/bundles`), public browser (`BundleBrowser`), booking wizard (`/book/bundle/[bundleId]/**`), payments, webhook fan-out, confirmation/cancellation emails | — | — | — |
 
 ---
 
@@ -85,8 +86,10 @@ Legend:
 | Photo gallery master (CRUD) | Yes | `admin/gallery/page.tsx` | — | — | — |
 | Instructor master (CRUD) | Yes | `admin/instructors/page.tsx` | — | — | — |
 | Bookings view | Partial | `admin/bookings/page.tsx` — read-only | No cancel/refund action; no export | High | Add cancel action + Stripe refund; add CSV export |
+| Bundle management | **Yes** | `admin/bundles/page.tsx` — full CRUD; `BundleForm.tsx` with session selector, price validation | — | — | — |
+| Class type management | **Yes** | `admin/class-types/page.tsx` — full CRUD for `class_types` Firestore collection; replaces hardcoded enum | — | — | — |
 | Testimonials master (CRUD) | **No** | Testimonials are hardcoded in the public page | New admin section + Firestore collection | Medium | Add `admin/testimonials/page.tsx` + `testimonials` collection |
-| Contact / feedback inbox | **Yes** ✓ | `admin/contact/page.tsx` — lists `contact_messages`, status filter, expandable rows, status updates | — | — | Implemented Apr 2026 |
+| Contact / feedback inbox | **Yes** | `admin/contact/page.tsx` — lists `contact_messages`, status filter, expandable rows, status updates | — | — | — |
 | Admin stats / analytics | Partial | `admin/dashboard/page.tsx` — basic counts | No revenue chart, no booking trend, no export | Low | Add charting library (Recharts) + aggregate queries |
 
 ---
@@ -98,7 +101,7 @@ Legend:
 | Stripe payment at booking time | Yes | Full Stripe Elements flow in booking wizard | — | — | — |
 | Payment status tracked | Yes | `booking.payment.status` field; `receiptUrl` stored | — | — | — |
 | Payment history for users | Yes | `portal/my-payments/page.tsx` | — | — | — |
-| Stripe webhook handler | **Yes** ✓ | `src/app/api/webhooks/stripe/route.ts` — signature-verified, handles `payment_intent.succeeded` + `payment_intent.payment_failed`; all booking creation is server-side via webhook | Register production endpoint in Stripe Dashboard before go-live | — | Implemented Apr 2026 |
+| Stripe webhook handler | **Yes** | `src/app/api/webhooks/stripe/route.ts` — signature-verified, handles `payment_intent.succeeded` + `payment_intent.payment_failed`; all booking creation is server-side via webhook; supports both single-session and bundle fan-out | Production endpoint registered at `https://www.bloomingtastebuds.com/api/webhooks/stripe` | — | — |
 | Refunds (admin-initiated) | **No** | No refund route or UI | Admin cannot issue refunds from within the app | High | Add Stripe `refunds.create()` call tied to booking cancellation |
 | PayPal support | **No** | Not present | Full PayPal SDK integration or Stripe PayPal payment method | Medium | Evaluate Stripe's PayPal gateway vs. native PayPal JS SDK |
 
@@ -108,11 +111,14 @@ Legend:
 
 | Requirement | Exists? | Evidence in Code | Missing Pieces | Priority | Recommended Approach |
 |-------------|---------|-----------------|----------------|----------|---------------------|
-| Booking confirmation email | Yes | `api/emails/send/route.ts` type=`confirmation` via Resend | — | — | — |
-| Cancellation email | Partial | Template exists in email route | No trigger path from admin/user cancellation UI | Medium | Wire up when cancellation UI is built |
+| Booking confirmation email | Yes | `api/webhooks/stripe/route.ts` — sends confirmation via Resend after webhook-based booking creation | — | — | — |
+| Bundle booking confirmation email | Yes | `api/webhooks/stripe/route.ts` — `sendBundleConfirmationEmail` called after bundle payment success | — | — | — |
+| Cancellation email (individual booking) | Yes | `api/emails/send/route.ts` type=`cancellation` — triggered from `portal/my-classes` when user cancels | Admin CC'd if `RESEND_ADMIN_EMAIL` set | — | — |
+| Cancellation email (bundle) | Yes | `api/emails/send/route.ts` type=`bundle-cancellation` — triggered from `portal/my-classes` on bundle cancel | Admin CC'd if `RESEND_ADMIN_EMAIL` set | — | — |
+| Admin booking notification email | Yes | `api/webhooks/stripe/route.ts` — `sendAdminBookingNotification` sends to `RESEND_ADMIN_EMAIL` after new booking (single or bundle) | — | — | — |
 | Pre-class reminder email | **No** | No scheduler | Scheduled job (Vercel Cron / Cloud Scheduler) needed | Medium | Use Vercel Cron Jobs + `/api/reminders/route.ts` |
 | Password reset email | Yes | Firebase Auth handles this natively | — | — | — |
-| Contact / feedback form with admin notification | **Yes** ✓ | `src/app/(public)/contact/page.tsx` + `POST /api/contact` — writes to Firestore `contact_messages`, sends admin email via Resend | — | — | Implemented Apr 2026 |
+| Contact / feedback form with admin notification | **Yes** | `src/app/(public)/contact/page.tsx` + `POST /api/contact` — writes to Firestore `contact_messages`, sends admin email via Resend | — | — | — |
 
 ---
 

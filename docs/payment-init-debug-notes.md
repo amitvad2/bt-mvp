@@ -2,6 +2,8 @@
 
 Last updated: 2026-04-17
 
+> **Current Operational Guidance:** The bug described here (incomplete `FIREBASE_ADMIN_SERVICE_ACCOUNT` stub) is fixed. The env var list below documents all variables required for the full payment and email flow to work in any environment. Set all of them in Vercel project settings before deploying to production.
+
 ---
 
 ## Root Cause (Fixed)
@@ -62,6 +64,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Resend (optional for local dev — omit to skip emails silently)
 RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=hello@yourdomain.com   # must be a verified Resend domain in production
+RESEND_ADMIN_EMAIL=admin@yourdomain.com  # receives booking notifications and contact form alerts
 ```
 
 ### How to get the Firebase Admin service account
