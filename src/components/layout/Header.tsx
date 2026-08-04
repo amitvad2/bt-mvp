@@ -93,6 +93,11 @@ export default function Header() {
                     <hr className="divider" />
                     {user ? (
                         <>
+                            {btUser?.role === 'admin' && (
+                                <Link href="/admin/dashboard" className="btn btn-ghost btn-full" onClick={() => setMobileOpen(false)}>
+                                    Admin Control
+                                </Link>
+                            )}
                             <Link href="/portal/dashboard" className="btn btn-outline btn-full" onClick={() => setMobileOpen(false)}>
                                 My Portal
                             </Link>
