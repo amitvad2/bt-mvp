@@ -37,7 +37,10 @@
       "Read(//Users/amit.vadhel/.ssh/**)",
       "Bash(gh --version)",
       "Bash(ssh-keygen -t ed25519 -C \"amit.vadhel@accenture.com\" -f ~/.ssh/id_ed25519 -N \"\")",
-      "Bash(pbcopy)"
+      "Bash(pbcopy)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); deps={**p.get\\('dependencies',{}\\), **p.get\\('devDependencies',{}\\)}; [print\\(f'{k}: {v}'\\) for k,v in sorted\\(deps.items\\(\\)\\)]\")"
     ],
     "additionalDirectories": [
       "/Users/amit.vadhel/Library/CloudStorage/OneDrive-Accenture/Documents/blooming_tastebuds/bloomingtastebuds-mvp/bt-mvp/.next"

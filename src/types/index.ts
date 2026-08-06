@@ -137,6 +137,188 @@ export interface Recipe {
 export type BookingStatus = 'confirmed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'refunded';
 
+// ============================================================
+// Guest Express Checkout Types
+// ============================================================
+
+export type BookingMode = 'account' | 'guest';
+
+export type BookingSource =
+    | 'website'
+    | 'website_express'
+    | 'whatsapp_express'
+    | 'facebook_express'
+    | 'instagram_express'
+    | 'qr_express'
+    | 'google_express'
+    | 'unknown';
+
+export type SafetyReviewStatus =
+    | 'not_required'
+    | 'pending'
+    | 'reviewed'
+    | 'contact_parent'
+    | 'cannot_accommodate';
+
+export interface GuestParentDetails {
+    firstName: string;
+    lastName: string;
+    email: string;
+    telephone: string;
+}
+
+export interface GuestChildDetails {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string; // YYYY-MM-DD
+}
+
+export interface GuestMedicalInfo {
+    foodAllergies: boolean;
+    dietaryRequirements: string;
+    airborneAllergies: boolean;
+    allergenDetails: string;
+    knownReactions: string;
+    symptoms: string;
+    epipenRequired: boolean;
+    epipenDetails: string;
+    medicationDetails: string;
+    respiratoryProblems: boolean;
+    medicalConditions: string;
+    recentOperations: string;
+    visionImpairment: boolean;
+    hearingImpairment: boolean;
+    additionalSupportNeeds: string;
+    otherSafetyInfo: string;
+}
+
+export interface GuestAllergyDietaryInfo {
+    foodAllergies: string[];
+    dietaryRequirements: string[];
+    airborneAllergies: string[];
+    allergenDetails: string;
+    reactionDetails: string;
+    symptoms: string;
+}
+
+export interface GuestEmergencyContact {
+    name: string;
+    relationship: string;
+    mobile: string;
+    alternativePhone: string;
+    email: string;
+}
+
+export interface GuestAuthorisedCollector {
+    name: string;
+    relationship: string;
+    phone: string;
+    sameAsParent: boolean;
+}
+
+export interface GuestConsentRecord {
+    // Mandatory consents
+    parentGuardianAuthority: boolean;
+    accuracyOfInformation: boolean;
+    healthSafetyDataProcessing: boolean;
+    emergencyAssistanceAuthorisation: boolean;
+    termsAndCancellationPolicy: boolean;
+    privacyNoticeAcknowledgement: boolean;
+    // Optional consents
+    photographyPromotionalUse: boolean;
+    emailMarketing: boolean;
+    whatsappMarketing: boolean;
+}
+
+export interface ConsentAudit {
+    consents: GuestConsentRecord;
+    acceptedAt: any; // Firestore Timestamp
+    acceptedBy: string; // Full name of accepting person
+    termsVersion: string;
+    privacyNoticeVersion: string;
+    sourceChannel: BookingSource;
+    submissionTimestamp: any; // Firestore Timestamp
+}
+
+export interface GuestSessionInfo {
+    id: string;
+    className: string;
+    classType: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    venueName: string;
+    ageMin: number;
+    ageMax: number;
+    price: number; // pence
+    spotsAvailable: number;
+    status: string;
+}
+
+export interface GuestBooking {
+    id: string; // = PaymentIntent ID
+    bookingMode: 'guest';
+    bookingSource: BookingSource;
+    sessionId: string;
+    status: BookingStatus;
+
+    // Embedded snapshots (no linked documents)
+    guestContact: GuestParentDetails;
+    childSnapshot: GuestChildDetails;
+    medicalSnapshot: GuestMedicalInfo;
+    allergyDietarySnapshot: GuestAllergyDietaryInfo;
+    emergencyContactSnapshot: GuestEmergencyContact;
+    authorisedCollectorSnapshot: GuestAuthorisedCollector;
+    consentAudit: ConsentAudit;
+    sessionSnapshot: GuestSessionInfo;
+
+    // Safety review
+    safetyReviewStatus: SafetyReviewStatus;
+    safetyReviewNotes?: string;
+    safetyReviewedAt?: any;
+    safetyReviewedBy?: string;
+
+    // Payment (same shape as existing Booking.payment)
+    payment: {
+        stripePaymentIntentId: string;
+        amount: number; // pence
+        currency: string;
+        status: PaymentStatus;
+        receiptUrl?: string;
+    };
+
+    // Flags
+    overbooking?: boolean;
+
+    // Timestamps
+    createdAt: any; // Firestore Timestamp
+}
+
+export interface GuestBookingDraft {
+    stripePaymentIntentId: string;
+    paymentStatus: 'pending' | 'failed';
+    bookingMode: 'guest';
+    sessionId: string;
+    source: BookingSource;
+
+    guestContact: GuestParentDetails;
+    childDetails: GuestChildDetails;
+    medicalInfo: GuestMedicalInfo;
+    allergyDietaryInfo: GuestAllergyDietaryInfo;
+    emergencyContact: GuestEmergencyContact;
+    authorisedCollector: GuestAuthorisedCollector;
+    consentAudit: ConsentAudit;
+
+    // Idempotency
+    submissionRef: string;
+
+    createdAt: any; // Firestore serverTimestamp()
+}
+
+// ============================================================
+// Bookings
+// ============================================================
+
 export interface Booking {
     id: string;
     sessionId: string;
@@ -163,6 +345,19 @@ export interface Booking {
     bundleId?: string;
     bundleName?: string;
     overbooking?: boolean;
+    // Guest express checkout fields (optional — only present for guest bookings)
+    bookingMode?: BookingMode;
+    bookingSource?: BookingSource;
+    safetyReviewStatus?: SafetyReviewStatus;
+    safetyReviewNotes?: string;
+    guestContact?: GuestParentDetails;
+    childSnapshot?: GuestChildDetails;
+    medicalSnapshot?: GuestMedicalInfo;
+    allergyDietarySnapshot?: GuestAllergyDietaryInfo;
+    emergencyContactSnapshot?: GuestEmergencyContact;
+    authorisedCollectorSnapshot?: GuestAuthorisedCollector;
+    consentAudit?: ConsentAudit;
+    sessionSnapshot?: GuestSessionInfo;
     createdAt: any;
 }
 

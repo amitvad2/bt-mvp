@@ -46,3 +46,4 @@ compile_errors.txt
 .gemini/
 
 .vercel
+.env*

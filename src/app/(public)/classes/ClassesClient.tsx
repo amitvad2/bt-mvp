@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { isGuestCheckoutEnabled } from '@/lib/feature-flags';
 import SessionBrowser from '@/components/sessions/SessionBrowser';
 
 export default function ClassesClient() {
@@ -17,5 +18,7 @@ export default function ClassesClient() {
         }
     };
 
-    return <SessionBrowser onBook={handleBook} />;
+    const showGuestOption = !user && isGuestCheckoutEnabled();
+
+    return <SessionBrowser onBook={handleBook} showGuestOption={showGuestOption} />;
 }

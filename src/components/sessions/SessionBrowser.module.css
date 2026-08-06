@@ -152,6 +152,25 @@
     font-weight: 600;
 }
 
+.guestBookLink {
+    display: block;
+    text-align: center;
+    margin-top: var(--space-3);
+    padding: 10px 16px;
+    border: 1.5px solid var(--bt-accent);
+    border-radius: var(--radius-md, 8px);
+    color: var(--bt-accent);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.guestBookLink:hover {
+    background: var(--bt-accent);
+    color: #fff;
+}
+
 .empty {
     text-align: center;
     padding: var(--space-20) 0;

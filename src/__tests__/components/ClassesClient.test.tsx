@@ -16,8 +16,13 @@ vi.mock('@/context/AuthContext', () => ({
 
 // Stub SessionBrowser so tests control when onBook fires without hitting Firestore
 vi.mock('@/components/sessions/SessionBrowser', () => ({
-    default: ({ onBook }: { onBook: (id: string) => void }) => (
-        <button onClick={() => onBook('session-123')}>Book Now</button>
+    default: ({ onBook, showGuestOption }: { onBook: (id: string) => void; showGuestOption?: boolean }) => (
+        <div>
+            <button onClick={() => onBook('session-123')}>Book Now</button>
+            {showGuestOption && (
+                <a href="/express-booking/session-123?source=website_express">Book as a guest — no account required</a>
+            )}
+        </div>
     ),
 }));
 
@@ -51,5 +56,46 @@ describe('ClassesClient booking redirect', () => {
         render(<ClassesClient />);
         await userEvent.click(screen.getByRole('button', { name: /book now/i }));
         expect(mockPush).toHaveBeenCalledWith('/book/session-123/student');
+    });
+});
+
+describe('ClassesClient guest booking option', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('shows guest booking link when user is not authenticated and feature flag is enabled', () => {
+        process.env.NEXT_PUBLIC_GUEST_CHECKOUT_ENABLED = 'true';
+        asLoggedOut();
+        render(<ClassesClient />);
+        const guestLink = screen.queryByRole('link', { name: /book as a guest/i });
+        expect(guestLink).toBeInTheDocument();
+        delete process.env.NEXT_PUBLIC_GUEST_CHECKOUT_ENABLED;
+    });
+
+    it('hides guest booking link when user is authenticated', () => {
+        process.env.NEXT_PUBLIC_GUEST_CHECKOUT_ENABLED = 'true';
+        asLoggedIn();
+        render(<ClassesClient />);
+        const guestLink = screen.queryByRole('link', { name: /book as a guest/i });
+        expect(guestLink).not.toBeInTheDocument();
+        delete process.env.NEXT_PUBLIC_GUEST_CHECKOUT_ENABLED;
+    });
+
+    it('hides guest booking link when feature flag is disabled', () => {
+        process.env.NEXT_PUBLIC_GUEST_CHECKOUT_ENABLED = 'false';
+        asLoggedOut();
+        render(<ClassesClient />);
+        const guestLink = screen.queryByRole('link', { name: /book as a guest/i });
+        expect(guestLink).not.toBeInTheDocument();
+        delete process.env.NEXT_PUBLIC_GUEST_CHECKOUT_ENABLED;
+    });
+
+    it('hides guest booking link when feature flag is absent', () => {
+        delete process.env.NEXT_PUBLIC_GUEST_CHECKOUT_ENABLED;
+        asLoggedOut();
+        render(<ClassesClient />);
+        const guestLink = screen.queryByRole('link', { name: /book as a guest/i });
+        expect(guestLink).not.toBeInTheDocument();
     });
 });

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Session, Venue, BTClassType } from '@/types';
@@ -12,17 +13,18 @@ import styles from './SessionBrowser.module.css';
 
 interface Props {
     onBook: (sessionId: string) => void;
+    showGuestOption?: boolean;
 }
 
-export default function SessionBrowser({ onBook }: Props) {
+export default function SessionBrowser({ onBook, showGuestOption }: Props) {
     return (
         <Suspense fallback={<div className="loading-screen"><div className="spinner" /></div>}>
-            <SessionBrowserContent onBook={onBook} />
+            <SessionBrowserContent onBook={onBook} showGuestOption={showGuestOption} />
         </Suspense>
     );
 }
 
-function SessionBrowserContent({ onBook }: Props) {
+function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     const searchParams = useSearchParams();
     const [venues, setVenues] = useState<Venue[]>([]);
     const [classTypes, setClassTypes] = useState<BTClassType[]>([]);
@@ -267,6 +269,15 @@ function SessionBrowserContent({ onBook }: Props) {
                                             {s.spotsAvailable === 0 ? 'Full' : 'Book Now'}
                                         </button>
                                     </div>
+
+                                    {showGuestOption && s.spotsAvailable > 0 && (
+                                        <Link
+                                            href={`/express-booking/${s.id}?source=website_express`}
+                                            className={styles.guestBookLink}
+                                        >
+                                            Book as a Guest
+                                        </Link>
+                                    )}
 
                                     {s.spotsAvailable !== undefined && s.spotsAvailable <= 3 && s.spotsAvailable > 0 && (
                                         <p className={`${styles.spots} ${styles.spotsLow}`}>

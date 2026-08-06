@@ -43,7 +43,7 @@ export default function HomePage() {
                 </div>
                 <div className={`container ${styles.heroContent}`}>
                     <div className={styles.heroBadge}>
-                        <Sparkles size={16} /> London&apos;s Favourite Kids Cooking School
+                        <Sparkles size={16} /> Helping Kids Discover the Joy of Cooking
                     </div>
                     <h1 className={styles.heroTitle}>
                         Welcome to<br />
