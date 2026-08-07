@@ -1,0 +1,277 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header h1 {
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.header p {
+    font-size: 1.1rem;
+    color: var(--bt-gray-500);
+}
+
+.pendingCount {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.4rem 0.75rem;
+    background: var(--bt-orange-light);
+    color: var(--bt-orange-dark);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.toolbar {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+}
+
+.toolbarLabel {
+    font-size: 0.9rem;
+    color: var(--bt-gray-500);
+    font-weight: 500;
+}
+
+.filterBtn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius);
+    background: var(--bt-white);
+    color: var(--bt-gray-700);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.filterBtn:hover {
+    background: var(--bt-gray-50);
+    border-color: var(--bt-gray-300);
+}
+
+.filterActive {
+    background: var(--bt-orange-light);
+    color: var(--bt-orange-dark);
+    border-color: var(--bt-orange-dark);
+}
+
+.tableCard {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    padding: 0;
+}
+
+.tableCard :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tableCard :global(th) {
+    text-align: left;
+    padding: var(--space-4) var(--space-6);
+    background: var(--bt-gray-50);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bt-gray-500);
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.tableCard :global(td) {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--bt-gray-100);
+    font-size: 0.95rem;
+    vertical-align: top;
+}
+
+.tableCard :global(tr:last-child td) {
+    border-bottom: none;
+}
+
+.nameCell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nameCell strong {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.nameCell span {
+    font-size: 0.85rem;
+    color: var(--bt-gray-500);
+}
+
+.contactCell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contactCell a {
+    font-size: 0.9rem;
+    color: var(--bt-sky);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.contactCell a:hover {
+    text-decoration: underline;
+}
+
+.contactCell span {
+    font-size: 0.85rem;
+    color: var(--bt-gray-600);
+}
+
+.medicalSummary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.medicalFlag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.statusSelect {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--bt-gray-200);
+    background: var(--bt-white);
+    color: var(--bt-gray-800);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    min-width: 160px;
+}
+
+.statusSelect:focus {
+    outline: 2px solid var(--bt-sky);
+    outline-offset: 2px;
+}
+
+.notesSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.notesTextarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-family: inherit;
+    resize: vertical;
+    color: var(--bt-gray-800);
+}
+
+.notesTextarea:focus {
+    outline: 2px solid var(--bt-sky);
+    outline-offset: 2px;
+    border-color: var(--bt-sky);
+}
+
+.notesSaveBtn {
+    align-self: flex-end;
+    padding: 0.4rem 0.75rem;
+    background: var(--bt-sky);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.notesSaveBtn:hover {
+    opacity: 0.9;
+}
+
+.notesSaveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.empty {
+    padding: var(--space-12);
+    text-align: center;
+    color: var(--bt-gray-500);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.empty p {
+    font-size: 1.1rem;
+}
+
+.statusBadge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.statusPending {
+    background: var(--bt-orange-light);
+    color: var(--bt-orange-dark);
+}
+
+.statusContactParent {
+    background: var(--bt-amber-light);
+    color: var(--bt-amber-dark);
+}
+
+.statusReviewed {
+    background: var(--bt-green-light);
+    color: var(--bt-leaf-dark);
+}
+
+.statusCannotAccommodate {
+    background: #FFEBEE;
+    color: var(--bt-danger);
+}
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-wrap: wrap;
+    }
+
+    .tableCard {
+        overflow-x: auto;
+    }
+}

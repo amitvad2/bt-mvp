@@ -256,7 +256,7 @@ All collections live in **Firebase Firestore**. The TypeScript types that define
 | `description` | string | Caption text |
 | `altText` | string | Accessibility alt attribute |
 | `order` | number | Sort order |
-| `category` | `'cooking-classes' \| 'cakes' \| 'cookies' \| 'breads'?` | Filter category |
+| `category` | `'cooking-classes' \| 'personal-gallery'` | Filter category. Legacy values `'cakes'`, `'cookies'`, `'breads'` are normalised to `'personal-gallery'` at read time via `normalizeCategory()` in `src/lib/gallery-categories.ts` — no data migration required. |
 | `createdAt` | Timestamp | |
 
 **Relationships:** None
@@ -277,7 +277,7 @@ All collections live in **Firebase Firestore**. The TypeScript types that define
 | `name` | string | Submitter's full name |
 | `email` | string | Submitter's email address |
 | `phone` | string? | Optional phone number |
-| `category` | `ContactCategory` | `'general' \| 'booking' \| 'feedback' \| 'technical' \| 'other'` |
+| `category` | `ContactCategory` | `'general' \| 'class-info' \| 'booking-help' \| 'dietary-allergy' \| 'private-event' \| 'technical' \| 'feedback'` |
 | `message` | string | Message body (min 10 chars) |
 | `consentToReply` | boolean | Submitter gave consent to be contacted |
 | `source` | `'contact-page'` | Origin of submission (for future multi-source support) |
@@ -297,7 +297,93 @@ match /contact_messages/{docId} {
 
 **Relationships:** Optional link to `users/{userId}` if the submitter was authenticated.
 
-**Status:** Exists in code. Implemented Apr 2026.
+**Status:** Exists in code.
+
+---
+
+### 11. `class_types`
+
+**Purpose:** Dynamic programme configuration. Replaces a formerly hardcoded TypeScript type enum. Admins can manage class types (e.g. "Kids After School Club", "Young Adult Weekend") via the admin panel without code changes.
+
+**Collection:** `class_types/{id}`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | string | Auto-generated Firestore ID |
+| `slug` | string | URL-safe unique identifier (e.g. `kidsAfterSchool`) — used as the `classType` value on Session documents |
+| `displayName` | string | Human-readable name (e.g. "Kids After School Club") |
+| `shortLabel` | string | Abbreviated label for badges |
+| `badgeColor` | `BadgeColor` | `'amber' \| 'green' \| 'indigo' \| 'red' \| 'gray'` — used for session badges |
+| `skipQuestionnaire` | boolean | If true, dietary questionnaire is skipped in booking wizard |
+| `requireEmergencyContact` | boolean | If true, emergency contact is required |
+| `defaultAgeMin` | number | Default minimum age for this class type |
+| `defaultAgeMax` | number | Default maximum age |
+| `defaultMaxSize` | number | Default maximum session size |
+| `defaultPrice` | number | Default price in pence |
+| `order` | number | Display sort order |
+| `createdAt` | Timestamp | |
+
+**TypeScript type:** `BTClassType` — defined in `src/types/index.ts`.
+
+**Firestore rules:** Public read (needed by session browser + booking wizard); admin-only write.
+
+**Status:** Exists in code.
+
+---
+
+### 12. `bundles`
+
+**Purpose:** Grouped session packages sold at a discounted price. A bundle links 2–20 sessions from the same class, with a bundle price lower than the sum of individual session prices.
+
+**Collection:** `bundles/{id}`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | string | Auto-generated Firestore ID |
+| `name` | string | Bundle display name (3–100 characters) |
+| `classId` | string | Reference to `classes/{id}` |
+| `className` | string | Denormalised class name |
+| `classType` | string | Denormalised class type slug |
+| `sessionIds` | string[] | Array of 2–20 `sessions/{id}` references, all from the same classId |
+| `bundlePrice` | number | Total bundle price in pence (must be > 0 and <= totalIndividualPrice) |
+| `totalIndividualPrice` | number | Sum of all session prices in pence (informational) |
+| `status` | `BundleStatus` | `'active' \| 'closed' \| 'cancelled'` |
+| `venueId` | string | Reference to `venues/{id}` |
+| `venueName` | string | Denormalised |
+| `createdAt` | Timestamp | |
+
+**TypeScript types:** `BundleStatus`, `Bundle` — defined in `src/types/index.ts`.
+
+**Firestore rules:** Public read; admin-only write.
+
+**Booking IDs for bundle bookings:** `{paymentIntentId}_{sessionId}` — created by webhook fan-out transaction.
+
+**Status:** Exists in code.
+
+---
+
+### 13. `booking_drafts`
+
+**Purpose:** Temporary server-side state written by `POST /api/payments/create-intent` before the Stripe PaymentIntent is confirmed. Read and deleted by the Stripe webhook after booking creation. Enables the webhook to reconstruct the full booking without relying on browser state.
+
+**Collection:** `booking_drafts/{paymentIntentId}`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `stripePaymentIntentId` | string | Same as document ID |
+| `paymentStatus` | `'pending' \| 'failed'` | Updated to 'failed' by `payment_intent.payment_failed` webhook |
+| `sessionId` | string? | Set for single-session bookings |
+| `bundleId` | string? | Set for bundle bookings |
+| `sessionIds` | string[]? | All session IDs for bundle bookings |
+| `sessions` | object[]? | Per-session denormalized data (date, startTime, endTime, venueName) for bundle bookings |
+| Full booking payload | ... | All wizard state: bookedByUid, bookedByName, bookedByEmail, studentId, studentName, medicalInfo, emergencyContact, questionnaire, termsAccepted, className, venueName, etc. |
+| `createdAt` | Timestamp | |
+
+**Firestore rules:** `allow read, write: if false` — all access via Firebase Admin SDK only.
+
+**Lifecycle:** Created by `create-intent` → read by webhook → deleted by webhook on success. If abandoned (user never completes payment), document remains indefinitely (needs cleanup cron).
+
+**Status:** Exists in code.
 
 ---
 
@@ -360,66 +446,11 @@ contact_messages  ← standalone; optional soft-link to users/{userId}
 
 ---
 
-## Firestore Security Rules (MISSING — Critical)
+## Firestore Security Rules
 
-No `firestore.rules` file was found in the repository. Without security rules, **Firestore defaults to locked mode in production but this must be explicitly verified**. The following rules should be implemented:
+`firestore.rules` exists in the repository root and covers all collections. See [docs/firestore-rules-notes.md](../docs/firestore-rules-notes.md) for the full design, per-collection rule model, and deployment instructions.
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    // Public read: gallery
-    match /gallery/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    // Public read: testimonials (once created)
-    match /testimonials/{docId} {
-      allow read: if resource.data.published == true;
-      allow write: if isAdmin();
-    }
-
-    // Authenticated users read their own data
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-      allow read: if isAdmin();
-    }
-
-    // Students: parent owns, admin reads all
-    match /students/{docId} {
-      allow read, write: if request.auth != null &&
-        request.auth.uid == resource.data.parentUid;
-      allow read, write: if isAdmin();
-    }
-
-    // Sessions: public read (for browse); admin write
-    match /sessions/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Bookings: owner reads own; admin reads all; write via server-side only
-    match /bookings/{docId} {
-      allow read: if request.auth != null &&
-        request.auth.uid == resource.data.bookedByUid;
-      allow read, write: if isAdmin();
-    }
-
-    // Venues, Classes, Recipes, Instructors: public read; admin write
-    match /{collection}/{docId}
-      if collection in ['venues', 'classes', 'recipes', 'instructors'] {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    function isAdmin() {
-      return request.auth != null &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-  }
-}
+To deploy rules:
+```bash
+firebase deploy --only firestore:rules
 ```
-
-> **Action required:** Create `firestore.rules` and deploy via `firebase deploy --only firestore:rules`.

@@ -95,8 +95,11 @@ Status key: **Complete** | **Partial** | **Placeholder**
 
 ### 2.4 Role-Based Access Control
 - **Status:** Complete
-- **Files:** `src/context/AuthContext.tsx`, `src/middleware.ts`
-- **How it works:** Three roles defined — `parent`, `youngAdult`, `admin`. Stored in `users/{uid}.role`. Middleware checks the `bt_session` cookie; admin routes additionally verify the `customClaims.admin` flag set via Firebase Admin SDK.
+- **Files:** `src/context/AuthContext.tsx`, `src/middleware.ts`, `firestore.rules`
+- **How it works:** Three roles — `parent`, `youngAdult`, `admin` — stored in `users/{uid}.role` in Firestore.
+  - **Edge middleware** (`src/middleware.ts`) checks only for the presence of the `bt_session` cookie (a plain boolean set by AuthContext). It does NOT verify the role or call Firebase Admin SDK. This is a UX gate only.
+  - **Admin role enforcement** is done client-side by the admin layout (redirects non-admin users) and server-side by Firestore security rules (`isAdmin()` function reads `users/{uid}.role`).
+  - **API route security** for sensitive endpoints (create-intent, emails/send) verifies the Firebase ID token via `adminAuth.verifyIdToken()` in the route handler.
 
 ### 2.5 Session Persistence
 - **Status:** Complete
@@ -125,7 +128,10 @@ Status key: **Complete** | **Partial** | **Placeholder**
 ### 3.3 My Classes (Booked Sessions)
 - **Status:** Complete
 - **File:** [src/app/portal/my-classes/page.tsx](../src/app/portal/my-classes/page.tsx)
-- **How it works:** Queries `bookings` where `bookedByUid == currentUser.uid`. Displays upcoming and past bookings with class details, student name, date, venue, and status badge.
+- **How it works:** Queries `bookings` where `bookedByUid == currentUser.uid`. Separates individual bookings from bundle bookings. Bundle bookings are grouped by `bundleId` and rendered via `BundleGroupCard`. Individual bookings show as standard cards. Both support cancellation:
+  - **Individual booking cancel:** `updateDoc(bookings/{id}, {status:'cancelled', cancelledAt})` + sends cancellation email via `POST /api/emails/send`
+  - **Bundle cancel:** Updates all bookings in the bundle to `'cancelled'` + sends bundle cancellation email
+  - Note: Cancellation does NOT trigger a Stripe refund. Spot restoration on cancellation is not yet implemented (admin must manually adjust spots).
 
 ### 3.4 My Payments
 - **Status:** Complete
@@ -201,6 +207,22 @@ Status key: **Complete** | **Partial** | **Placeholder**
 
 ---
 
+## 4b. Bundle Booking Wizard
+
+### 4b.1 Bundle Booking Wizard (all steps)
+- **Status:** Complete
+- **Files:** `src/app/book/bundle/[bundleId]/**`, `src/context/BundleBookingContext.tsx`
+- **How it works:** Mirrors the single-session wizard with the same 6 steps (student → medical → questionnaire → terms → payment → confirmation), scoped to a bundle:
+  - **Step 1 (student):** Same student selection logic as single-session wizard
+  - **Step 2 (medical):** Same MedicalInfo + EmergencyContact forms
+  - **Step 3 (questionnaire):** Shown/skipped based on bundle's `classType` (same logic as single-session)
+  - **Step 4 (terms):** Same T&C acceptance
+  - **Step 5 (payment):** Calls `POST /api/payments/create-intent` with `bundleId`. If any session is full, displays which sessions are full and prevents payment. `BundleCheckoutForm.tsx` renders Stripe PaymentElement.
+  - **Step 6 (confirmation):** Polls Firestore for all `{piId}_{sessionId}` booking documents created by the webhook. Shows all session dates in chronological order.
+- **State management:** `BundleBookingContext` persists to `sessionStorage` under key `bundle_booking_{bundleId}`
+
+---
+
 ## 5. Admin Panel
 
 ### 5.1 Admin Dashboard
@@ -253,6 +275,29 @@ Status key: **Complete** | **Partial** | **Placeholder**
   - "N new" badge showing count of unread messages
   - Sidebar navigation entry with `MessageSquare` icon
 
+### 5.10 Bundle Management
+- **Status:** Complete
+- **File:** [src/app/admin/bundles/page.tsx](../src/app/admin/bundles/page.tsx), `BundleForm.tsx`
+- **How it works:** Full CRUD for `bundles` collection. `BundleForm.tsx` (React Hook Form + Zod) allows:
+  - Naming the bundle (3–100 characters)
+  - Selecting a base class and then picking 2–20 sessions from that class (status: 'open' only)
+  - Auto-calculated `totalIndividualPrice` from selected sessions
+  - Setting `bundlePrice` (must be > 0 and <= total individual price — must offer a saving)
+  - Bundle status: active / closed / cancelled
+  - On edit: sessions with existing bookings cannot be removed
+
+### 5.11 Class Type Management
+- **Status:** Complete
+- **File:** [src/app/admin/class-types/page.tsx](../src/app/admin/class-types/page.tsx)
+- **How it works:** Full CRUD for `class_types` collection. Class types are the dynamic programme configuration (e.g., "Kids After School Club", "Young Adult Weekend"). Fields: `slug` (URL-safe, unique), `displayName`, `shortLabel`, `badgeColor`, `skipQuestionnaire`, `requireEmergencyContact`, `defaultAgeMin`, `defaultAgeMax`, `defaultMaxSize`, `defaultPrice`, `order`. Previously this was a hardcoded TypeScript enum; now it's Firestore-managed.
+- **File:** [src/app/admin/contact/page.tsx](../src/app/admin/contact/page.tsx)
+- **How it works:** Lists all contact/feedback submissions from the `contact_messages` Firestore collection, ordered by date descending. Features:
+  - Expandable rows to view the full message body
+  - Status filter tabs (all / new / read / replied / closed)
+  - Status dropdown per message that calls `updateDoc` on change
+  - "N new" badge showing count of unread messages
+  - Sidebar navigation entry with `MessageSquare` icon
+
 ---
 
 ## 6. Payments
@@ -287,9 +332,14 @@ Status key: **Complete** | **Partial** | **Placeholder**
 - **How it works:** `POST /api/emails/send` with `type: 'confirmation'`. Sends HTML-formatted email via Resend with booking details (class, date, venue, student). **Triggered from the Stripe webhook handler** after the booking document is created — not from the browser. Email failure is non-fatal; the booking is already created before the email send is attempted.
 
 ### 7.2 Booking Cancellation Email
-- **Status:** Complete (template exists)
+- **Status:** Complete
 - **File:** `src/app/api/emails/send/route.ts`
-- **How it works:** `type: 'cancellation'` sends a cancellation email. However, the admin UI does not currently have a button to trigger cancellations, so this path is partially unused.
+- **How it works:** `type: 'cancellation'` sends a cancellation email. Triggered by the user from `portal/my-classes` when they cancel an individual booking. The admin CC is included if `RESEND_ADMIN_EMAIL` is set.
+
+### 7.3 Bundle Cancellation Email
+- **Status:** Complete
+- **File:** `src/app/api/emails/send/route.ts`
+- **How it works:** `type: 'bundle-cancellation'` sends a bundle cancellation email listing all cancelled sessions. Triggered from `portal/my-classes` when user cancels an entire bundle. Admin CC included if `RESEND_ADMIN_EMAIL` is set.
 
 ### 7.3 Email Reminders
 - **Status:** Not implemented
@@ -316,29 +366,35 @@ Status key: **Complete** | **Partial** | **Placeholder**
 ### 9.1 TypeScript Type Definitions
 - **Status:** Complete
 - **File:** [src/types/index.ts](../src/types/index.ts)
-- **Entities defined:** `BTUser`, `Student`, `Venue`, `BTClass`, `Session`, `Recipe`, `Booking`, `GalleryImage`, `Instructor`, `MedicalInfo`, `EmergencyContact`, `Questionnaire`, `BookingWizardState`
+- **Entities defined:** `BTUser`, `UserRole`, `Student`, `Venue`, `BTClass`, `BTClassType`, `BadgeColor`, `Session`, `Recipe`, `Booking`, `BookingStatus`, `PaymentStatus`, `GalleryImage`, `GalleryCategory`, `Instructor`, `InstructorGender`, `MedicalInfo`, `EmergencyContact`, `Questionnaire`, `BookingWizardState`, `Bundle`, `BundleStatus`, `BundleBookingWizardState`, `ContactMessage`, `ContactCategory`, `ContactStatus`
 
 ### 9.2 Firestore Collections
 - **Status:** Complete
-- **Collections:** `users`, `students`, `venues`, `classes`, `sessions`, `recipes`, `bookings`, `gallery`, `instructors`, `booking_drafts`
+- **Collections:** `users`, `students`, `venues`, `classes`, `class_types`, `sessions`, `bundles`, `recipes`, `bookings`, `gallery`, `instructors`, `booking_drafts`, `contact_messages`
 - **`booking_drafts`:** Server-side only (Admin SDK). Holds full booking wizard state keyed by `paymentIntentId`. Written by `create-intent`, read and deleted by the Stripe webhook. Firestore rules deny all client access.
-- **Security rules:** `firestore.rules` is present in the repository root with per-collection access control. Deployed to Firebase project `bt-mvp-d057f`. To redeploy after rule changes: `firebase deploy --only firestore:rules`.
+- **`contact_messages`:** Server-side writes only (Admin SDK via `/api/contact`). Firestore rules deny client create/delete; admins read/update via client SDK.
+- **`class_types`:** Public read; admin write. Dynamic class type configuration replacing the former hardcoded TypeScript type enum.
+- **`bundles`:** Public read; admin write. Grouped session packages with discount pricing.
+- **Security rules:** `firestore.rules` is present in the repository root with comprehensive per-collection access control. See [docs/firestore-rules-notes.md](../docs/firestore-rules-notes.md).
 
 ---
 
-## 10. Missing / Not Implemented
+## 10. Not Implemented / Known Gaps
 
 | Feature | Notes |
 |---------|-------|
 | Courses/Class-types landing page | No dedicated `/courses` page describing the two class formats |
-| Booking cancellation + Stripe refund | Admin bookings page is read-only; no `stripe.refunds.create()` call; users can set `status: 'cancelled'` in Firestore but no refund is issued |
-| `payment.receiptUrl` not populated | Webhook creates the booking but does not expand `latest_charge` to fetch the Stripe receipt URL |
+| Stripe refund on cancellation | Users can cancel bookings (status update + email), but no `stripe.refunds.create()` call; refunds must be issued manually via Stripe Dashboard |
+| Spot restoration on user cancellation | When a user cancels, `spotsAvailable` is not incremented. Admin must adjust manually. |
+| `payment.receiptUrl` not populated | Webhook sets `receiptUrl: null`; it does not expand `latest_charge` to fetch the Stripe receipt URL |
 | T&C version not tracked | `termsVersion` field missing from booking documents |
 | Email verification | `sendEmailVerification` not called after sign-up |
-| Account settings save not confirmed | `portal/account` edit form save-to-Firestore not verified complete |
-| Post-login redirect | Middleware doesn't preserve the intended URL before redirecting to login |
-| Orphaned booking drafts | If user abandons payment mid-flow, `booking_drafts` document is never cleaned up |
+| Account settings save not confirmed | `portal/account` edit form save-to-Firestore not fully verified |
+| Post-login redirect | Middleware sets `?redirect=` param but login page redirect after auth may not honour it in all cases |
+| Orphaned booking drafts | If user abandons payment mid-flow, `booking_drafts` document is never cleaned up; a cron job is needed |
 | Password change in account page | UI incomplete |
 | Email reminders | No scheduler or cron |
 | PayPal payment option | Only Stripe is wired; PayPal not present |
-| Production Stripe webhook endpoint | Must be registered in Stripe Dashboard before go-live |
+| Testimonials in database | Reviews are hardcoded in TSX; no admin management |
+| Admin booking export | No CSV export on admin/bookings |
+| Admin refund action | No Stripe refund button in admin UI |

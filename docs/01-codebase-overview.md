@@ -71,8 +71,8 @@ bt-mvp/
 │   │   │   ├── account/page.tsx
 │   │   │   └── support/page.tsx
 │   │   │
-│   │   ├── book/[sessionId]/        # Dynamic booking wizard
-│   │   │   ├── layout.tsx           # Progress bar layout
+│   │   ├── book/[sessionId]/        # Dynamic booking wizard (single session)
+│   │   │   ├── layout.tsx           # Progress bar layout + BookingProvider
 │   │   │   ├── student/page.tsx     # Step 1: pick student
 │   │   │   ├── medical/page.tsx     # Step 2: medical info
 │   │   │   ├── questionnaire/page.tsx # Step 3: dietary questionnaire
@@ -80,12 +80,27 @@ bt-mvp/
 │   │   │   ├── payment/
 │   │   │   │   ├── page.tsx         # Step 5: payment wrapper
 │   │   │   │   └── CheckoutForm.tsx # Stripe Elements component
-│   │   │   └── confirmation/page.tsx # Step 6: success
+│   │   │   └── confirmation/page.tsx # Step 6: success (polls Firestore)
+│   │   │
+│   │   ├── book/bundle/[bundleId]/  # Dynamic booking wizard (bundle)
+│   │   │   ├── layout.tsx           # Progress bar layout + BundleBookingProvider
+│   │   │   ├── student/page.tsx     # Step 1: pick student
+│   │   │   ├── medical/page.tsx     # Step 2: medical info
+│   │   │   ├── questionnaire/page.tsx # Step 3: dietary questionnaire
+│   │   │   ├── terms/page.tsx       # Step 4: accept T&Cs
+│   │   │   ├── payment/
+│   │   │   │   ├── page.tsx         # Step 5: payment wrapper
+│   │   │   │   └── BundleCheckoutForm.tsx # Stripe Elements for bundle
+│   │   │   └── confirmation/page.tsx # Step 6: success (polls for all bundle bookings)
 │   │   │
 │   │   ├── admin/                   # Route group: admin panel
 │   │   │   ├── layout.tsx           # Admin sidebar layout
 │   │   │   ├── dashboard/page.tsx
 │   │   │   ├── bookings/page.tsx
+│   │   │   ├── bundles/             # Bundle CRUD (BundleForm.tsx + BundleForm.module.css)
+│   │   │   │   └── page.tsx
+│   │   │   ├── class-types/         # Dynamic class type CRUD (schema.ts)
+│   │   │   │   └── page.tsx
 │   │   │   ├── classes/page.tsx
 │   │   │   ├── contact/page.tsx
 │   │   │   ├── gallery/page.tsx
@@ -112,13 +127,19 @@ bt-mvp/
 │   │   │   ├── MapView.tsx
 │   │   │   ├── SessionMapFinder.tsx
 │   │   │   └── SessionMapSection.tsx
-│   │   └── layout/
-│   │       ├── Header.tsx
-│   │       └── Footer.tsx
+│   │   ├── layout/
+│   │   │   ├── Header.tsx
+│   │   │   └── Footer.tsx
+│   │   ├── sessions/
+│   │   │   ├── SessionBrowser.tsx   # Session list/filter component
+│   │   │   └── BundleBrowser.tsx    # Bundle cards component
+│   │   └── portal/
+│   │       └── BundleGroupCard.tsx  # Grouped bundle bookings in my-classes
 │   │
 │   ├── context/
-│   │   ├── AuthContext.tsx          # Firebase auth state + role
-│   │   └── BookingContext.tsx       # Multi-step booking state (sessionStorage)
+│   │   ├── AuthContext.tsx           # Firebase auth state + role
+│   │   ├── BookingContext.tsx        # Single-session booking wizard state (sessionStorage)
+│   │   └── BundleBookingContext.tsx  # Bundle booking wizard state (sessionStorage)
 │   │
 │   ├── lib/
 │   │   ├── firebase.ts              # Firebase client SDK init
@@ -138,7 +159,6 @@ bt-mvp/
 │   ├── images/                      # Hero, gallery, and review photos
 │   └── videos/                      # Hero background video (hero-loop.mp4)
 │
-├── .env.local.example               # Environment variable template
 ├── storage.rules                    # Firebase Storage security rules
 ├── next.config.ts
 ├── tsconfig.json
@@ -190,7 +210,7 @@ Next.js App Router with **route groups** and a **dynamic segment** for bookings.
 | `/portal/account` | `src/app/portal/account/page.tsx` |
 | `/portal/support` | `src/app/portal/support/page.tsx` |
 
-### Booking Wizard (auth required, dynamic `[sessionId]`)
+### Single-Session Booking Wizard (auth required, dynamic `[sessionId]`)
 | Route | File |
 |-------|------|
 | `/book/[sessionId]/student` | `src/app/book/[sessionId]/student/page.tsx` |
@@ -200,13 +220,25 @@ Next.js App Router with **route groups** and a **dynamic segment** for bookings.
 | `/book/[sessionId]/payment` | `src/app/book/[sessionId]/payment/page.tsx` |
 | `/book/[sessionId]/confirmation` | `src/app/book/[sessionId]/confirmation/page.tsx` |
 
+### Bundle Booking Wizard (auth required, dynamic `[bundleId]`)
+| Route | File |
+|-------|------|
+| `/book/bundle/[bundleId]/student` | `src/app/book/bundle/[bundleId]/student/page.tsx` |
+| `/book/bundle/[bundleId]/medical` | `src/app/book/bundle/[bundleId]/medical/page.tsx` |
+| `/book/bundle/[bundleId]/questionnaire` | `src/app/book/bundle/[bundleId]/questionnaire/page.tsx` |
+| `/book/bundle/[bundleId]/terms` | `src/app/book/bundle/[bundleId]/terms/page.tsx` |
+| `/book/bundle/[bundleId]/payment` | `src/app/book/bundle/[bundleId]/payment/page.tsx` |
+| `/book/bundle/[bundleId]/confirmation` | `src/app/book/bundle/[bundleId]/confirmation/page.tsx` |
+
 ### Admin (admin role required)
 | Route | File |
 |-------|------|
 | `/admin/dashboard` | `src/app/admin/dashboard/page.tsx` |
 | `/admin/venues` | `src/app/admin/venues/page.tsx` |
 | `/admin/classes` | `src/app/admin/classes/page.tsx` |
+| `/admin/class-types` | `src/app/admin/class-types/page.tsx` |
 | `/admin/sessions` | `src/app/admin/sessions/page.tsx` |
+| `/admin/bundles` | `src/app/admin/bundles/page.tsx` |
 | `/admin/recipes` | `src/app/admin/recipes/page.tsx` |
 | `/admin/gallery` | `src/app/admin/gallery/page.tsx` |
 | `/admin/instructors` | `src/app/admin/instructors/page.tsx` |
@@ -229,11 +261,15 @@ Next.js App Router with **route groups** and a **dynamic segment** for bookings.
 |-----------|----------|---------|
 | `Header` | `src/components/layout/Header.tsx` | Top nav with auth state, mobile menu |
 | `Footer` | `src/components/layout/Footer.tsx` | Footer with social links |
+| `SessionBrowser` | `src/components/sessions/SessionBrowser.tsx` | Session list + filter component |
+| `BundleBrowser` | `src/components/sessions/BundleBrowser.tsx` | Bundle cards with availability indicators |
+| `BundleGroupCard` | `src/components/portal/BundleGroupCard.tsx` | Grouped bundle bookings in portal/my-classes |
 | `SessionMapFinder` | `src/components/home/SessionMapFinder.tsx` | Leaflet map for session browsing |
 | `SessionMapSection` | `src/components/home/SessionMapSection.tsx` | Lazy-loaded map section |
 | `HeroCanvas` | `src/components/home/HeroCanvas.tsx` | Animated canvas hero |
 | `MagicCursor` | `src/components/home/MagicCursor.tsx` | Custom interactive cursor |
-| `CheckoutForm` | `src/app/book/[sessionId]/payment/CheckoutForm.tsx` | Stripe PaymentElement |
+| `CheckoutForm` | `src/app/book/[sessionId]/payment/CheckoutForm.tsx` | Stripe PaymentElement (single session) |
+| `BundleCheckoutForm` | `src/app/book/bundle/[bundleId]/payment/BundleCheckoutForm.tsx` | Stripe PaymentElement (bundle) |
 | `ExpandableReview` | `src/app/(public)/testimonies/ExpandableReview.tsx` | Collapsible testimonial card |
 | `GalleryClient` | `src/app/(public)/gallery/GalleryClient.tsx` | Client-side gallery render |
 
@@ -245,7 +281,7 @@ Next.js App Router with **route groups** and a **dynamic segment** for bookings.
 - Wraps the entire app via root layout
 - Listens to `onAuthStateChanged` from Firebase Auth
 - Fetches the `BTUser` document from Firestore (`users/{uid}`)
-- Sets a `bt_session` cookie for middleware-level route protection
+- Sets a `bt_session` cookie (plain boolean) for middleware-level UX gate. This is NOT a security token — actual security is enforced by Firestore rules and server-side token verification.
 - Exposes: `user`, `btUser`, `loading`, `signUp`, `signIn`, `signInWithGoogle`, `logOut`, `resetPassword`
 
 ### BookingContext (`src/context/BookingContext.tsx`)
@@ -253,7 +289,13 @@ Next.js App Router with **route groups** and a **dynamic segment** for bookings.
 - Persists state to `sessionStorage` under key `booking_{sessionId}`
 - Hydrates from sessionStorage on mount; survives page refreshes
 - Tracks: `session`, `studentId`, `student`, `medicalInfo`, `emergencyContact`, `questionnaire`, `termsAccepted`
-- Fetches Session document from Firestore on mount
+- Fetches Session document and class type record from Firestore on mount
+
+### BundleBookingContext (`src/context/BundleBookingContext.tsx`)
+- Scoped to the `book/bundle/[bundleId]` route group via its layout
+- Persists state to `sessionStorage` under key `bundle_booking_{bundleId}`
+- Tracks: `bundle`, `sessions`, `studentId`, `student`, `medicalInfo`, `emergencyContact`, `questionnaire`, `termsAccepted`
+- Fetches Bundle document, all associated Session documents, and class type record from Firestore on mount
 
 ---
 
@@ -269,12 +311,19 @@ All data operations go through the Firebase client SDK (no custom REST API layer
 | Write student | `students` | `book/.../student`, `portal/my-students` |
 | Write booking | `bookings` | Stripe webhook handler only (Admin SDK) — never client-side |
 | Decrement spots | `sessions/{id}` | Stripe webhook handler only (Admin SDK Firestore transaction) |
+| Cancel booking | `bookings/{id}` | `portal/my-classes` (updateDoc status:'cancelled') |
 | Read bookings | `bookings` | `portal/my-classes`, `portal/my-payments`, `book/.../confirmation` |
-| Read/write gallery | `gallery` | `portal/gallery` (admin), `(public)/gallery` |
+| Read bundles | `bundles` | `BundleBrowser`, `portal/find-class`, `/classes` |
+| Write bundles | `bundles` | `admin/bundles` |
+| Read class types | `class_types` | `BookingContext`, `BundleBookingContext`, `admin/sessions`, `admin/class-types` |
+| Write class types | `class_types` | `admin/class-types` |
+| Read/write gallery | `gallery` | `admin/gallery`, `(public)/gallery` |
 | Read/write venues | `venues` | `admin/venues` |
 | Read/write classes | `classes` | `admin/classes` |
 | Read/write recipes | `recipes` | `admin/recipes` |
 | Read/write instructors | `instructors` | `admin/instructors` |
+| Write contact messages | `contact_messages` | Admin SDK only via `POST /api/contact` |
+| Read/update contact messages | `contact_messages` | `admin/contact` (admin role only) |
 
 ---
 
@@ -282,19 +331,20 @@ All data operations go through the Firebase client SDK (no custom REST API layer
 
 | File | Purpose |
 |------|---------|
-| `.env.local.example` | Documents all required environment variables |
-| `.env.local` | Actual secrets (gitignored) |
-| `next.config.ts` | Minimal Next.js config |
+| `.env.local` | Actual secrets (gitignored; no .env.local.example exists) |
+| `next.config.ts` | Security headers (X-Frame-Options, HSTS, etc.) |
 | `tsconfig.json` | Strict TypeScript; path alias `@/*` → `src/*` |
 | `storage.rules` | Firebase Storage: public read, authenticated write |
-| `firestore.rules` | Firestore security rules — deployed to `bt-mvp-d057f` |
+| `firestore.rules` | Firestore security rules — deployed to production Firebase project |
+| `firestore.indexes.json` | Composite Firestore indexes |
 | `firebase.json` | Firebase CLI config — points rules files for deployment |
-| `.firebaserc` | Firebase project alias (`default` → `bt-mvp-d057f`) |
+| `.firebaserc` | Firebase project alias |
 | `eslint.config.mjs` | ESLint (default Next.js config) |
+| `vitest.config.ts` | Vitest test runner config |
 
 ### Required Environment Variables
 ```
-# Firebase Client
+# Firebase Client (NEXT_PUBLIC_ = safe to expose)
 NEXT_PUBLIC_FIREBASE_API_KEY
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
 NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -302,8 +352,8 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 NEXT_PUBLIC_FIREBASE_APP_ID
 
-# Firebase Admin (server-side)
-FIREBASE_ADMIN_SERVICE_ACCOUNT   # JSON-encoded service account
+# Firebase Admin (server-side only — never expose to browser)
+FIREBASE_ADMIN_SERVICE_ACCOUNT   # Full service account JSON as single-line string
 
 # Stripe
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -313,9 +363,10 @@ STRIPE_WEBHOOK_SECRET
 # App
 NEXT_PUBLIC_APP_URL
 
-# Email (optional — Resend)
+# Email — Resend
 RESEND_API_KEY
-RESEND_FROM_EMAIL
+RESEND_FROM_EMAIL    # Must match verified Resend sending domain in production
+RESEND_ADMIN_EMAIL   # Receives booking confirmations and contact form notifications
 ```
 
 ---
@@ -335,8 +386,8 @@ RESEND_FROM_EMAIL
 # Install dependencies
 npm install
 
-# Copy and fill in environment variables
-cp .env.local.example .env.local
+# Create and populate environment variables (no .env.local.example exists — see docs/payment-init-debug-notes.md for the full variable list)
+touch .env.local
 
 # Start dev server (http://localhost:3000)
 npm run dev

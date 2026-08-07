@@ -155,8 +155,18 @@
     border-bottom: none;
 }
 
+.sourceLabel {
+    font-size: 0.85rem;
+    color: var(--bt-gray-600);
+    font-weight: 500;
+}
+
 @media (max-width: 768px) {
     .toolbar {
         flex-direction: column;
+    }
+
+    .filters {
+        flex-wrap: wrap;
     }
 }

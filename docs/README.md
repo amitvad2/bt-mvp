@@ -44,7 +44,10 @@ The codebase was deployed to Vercel (`.vercel/` directory present).
 | Booking confirmation emails (Resend) — triggered by webhook | Complete |
 | Admin: venues, classes, sessions, recipes, gallery, instructors | Complete |
 | Admin: bookings view | Partial (read-only, no cancel/refund) |
-| Firestore data model (10 collections with full types) | Complete |
+| **Admin: bundles CRUD** | **Complete** |
+| **Admin: class types CRUD** (replaces hardcoded enum) | **Complete** |
+| **Session bundles** — bundle booking wizard, payments, confirmation/cancellation emails | **Complete** |
+| Firestore data model (13 collections with full types) | Complete |
 | Firebase Storage (image uploads in admin) | Complete |
 | **`firestore.rules`** — per-collection access control | **Complete (ready to deploy)** |
 | Next.js Edge middleware for route protection | Complete |
@@ -94,4 +97,6 @@ The codebase was deployed to Vercel (`.vercel/` directory present).
 | [07-mvp-roadmap.md](./07-mvp-roadmap.md) | MVP Roadmap | 8-phase build plan with priorities |
 | [08-claude-md.md](./08-claude-md.md) | Claude Working Memory | AI-optimised project context for coding sessions |
 | [firestore-rules-notes.md](./firestore-rules-notes.md) | Firestore Rules Notes | Design decisions, tradeoffs, and deployment steps |
-| [stripe-webhook-notes.md](./stripe-webhook-notes.md) | Stripe Webhook Notes | Webhook architecture, test steps, edge cases |
+| [stripe-webhook-notes.md](./stripe-webhook-notes.md) | Stripe Webhook Notes | Webhook architecture, bundle support, test steps, edge cases |
+| [payment-init-debug-notes.md](./payment-init-debug-notes.md) | Payment Init Debug Notes | Env var reference, common failure modes, test verification steps |
+| [HOSTING-AND-DEPLOYMENT.md](./HOSTING-AND-DEPLOYMENT.md) | Hosting & Deployment | Production setup (GoDaddy, Vercel, Firebase, Stripe live mode, Resend), DNS records, env vars, runbook |

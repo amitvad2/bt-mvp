@@ -1,0 +1,218 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--space-4);
+}
+
+.panel {
+    background: var(--bt-white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    max-width: 640px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: var(--space-8);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--bt-gray-900);
+    margin: 0;
+}
+
+.header p {
+    font-size: 0.85rem;
+    color: var(--bt-gray-600);
+    margin-top: 4px;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    color: var(--bt-gray-600);
+    transition: background 0.15s;
+}
+
+.closeBtn:hover {
+    background: var(--bt-gray-100);
+}
+
+.section {
+    margin-bottom: var(--space-6);
+}
+
+.section h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bt-gray-600);
+    margin-bottom: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.fieldGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3) var(--space-6);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fieldFull {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fieldLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bt-gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.fieldValue {
+    font-size: 0.95rem;
+    color: var(--bt-gray-900);
+    font-weight: 500;
+}
+
+.fieldValueMuted {
+    font-size: 0.95rem;
+    color: var(--bt-gray-400);
+    font-style: italic;
+}
+
+.flagRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.flagDanger {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.flagWarning {
+    background: var(--bt-amber-light);
+    color: var(--bt-amber-dark);
+}
+
+.flagInfo {
+    background: var(--bt-sky-light);
+    color: #1565C0;
+}
+
+.flagSuccess {
+    background: var(--bt-green-light);
+    color: #166534;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.statusPending {
+    background: var(--bt-amber-light);
+    color: var(--bt-amber-dark);
+}
+
+.statusReviewed {
+    background: var(--bt-green-light);
+    color: #166534;
+}
+
+.statusContactParent {
+    background: var(--bt-sky-light);
+    color: #1565C0;
+}
+
+.statusCannotAccommodate {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.statusNotRequired {
+    background: var(--bt-gray-100);
+    color: var(--bt-gray-600);
+}
+
+.notesBox {
+    background: var(--bt-gray-50);
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+    font-size: 0.9rem;
+    color: var(--bt-gray-700);
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.accessDenied {
+    text-align: center;
+    padding: var(--space-12);
+    color: var(--bt-gray-600);
+}
+
+.accessDenied h3 {
+    font-size: 1.1rem;
+    color: var(--bt-gray-900);
+    margin-bottom: var(--space-2);
+}
+
+@media (max-width: 640px) {
+    .panel {
+        padding: var(--space-4);
+        max-height: 95vh;
+    }
+
+    .fieldGrid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -259,36 +259,41 @@ Implemented in `src/app/book/[sessionId]/terms/page.tsx`.
 
 ### Current State in Code
 ```
-/book/[sessionId]/payment
-  → page.tsx: calls POST /api/payments/create-intent (server action)
-              receives clientSecret
-              mounts <Elements stripe={stripe} options={{clientSecret}}>
-              renders CheckoutForm
+/book/[sessionId]/payment  (or /book/bundle/[bundleId]/payment)
+  → page.tsx: calls POST /api/payments/create-intent with Bearer token + full booking payload
+              Server verifies Firebase ID token (401 on failure)
+              Server reads authoritative price from Firestore (never trusts client amount)
+              Server checks session open + spotsAvailable > 0 (400 if full)
+              Server creates Stripe PaymentIntent
+              Server writes booking_drafts/{piId} via Admin SDK
+              Returns { clientSecret, paymentIntentId }
+              Mounts <Elements stripe={stripe} options={{clientSecret}}>
+              Renders CheckoutForm / BundleCheckoutForm
 
-  CheckoutForm.tsx:
+  CheckoutForm.tsx (no Firestore writes):
   → Renders <PaymentElement> (Stripe-hosted card UI)
-  → On submit: stripe.confirmPayment({
-        elements,
-        confirmParams: { return_url: ... }
-      })
-  → On success (Stripe redirects back):
-      - Creates booking document in Firestore
-      - Decrements session.spotsAvailable
-      - Updates student.medicalInfo
-      - Calls POST /api/emails/send (confirmation email)
-      - Navigates to /book/[sessionId]/confirmation
+  → On submit: stripe.confirmPayment({ elements, confirmParams: { return_url: ... } })
+  → On inline success: navigates to /book/[sessionId]/confirmation?payment_intent={piId}
+
+Stripe → POST /api/webhooks/stripe (server-side, async):
+  → Verifies Stripe signature
+  → Reads booking_drafts/{piId}
+  → Runs Firestore transaction: idempotency check + capacity check + bookings/{piId}.set()
+  → Updates student.medicalInfo (best-effort)
+  → Sends confirmation email via Resend (best-effort)
+  → Sends admin notification email (best-effort)
+  → Deletes booking_drafts/{piId}
 ```
-Implemented in `src/app/book/[sessionId]/payment/page.tsx` + `CheckoutForm.tsx` + `src/app/api/payments/create-intent/route.ts`.
+Implemented in `src/app/book/[sessionId]/payment/page.tsx` + `CheckoutForm.tsx` + `src/app/api/payments/create-intent/route.ts` + `src/app/api/webhooks/stripe/route.ts`.
 
 ### Missing Steps
-- **No Stripe webhook handler** — if the redirect back to the app fails (e.g. network drop), the booking may never be created in Firestore even though payment succeeded.
-- **No idempotency check** — re-submitting could theoretically create a duplicate booking.
 - **PayPal not supported.**
+- **No Stripe refund on cancellation** — user can cancel (status update + email) but no `stripe.refunds.create()` call.
 
-### Suggested Implementation
-1. Add `/api/webhooks/stripe/route.ts` to handle `payment_intent.succeeded` events as the authoritative booking creation trigger.
-2. Move booking-creation logic from `CheckoutForm.tsx` into the webhook handler.
-3. Use `payment_intent.id` as an idempotency key when writing the booking document.
+### Implementation Notes
+- Booking creation is exclusively server-side via the Stripe webhook — CheckoutForm.tsx has no Firestore writes.
+- Idempotency: booking document ID = Stripe PaymentIntent ID; webhook transaction checks doc existence before writing.
+- Bundle payments create N booking documents with IDs `{piId}_{sessionId}` in a single Firestore transaction.
 
 ---
 
@@ -296,14 +301,25 @@ Implemented in `src/app/book/[sessionId]/payment/page.tsx` + `CheckoutForm.tsx` 
 
 ### Current State in Code
 ```
-/book/[sessionId]/confirmation
-  → Reads session/booking data from BookingContext (client-side state)
-  → Shows: class name, date, venue, student name, amount paid
+/book/[sessionId]/confirmation?payment_intent={piId}
+  → Reads ?payment_intent URL param
+  → Polls Firestore bookings/{piId} up to 8 times at 1.5s intervals (~12s max)
+  → While waiting: shows a spinner with "Confirming your booking..."
+  → On booking found: shows full confirmation card (class, date, venue, student, amount)
+  → If polling exhausts (webhook delay > 12s): shows "Payment Received" fallback
+      with payment reference and instructions to check My Classes or contact support
   → CTA buttons: "View My Bookings" → /portal/my-classes
                  "Find Another Class" → /portal/find-class
-  → Confirmation email sent from CheckoutForm (before redirect)
+  → Confirmation email sent by Stripe webhook (not from browser)
 ```
-Implemented in `src/app/book/[sessionId]/confirmation/page.tsx`.
+
+```
+/book/bundle/[bundleId]/confirmation?payment_intent={piId}
+  → Polls for all bundle booking documents ({piId}_{sessionId}) via Firestore query
+  → Shows all session dates in chronological order when all bookings appear
+  → Bundle confirmation email sent by Stripe webhook
+```
+Implemented in `src/app/book/[sessionId]/confirmation/page.tsx` and `src/app/book/bundle/[bundleId]/confirmation/page.tsx`.
 
 ### Missing Steps
 - If user navigates directly to `/confirmation` without prior booking state, the page may show blank data.
@@ -326,7 +342,7 @@ Implemented in `src/app/book/[sessionId]/confirmation/page.tsx`.
       - email (required)
       - phone (optional)
       - category / enquiry type (required select):
-          'general' | 'booking' | 'feedback' | 'technical' | 'other'
+          'general' | 'class-info' | 'booking-help' | 'dietary-allergy' | 'private-event' | 'technical' | 'feedback'
       - message (required, min 10 chars)
       - consentToReply checkbox (required)
   → React Hook Form + Zod validates client-side

@@ -55,10 +55,12 @@ Browser                          Server                   Stripe
 
 ## Files Changed
 
+> **Historical note:** This table records the changes made when the webhook architecture was first introduced. The files listed are all still current; the descriptions reflect the change from the prior client-side approach.
+
 | File | Change |
 |------|--------|
-| `src/app/api/webhooks/stripe/route.ts` | **New** — webhook handler |
-| `src/app/api/payments/create-intent/route.ts` | Extended to accept full booking payload and write `booking_drafts` |
+| `src/app/api/webhooks/stripe/route.ts` | **New** — webhook handler (handles both single-session and bundle payments) |
+| `src/app/api/payments/create-intent/route.ts` | Extended to accept full booking payload, verify Firebase ID token, write `booking_drafts` |
 | `src/app/book/[sessionId]/payment/page.tsx` | Now imports `useAuth`, sends full booking state to create-intent |
 | `src/app/book/[sessionId]/payment/CheckoutForm.tsx` | All Firestore + email calls removed; just handles Stripe UI |
 | `src/app/book/[sessionId]/confirmation/page.tsx` | Accepts `?payment_intent` param; polls Firestore for webhook-created booking |
@@ -70,10 +72,36 @@ Browser                          Server                   Stripe
 
 | Event | Behaviour |
 |-------|-----------|
-| `payment_intent.succeeded` | Creates booking, decrements spots, updates student profile, sends email, deletes draft |
+| `payment_intent.succeeded` | Creates booking(s), decrements spots, updates student profile, sends email(s), sends admin notification, deletes draft |
 | `payment_intent.payment_failed` | Marks draft with `paymentStatus: 'failed'` and failure message for observability |
 
 All other event types are acknowledged (200) without processing.
+
+---
+
+## Bundle Payment Support
+
+When the `booking_drafts/{piId}` document contains a `bundleId` field, the webhook routes to a bundle-specific handler (`handleBundlePaymentSucceeded`). The bundle flow:
+
+1. Reads the `bundles/{bundleId}` document to get the full list of `sessionIds`.
+2. Runs a single Firestore transaction that:
+   - Creates N booking documents with IDs `{piId}_{sessionId}` (one per session in the bundle).
+   - Decrements `spotsAvailable` on each session atomically.
+   - Sets `bundleId` and `bundleName` on each booking document.
+3. Updates the student profile (medical info, emergency contact, questionnaire) — best-effort, outside the transaction.
+4. Sends a bundle confirmation email via Resend (single email covering all sessions).
+5. Sends an admin booking notification email.
+6. Deletes the `booking_drafts/{piId}` document.
+
+**Idempotency for bundles:** Each booking document ID (`{piId}_{sessionId}`) is checked for existence before writing. A duplicate webhook delivery is a no-op.
+
+**Cancellation:** Bundle cancellation (from `portal/my-classes`) updates all booking documents with `status: 'cancelled'` and sends a `bundle-cancellation` email via `/api/emails/send`. No Stripe refund is issued automatically.
+
+---
+
+## Admin Booking Notifications
+
+After every successful booking (single-session or bundle), the webhook calls `sendAdminBookingNotification()` which sends an email to `RESEND_ADMIN_EMAIL` (defaults to `bloomingtastebuds@gmail.com` if not set) with booking summary details. This is a best-effort call — a notification failure does not affect booking creation.
 
 ---
 

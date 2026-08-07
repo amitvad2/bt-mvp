@@ -17,6 +17,7 @@ import stripe from '@/lib/stripe';
 import { adminDb } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { resend } from '@/lib/resend';
+import { determineSafetyReviewStatus } from '@/lib/guest-validation';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -108,9 +109,14 @@ async function handlePaymentIntentSucceeded(
 
     const draft = draftSnap.data()!;
 
-    // Branch: bundle vs single-session booking
+    // Branch: bundle vs guest vs single-session booking
     if (draft.bundleId) {
         await handleBundlePaymentSucceeded(paymentIntent, draft);
+        return;
+    }
+
+    if (draft.bookingMode === 'guest') {
+        await handleGuestPaymentSucceeded(paymentIntent, draft);
         return;
     }
 
@@ -427,7 +433,176 @@ async function handleBundlePaymentSucceeded(
 }
 
 // ---------------------------------------------------------------------------
+// Guest: payment_intent.succeeded
+// ---------------------------------------------------------------------------
+
+async function handleGuestPaymentSucceeded(
+    paymentIntent: Stripe.PaymentIntent,
+    draft: FirebaseFirestore.DocumentData
+) {
+    const piId = paymentIntent.id;
+    const sessionId: string = draft.sessionId;
+
+    console.log(`[webhook] Guest payment_intent.succeeded: ${piId}`);
+
+    // 1. Validate consent records exist in draft
+    if (!draft.consentAudit?.consents) {
+        console.error(
+            `[webhook] Guest draft ${piId} missing consent records. ` +
+            `Cannot create booking without valid consent audit.`
+        );
+        return;
+    }
+
+    // 2. Determine safety review status based on medical declarations
+    const safetyReviewStatus = determineSafetyReviewStatus(draft);
+
+    // 3. Atomic booking creation + capacity decrement
+    const bookingRef = adminDb.doc(`bookings/${piId}`);
+    const sessionRef = adminDb.doc(`sessions/${sessionId}`);
+    const draftRef = adminDb.doc(`booking_drafts/${piId}`);
+
+    let alreadyProcessed = false;
+
+    await adminDb.runTransaction(async (tx) => {
+        // --- Idempotency check ---
+        const existingBooking = await tx.get(bookingRef);
+        if (existingBooking.exists) {
+            console.log(
+                `[webhook] Guest booking ${piId} already exists — duplicate event, skipping`
+            );
+            alreadyProcessed = true;
+            return;
+        }
+
+        // --- Session read for capacity check + snapshot ---
+        const sessionDoc = await tx.get(sessionRef);
+        if (!sessionDoc.exists) {
+            throw new Error(`Session ${sessionId} not found in Firestore`);
+        }
+
+        const sessionData = sessionDoc.data()!;
+
+        // Build the guest booking document
+        const guestBookingDoc = buildGuestBookingDoc(
+            draft,
+            paymentIntent,
+            safetyReviewStatus,
+            sessionData
+        );
+
+        if (sessionData.status !== 'open') {
+            // Session was closed/cancelled after payment was initiated.
+            console.warn(
+                `[webhook] Session ${sessionId} status is '${sessionData.status}' ` +
+                `(not open) — guest booking will be created without decrementing spots`
+            );
+            tx.set(bookingRef, guestBookingDoc);
+            return;
+        }
+
+        if (sessionData.spotsAvailable <= 0) {
+            // Session sold out between PaymentIntent creation and webhook.
+            console.warn(
+                `[webhook] Session ${sessionId} has 0 spots available. ` +
+                `Overbooking detected for guest booking — manual review needed.`
+            );
+            tx.set(bookingRef, { ...guestBookingDoc, overbooking: true });
+            return;
+        }
+
+        // --- Happy path: create booking + decrement spots atomically ---
+        tx.set(bookingRef, guestBookingDoc);
+        tx.update(sessionRef, {
+            spotsAvailable: admin.firestore.FieldValue.increment(-1),
+        });
+    });
+
+    if (alreadyProcessed) return;
+
+    // 4. Send guest confirmation email (best-effort, non-blocking)
+    await sendGuestConfirmationEmail(draft);
+
+    // 5. Notify admin of new guest booking (best-effort, non-blocking)
+    await sendAdminBookingNotification({
+        className: draft.className ?? '',
+        sessionDate: draft.sessionDate ?? '',
+        startTime: draft.startTime ?? undefined,
+        endTime: draft.endTime ?? undefined,
+        venueName: draft.venueName ?? '',
+        studentName: `${draft.childDetails?.firstName ?? ''} ${draft.childDetails?.lastName ?? ''}`.trim(),
+        bookedByName: `${draft.guestContact?.firstName ?? ''} ${draft.guestContact?.lastName ?? ''}`.trim(),
+        bookedByEmail: draft.guestContact?.email ?? '',
+    });
+
+    // 6. Delete the draft (cleanup — non-critical if this fails)
+    try {
+        await draftRef.delete();
+    } catch (err) {
+        console.error(`[webhook] Failed to delete guest booking draft ${piId}:`, err);
+    }
+
+    console.log(`[webhook] Guest booking ${piId} created successfully`);
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
+// ---------------------------------------------------------------------------
+
+function buildGuestBookingDoc(
+    draft: FirebaseFirestore.DocumentData,
+    paymentIntent: Stripe.PaymentIntent,
+    safetyReviewStatus: string,
+    sessionData: FirebaseFirestore.DocumentData
+) {
+    const piId = paymentIntent.id;
+
+    return {
+        id: piId,
+        bookingMode: 'guest' as const,
+        bookingSource: draft.source ?? 'unknown',
+        sessionId: draft.sessionId,
+        status: 'confirmed',
+        // Embedded snapshots (no linked documents — GUEST-FR-017)
+        guestContact: draft.guestContact,
+        childSnapshot: draft.childDetails,
+        medicalSnapshot: draft.medicalInfo,
+        allergyDietarySnapshot: draft.allergyDietaryInfo,
+        emergencyContactSnapshot: draft.emergencyContact,
+        authorisedCollectorSnapshot: draft.authorisedCollector,
+        consentAudit: draft.consentAudit,
+        sessionSnapshot: {
+            id: draft.sessionId,
+            className: sessionData.className ?? '',
+            classType: sessionData.classType ?? '',
+            date: sessionData.date ?? '',
+            startTime: sessionData.startTime ?? '',
+            endTime: sessionData.endTime ?? '',
+            venueName: sessionData.venueName ?? '',
+            ageMin: sessionData.ageMin ?? 0,
+            ageMax: sessionData.ageMax ?? 0,
+            price: sessionData.price ?? 0,
+            spotsAvailable: sessionData.spotsAvailable ?? 0,
+            status: sessionData.status ?? '',
+        },
+        // Safety review
+        safetyReviewStatus,
+        // Payment
+        payment: {
+            stripePaymentIntentId: piId,
+            amount: paymentIntent.amount,
+            currency: paymentIntent.currency,
+            status: 'paid',
+            receiptUrl: null,
+        },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Helpers (existing)
 // ---------------------------------------------------------------------------
 
 function buildBookingDoc(
@@ -696,5 +871,138 @@ async function sendAdminBookingNotification(params: {
         }
     } catch (err) {
         console.error('[webhook] Failed to send admin notification:', err);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Guest Confirmation Email
+// ---------------------------------------------------------------------------
+
+export async function sendGuestConfirmationEmail(
+    draft: FirebaseFirestore.DocumentData
+): Promise<void> {
+    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_placeholder') {
+        console.warn('[webhook] RESEND_API_KEY not set — skipping guest confirmation email');
+        return;
+    }
+
+    // Determine if running in Preview mode
+    const isPreview =
+        process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV !== 'production';
+
+    // Determine recipients
+    let recipients: string[];
+    if (isPreview) {
+        const previewRecipients = process.env.PREVIEW_EMAIL_RECIPIENTS;
+        if (!previewRecipients) {
+            console.warn(
+                '[webhook] Preview mode but PREVIEW_EMAIL_RECIPIENTS not configured — skipping guest confirmation email'
+            );
+            return;
+        }
+        recipients = previewRecipients.split(',').map((e) => e.trim()).filter(Boolean);
+        if (recipients.length === 0) {
+            console.warn('[webhook] PREVIEW_EMAIL_RECIPIENTS is empty — skipping guest confirmation email');
+            return;
+        }
+    } else {
+        // Production mode: send to the guest's email
+        const guestEmail = draft.guestContact?.email;
+        if (!guestEmail) {
+            console.error('[webhook] Guest draft missing guestContact.email — cannot send confirmation');
+            return;
+        }
+        recipients = [guestEmail];
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+    // Extract email content fields from draft (non-sensitive only)
+    const parentFirstName = draft.guestContact?.firstName ?? 'there';
+    const childFirstName = draft.childDetails?.firstName ?? 'your child';
+    const className = draft.className ?? 'Cooking Class';
+    const sessionDate = draft.sessionDate ?? '';
+    const startTime = draft.startTime ?? '';
+    const endTime = draft.endTime ?? '';
+    const venueName = draft.venueName ?? '';
+    const piId: string = draft.stripePaymentIntentId ?? '';
+
+    // Booking reference: last 8 chars of PaymentIntent ID
+    const bookingReference = piId.length >= 8 ? piId.slice(-8) : piId;
+
+    // Format amount (stored in pence on the PaymentIntent / draft)
+    const amountPence = draft.amount ?? 0;
+    const formattedAmount = `£${(amountPence / 100).toFixed(2)}`;
+
+    // Format date for display
+    const formattedDate = sessionDate
+        ? new Date(sessionDate).toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+        })
+        : '';
+
+    const timeStr = startTime && endTime ? `${startTime} – ${endTime}` : '';
+
+    // Subject line
+    const subjectPrefix = isPreview ? '[PREVIEW] ' : '';
+    const subject = `${subjectPrefix}Booking Confirmed: ${className}`;
+
+    try {
+        const { error } = await resend.emails.send({
+            from: `Blooming Tastebuds <${fromEmail}>`,
+            to: recipients,
+            subject,
+            html: `
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
+                    <h1 style="color:#0066CC;font-size:24px;margin-bottom:8px;">Booking Confirmed!</h1>
+                    <p style="color:#666;font-size:16px;margin-bottom:24px;">
+                        Hi ${parentFirstName}, your booking for ${childFirstName} is confirmed. We can't wait to see them!
+                    </p>
+                    <div style="background:#F5F5F7;padding:20px;border-radius:12px;margin-bottom:24px;">
+                        <h2 style="font-size:18px;margin-top:0;">Session Details</h2>
+                        <ul style="list-style:none;padding:0;margin:0;color:#333;">
+                            <li style="margin-bottom:8px;"><strong>Class:</strong> ${className}</li>
+                            ${formattedDate ? `<li style="margin-bottom:8px;"><strong>Date:</strong> ${formattedDate}</li>` : ''}
+                            ${timeStr ? `<li style="margin-bottom:8px;"><strong>Time:</strong> ${timeStr}</li>` : ''}
+                            ${venueName ? `<li style="margin-bottom:8px;"><strong>Venue:</strong> ${venueName}</li>` : ''}
+                            <li style="margin-bottom:8px;"><strong>Child:</strong> ${childFirstName}</li>
+                            <li style="margin-bottom:8px;"><strong>Amount Paid:</strong> ${formattedAmount}</li>
+                            <li style="margin-bottom:8px;"><strong>Booking Reference:</strong> ${bookingReference}</li>
+                        </ul>
+                    </div>
+                    <div style="background:#E8F5E9;padding:16px;border-radius:12px;margin-bottom:24px;">
+                        <p style="color:#2E7D32;font-size:14px;margin:0;">
+                            ✅ Your safety information has been received. Our team will review it ahead of the session.
+                        </p>
+                    </div>
+                    <div style="margin-bottom:24px;">
+                        <h3 style="font-size:16px;margin-bottom:8px;">Arrival Information</h3>
+                        <p style="color:#666;font-size:14px;line-height:1.5;margin:0;">
+                            Please arrive 5 minutes before the session start time. Ensure your child is collected by the authorised person at the end of the session.
+                        </p>
+                    </div>
+                    <hr style="border:0;border-top:1px solid #eee;margin:24px 0;" />
+                    <div style="text-align:center;">
+                        <p style="color:#666;font-size:14px;margin-bottom:8px;">
+                            <strong>Blooming Tastebuds</strong>
+                        </p>
+                        <p style="color:#999;font-size:12px;margin:0;">
+                            Fun, hands-on cooking classes for children.<br/>
+                            Questions? Contact us at <a href="mailto:info@bloomingtastebuds.co.uk" style="color:#0066CC;">info@bloomingtastebuds.co.uk</a>
+                        </p>
+                    </div>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error('[webhook] Guest confirmation email error:', error);
+        } else {
+            console.log(`[webhook] Guest confirmation email sent to ${recipients.join(', ')}`);
+        }
+    } catch (err) {
+        console.error('[webhook] Failed to send guest confirmation email:', err);
     }
 }

@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/context/AuthContext';
+import { isGuestCheckoutEnabled } from '@/lib/feature-flags';
 import styles from '../signup/page.module.css';
 
 const schema = z.object({
@@ -31,6 +32,13 @@ function LoginContent() {
     const redirect = searchParams.get('redirect') || '/portal/dashboard';
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Extract session ID from redirect if user was trying to book
+    const sessionIdFromRedirect = redirect.match(/\/book\/([^/]+)/)?.[1] ?? null;
+    const showGuestOption = isGuestCheckoutEnabled();
+    const guestLink = sessionIdFromRedirect
+        ? `/express-booking/${sessionIdFromRedirect}?source=website_express`
+        : '/classes';
 
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
@@ -119,6 +127,15 @@ function LoginContent() {
             <p className={styles.footer}>
                 Don't have an account? <Link href="/auth/signup">Register here</Link>
             </p>
+
+            {showGuestOption && (
+                <p className={styles.footer} style={{ marginTop: 'var(--space-4)' }}>
+                    Just want to book quickly?{' '}
+                    <Link href={guestLink}>
+                        {sessionIdFromRedirect ? 'Continue without an account' : 'Book as a Guest'}
+                    </Link>
+                </p>
+            )}
         </div>
     );
 }
