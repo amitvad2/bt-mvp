@@ -16,7 +16,10 @@ import type { NextRequest } from 'next/server';
 
 // /portal is intentionally absent — it is guarded client-side by PortalLayout,
 // which can read btUser.role. Middleware cannot distinguish roles from the cookie.
-const protectedRoutes = ['/book', '/admin'];
+//
+// /express-booking/* and /express-book-term/* are intentionally NOT in this list
+// or the matcher — they support guest checkout without authentication.
+const protectedRoutes = ['/book', '/book-term', '/admin'];
 
 // Routes that redirect authenticated users to the dashboard (no re-login needed).
 const authRoutes = ['/auth/login', '/auth/signup', '/auth/forgot-password'];
@@ -50,6 +53,7 @@ export function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         '/book/:path*',
+        '/book-term/:path*',
         '/admin/:path*',
         '/auth/:path*',
     ],

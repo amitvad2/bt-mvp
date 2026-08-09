@@ -499,4 +499,128 @@ describe('POST /api/payments/create-guest-intent', () => {
       );
     });
   });
+
+  // ── Social Attribution Propagation ────────────────────────────────────────
+
+  describe('Social attribution propagation', () => {
+    function makeRequestWithQueryParams(body: object, queryParams: string): Request {
+      return new Request(`http://localhost/api/payments/create-guest-intent?${queryParams}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-forwarded-for': '192.168.1.1',
+        },
+        body: JSON.stringify(body),
+      });
+    }
+
+    it('writes socialAttribution to draft when source=social_whatsapp', async () => {
+      const req = makeRequestWithQueryParams(
+        validPayload,
+        'source=social_whatsapp&campaign=summer_2025&socialBookingSessionId=sbs_123'
+      );
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          socialAttribution: {
+            bookingSource: 'whatsapp_express',
+            campaign: 'summer_2025',
+            socialBookingSessionId: 'sbs_123',
+          },
+        })
+      );
+    });
+
+    it('writes socialAttribution with instagram_express for source=social_instagram', async () => {
+      const req = makeRequestWithQueryParams(
+        validPayload,
+        'source=social_instagram&campaign=ig_promo'
+      );
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          socialAttribution: {
+            bookingSource: 'instagram_express',
+            campaign: 'ig_promo',
+            socialBookingSessionId: null,
+          },
+        })
+      );
+    });
+
+    it('writes socialAttribution with facebook_express for source=social_messenger', async () => {
+      const req = makeRequestWithQueryParams(
+        validPayload,
+        'source=social_messenger'
+      );
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          socialAttribution: {
+            bookingSource: 'facebook_express',
+            campaign: null,
+            socialBookingSessionId: null,
+          },
+        })
+      );
+    });
+
+    it('does NOT include socialAttribution when no source query param is present', async () => {
+      const req = makeRequest(validPayload);
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+
+      const setCall = mockDocSet.mock.calls[0][0];
+      expect(setCall).not.toHaveProperty('socialAttribution');
+    });
+
+    it('does NOT include socialAttribution when source is not a social channel', async () => {
+      const req = makeRequestWithQueryParams(validPayload, 'source=website_express');
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+
+      const setCall = mockDocSet.mock.calls[0][0];
+      expect(setCall).not.toHaveProperty('socialAttribution');
+    });
+
+    it('does NOT include socialAttribution for unrecognised social source', async () => {
+      const req = makeRequestWithQueryParams(validPayload, 'source=social_unknown_platform');
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+
+      const setCall = mockDocSet.mock.calls[0][0];
+      expect(setCall).not.toHaveProperty('socialAttribution');
+    });
+
+    it('does not modify existing draft fields when social attribution is present', async () => {
+      const req = makeRequestWithQueryParams(
+        validPayload,
+        'source=social_whatsapp&campaign=test_campaign&socialBookingSessionId=sbs_xyz'
+      );
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+
+      // Verify existing fields are still present alongside social attribution
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stripePaymentIntentId: 'pi_test_123456',
+          paymentStatus: 'pending',
+          bookingMode: 'guest',
+          sessionId: 'session-abc-123',
+          source: 'whatsapp_express',
+          socialAttribution: {
+            bookingSource: 'whatsapp_express',
+            campaign: 'test_campaign',
+            socialBookingSessionId: 'sbs_xyz',
+          },
+        })
+      );
+    });
+  });
 });

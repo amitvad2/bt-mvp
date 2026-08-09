@@ -461,11 +461,11 @@ describe('Integration: Full Guest Booking Flow', () => {
     function getSourceLabel(source?: string): string {
       switch (source) {
         case 'whatsapp_express': return 'WhatsApp';
-        case 'facebook_express': return 'Facebook';
+        case 'facebook_express': return 'Messenger';
         case 'instagram_express': return 'Instagram';
         case 'qr_express': return 'QR Code';
         case 'google_express': return 'Google';
-        case 'website_express': return 'Website (Express)';
+        case 'website_express': return 'Website (Guest)';
         case 'website': return 'Website';
         case 'unknown': return 'Unknown';
         default: return '—';
@@ -523,11 +523,11 @@ describe('Integration: Full Guest Booking Flow', () => {
 
     it('getSourceLabel returns correct labels for all guest booking sources', () => {
       expect(getSourceLabel('whatsapp_express')).toBe('WhatsApp');
-      expect(getSourceLabel('facebook_express')).toBe('Facebook');
+      expect(getSourceLabel('facebook_express')).toBe('Messenger');
       expect(getSourceLabel('instagram_express')).toBe('Instagram');
       expect(getSourceLabel('qr_express')).toBe('QR Code');
       expect(getSourceLabel('google_express')).toBe('Google');
-      expect(getSourceLabel('website_express')).toBe('Website (Express)');
+      expect(getSourceLabel('website_express')).toBe('Website (Guest)');
       expect(getSourceLabel('website')).toBe('Website');
       expect(getSourceLabel('unknown')).toBe('Unknown');
       expect(getSourceLabel(undefined)).toBe('—');

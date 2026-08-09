@@ -24,7 +24,6 @@ export default function ClassesPage() {
                 <div className="container">
                     <div className={styles.pathsGrid}>
                         <div className={styles.pathCard}>
-                            <span className={styles.pathEmoji}>🍳</span>
                             <div>
                                 <h3>Junior Cooks</h3>
                                 <span className={styles.pathAge}>Ages 5–11</span>
@@ -32,7 +31,6 @@ export default function ClassesPage() {
                             <p>A fun, safe introduction to healthy cooking. Kids explore fresh ingredients, basic kitchen skills, and the joy of making food from scratch in a supportive group setting.</p>
                         </div>
                         <div className={`${styles.pathCard} ${styles.pathCardTeen}`}>
-                            <span className={styles.pathEmoji}>🔥</span>
                             <div>
                                 <h3>Teen Chefs</h3>
                                 <span className={`${styles.pathAge} ${styles.pathAgeTeen}`}>Ages 12–18</span>
@@ -47,11 +45,11 @@ export default function ClassesPage() {
             <div className={styles.reassuranceStrip}>
                 <div className="container">
                     <ul className={styles.reassuranceList}>
-                        <li><span aria-hidden="true">🥦</span> 100% vegetarian cooking</li>
-                        <li><span aria-hidden="true">⚠️</span> Allergy-aware sessions</li>
-                        <li><span aria-hidden="true">🛡️</span> DBS-checked instructor</li>
-                        <li><span aria-hidden="true">👕</span> Aprons provided — just bring yourself</li>
-                        <li><span aria-hidden="true">💳</span> Easy online booking</li>
+                        <li>100% vegetarian cooking</li>
+                        <li>Allergy-aware sessions</li>
+                        <li>DBS-checked instructor</li>
+                        <li>Aprons provided — just bring yourself</li>
+                        <li>Easy online booking</li>
                     </ul>
                 </div>
             </div>

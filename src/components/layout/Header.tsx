@@ -55,10 +55,10 @@ export default function Header() {
                         </>
                     ) : !loading ? (
                         <>
-                            <Link href="/auth/login" className="btn btn-ghost btn-sm">
+                            <Link href="/auth/login" className="btn btn-ghost">
                                 Login
                             </Link>
-                            <Link href="/auth/signup" className="btn btn-primary btn-sm">
+                            <Link href="/auth/signup" className="btn btn-primary">
                                 Register
                             </Link>
                         </>

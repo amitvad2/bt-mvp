@@ -7,13 +7,17 @@ import { db, storage } from '@/lib/firebase';
 import { Recipe } from '@/types';
 import { BookOpen, Plus, Edit2, Trash2, X, Upload, Loader2, AlertCircle } from 'lucide-react';
 import styles from './page.module.css';
+import sessionStyles from '@/app/admin/sessions/page.module.css';
 
 export default function AdminRecipes() {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
-    const [formData, setFormData] = useState({ name: '', description: '', photoUrl: '' });
+    const [formData, setFormData] = useState({ name: '', description: '', photoUrl: '', skills: [] as string[] });
+
+    // Skill input state
+    const [skillInput, setSkillInput] = useState('');
 
     // Upload state
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -39,14 +43,15 @@ export default function AdminRecipes() {
     const handleOpenModal = (recipe?: Recipe) => {
         if (recipe) {
             setEditingRecipe(recipe);
-            setFormData({ name: recipe.name, description: recipe.description, photoUrl: recipe.photoUrl || '' });
+            setFormData({ name: recipe.name, description: recipe.description, photoUrl: recipe.photoUrl || '', skills: recipe.skills || [] });
         } else {
             setEditingRecipe(null);
-            setFormData({ name: '', description: '', photoUrl: '' });
+            setFormData({ name: '', description: '', photoUrl: '', skills: [] });
         }
         setSelectedFile(null);
         setUploadError(null);
         setUploadProgress(0);
+        setSkillInput('');
         setShowModal(true);
     };
 
@@ -122,6 +127,7 @@ export default function AdminRecipes() {
             const payload = {
                 ...formData,
                 photoUrl: finalPhotoUrl,
+                skills: formData.skills,
                 updatedAt: serverTimestamp()
             };
 
@@ -197,6 +203,9 @@ export default function AdminRecipes() {
                             <div className={styles.recipeContent}>
                                 <h3>{recipe.name}</h3>
                                 <p className={styles.description}>{recipe.description}</p>
+                                {recipe.skills && recipe.skills.length > 0 && (
+                                    <p className={styles.skillsList}>{recipe.skills.join(', ')}</p>
+                                )}
                                 <div className={styles.actions}>
                                     <div className="flex gap-2">
                                         <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(recipe)}>
@@ -294,6 +303,45 @@ export default function AdminRecipes() {
                                     placeholder="Tell students about the dish..."
                                     disabled={uploading}
                                 />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Skills / Learning Outcomes</label>
+                                <div className={sessionStyles.skillsTagContainer}>
+                                    {formData.skills.map((skill, idx) => (
+                                        <span key={idx} className={sessionStyles.skillTag}>
+                                            {skill}
+                                            <button
+                                                type="button"
+                                                className={sessionStyles.skillTagRemove}
+                                                onClick={() => setFormData({ ...formData, skills: formData.skills.filter((_, i) => i !== idx) })}
+                                                aria-label={`Remove skill: ${skill}`}
+                                                disabled={uploading}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <input
+                                        type="text"
+                                        className={sessionStyles.skillInput}
+                                        placeholder="Type a skill and press Enter"
+                                        value={skillInput}
+                                        onChange={e => setSkillInput(e.target.value)}
+                                        onKeyDown={e => {
+                                            if ((e.key === 'Enter' || e.key === ',') && skillInput.trim()) {
+                                                e.preventDefault();
+                                                const newSkill = skillInput.trim().replace(/,+$/, '');
+                                                if (newSkill && !formData.skills.includes(newSkill)) {
+                                                    setFormData({ ...formData, skills: [...formData.skills, newSkill] });
+                                                }
+                                                setSkillInput('');
+                                            }
+                                        }}
+                                        disabled={uploading}
+                                    />
+                                </div>
+                                <span className={sessionStyles.skillHint}>Press Enter or comma to add a skill (e.g. &quot;chopping&quot;, &quot;mixing&quot;, &quot;creative plating&quot;)</span>
                             </div>
 
                             <div className={styles.modalActions}>

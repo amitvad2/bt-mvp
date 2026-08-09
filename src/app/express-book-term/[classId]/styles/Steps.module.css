@@ -1,0 +1,554 @@
+/* ============================================================
+   STEPS — Form Field Layout, Inputs, Errors, Navigation
+   Mobile-first (320px minimum), scales to desktop.
+   Mirrors Steps.module.css from /express-booking/ with term additions.
+   ============================================================ */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Labels */
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bt-charcoal);
+}
+
+.labelRequired::after {
+  content: " *";
+  color: var(--bt-danger);
+}
+
+.labelHint {
+  font-size: 0.8rem;
+  color: var(--bt-gray-500);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* Inputs */
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid var(--bt-border);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--bt-charcoal);
+  background: var(--bt-white);
+  transition: all var(--transition);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--bt-sky);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--bt-sky-light);
+  outline: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--bt-gray-400);
+}
+
+.inputError {
+  border-color: var(--bt-danger);
+}
+
+.inputError:focus {
+  border-color: var(--bt-danger);
+  box-shadow: 0 0 0 4px rgba(209, 17, 36, 0.08);
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Errors */
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--bt-danger);
+  line-height: 1.3;
+}
+
+.errorBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: rgba(209, 17, 36, 0.05);
+  border: 1px solid rgba(209, 17, 36, 0.15);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: var(--bt-danger);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.errorBannerIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Section Headers */
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--bt-gray-900);
+  margin-bottom: var(--space-2);
+}
+
+.sectionSubtitle {
+  font-size: 0.85rem;
+  color: var(--bt-gray-500);
+  line-height: 1.4;
+  margin-bottom: var(--space-4);
+}
+
+.sectionDivider {
+  height: 1px;
+  background: var(--bt-gray-200);
+  margin: var(--space-6) 0;
+}
+
+/* Term Badge */
+.termBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--bt-leaf-light);
+  color: var(--bt-leaf-dark);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Consent Checkboxes */
+.consentGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.consentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bt-gray-50);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  min-height: 48px;
+}
+
+.consentItem:hover {
+  border-color: var(--bt-accent);
+  background: var(--bt-white);
+}
+
+.consentItemChecked {
+  border-color: var(--bt-leaf);
+  background: var(--bt-leaf-light);
+}
+
+.consentCheckbox {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  accent-color: var(--bt-accent);
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.consentLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--bt-gray-800);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.consentMandatory {
+  font-weight: 600;
+}
+
+.consentOptional {
+  color: var(--bt-gray-600);
+}
+
+.consentOptionalTag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bt-gray-400);
+  background: var(--bt-gray-200);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: var(--space-2);
+}
+
+/* Step Navigation */
+.stepNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--bt-gray-100);
+}
+
+.stepNavBack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--bt-gray-600);
+  border: 2px solid var(--bt-gray-200);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.stepNavBack:hover {
+  border-color: var(--bt-gray-400);
+  color: var(--bt-gray-900);
+  background: var(--bt-gray-50);
+}
+
+.stepNavNext {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 28px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--bt-coral), var(--bt-orange));
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.stepNavNext:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--bt-coral-dark), var(--bt-orange-dark));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+}
+
+.stepNavNext:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Review Summary */
+.reviewSection {
+  background: var(--bt-gray-50);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.reviewSectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--bt-gray-900);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.reviewItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-2) 0;
+  gap: var(--space-4);
+}
+
+.reviewLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--bt-gray-500);
+  flex-shrink: 0;
+}
+
+.reviewValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bt-gray-900);
+  text-align: right;
+  word-break: break-word;
+}
+
+.reviewTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-5);
+  background: var(--bt-leaf-light);
+  border-radius: var(--radius);
+  margin-top: var(--space-4);
+}
+
+.reviewTotalLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--bt-gray-700);
+}
+
+.reviewTotalAmount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bt-leaf-dark);
+}
+
+.reviewEditBtn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--bt-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.reviewEditBtn:hover {
+  background: var(--bt-accent-light);
+}
+
+/* Medical Form */
+.medicalToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  background: var(--bt-gray-50);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  min-height: 48px;
+}
+
+.medicalToggle:hover {
+  border-color: var(--bt-accent);
+  background: var(--bt-white);
+}
+
+.medicalToggleActive {
+  border-color: var(--bt-amber);
+  background: var(--bt-amber-light);
+}
+
+.medicalToggleLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--bt-gray-800);
+}
+
+.medicalToggleSwitch {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--bt-amber);
+}
+
+.conditionalFields {
+  padding: var(--space-4);
+  background: var(--bt-amber-light);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Disclaimer */
+.disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bt-amber-light);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--bt-amber-dark);
+  line-height: 1.4;
+}
+
+.disclaimerIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Stripe Payment */
+.paymentContainer {
+  min-height: 250px;
+  margin: var(--space-6) 0;
+  padding: var(--space-5);
+  background: var(--bt-gray-50);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius-lg);
+}
+
+.paymentBlocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.paymentBlockedIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--bt-amber);
+}
+
+.paymentBlockedMessage {
+  font-size: 0.9rem;
+  color: var(--bt-gray-600);
+  line-height: 1.4;
+  max-width: 320px;
+}
+
+.securityNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: 0.8rem;
+  color: var(--bt-gray-500);
+  margin-top: var(--space-4);
+}
+
+/* Same-As-Parent Toggle */
+.sameAsParent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bt-sky-light);
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.sameAsParentCheckbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--bt-sky);
+  cursor: pointer;
+}
+
+.sameAsParentLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--bt-gray-800);
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (min-width: 480px) {
+  .fieldRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .form {
+    gap: var(--space-8);
+  }
+
+  .consentItem {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .reviewSection {
+    padding: var(--space-6);
+  }
+
+  .paymentContainer {
+    padding: var(--space-6);
+  }
+}

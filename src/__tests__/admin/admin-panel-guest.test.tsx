@@ -252,7 +252,7 @@ describe('Admin Panel — Guest Booking Support', () => {
             });
         });
 
-        it('displays "Facebook" for facebook_express source', async () => {
+        it('displays "Messenger" for facebook_express source', async () => {
             const fbBooking = { ...mockGuestBooking, bookingSource: 'facebook_express' as const };
             mockGetDocs.mockResolvedValue({
                 docs: [{ id: fbBooking.id, data: () => ({ ...fbBooking, id: undefined }) }],
@@ -261,7 +261,7 @@ describe('Admin Panel — Guest Booking Support', () => {
             render(<AdminBookings />);
 
             await waitFor(() => {
-                expect(screen.getByText('Facebook')).toBeInTheDocument();
+                expect(screen.getByText('Messenger')).toBeInTheDocument();
             });
         });
 

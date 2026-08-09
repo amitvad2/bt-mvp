@@ -16,9 +16,15 @@
  * 8. Child age validation against session ageMin/ageMax → 400 if out of range
  * 9. Mandatory consent validation → 400 if any missing
  * 10. Create Stripe PaymentIntent (Firestore price, GBP, metadata: mode + sessionId + source + draftId)
- * 11. Save booking_drafts/{piId} with full payload
+ * 11. Save booking_drafts/{piId} with full payload (including social attribution if present)
  * 12. If draft save fails → cancel PaymentIntent, return 500
  * 13. Return { clientSecret, paymentIntentId }
+ *
+ * Social Attribution (Requirements 8.3, 15.2):
+ * - Accepts optional `source`, `campaign`, and `socialBookingSessionId` URL query params
+ * - If `source` starts with `social_`, maps to booking attribution:
+ *   social_whatsapp → whatsapp_express, social_instagram → instagram_express, social_messenger → facebook_express
+ * - Writes `socialAttribution` field on the booking_drafts document for downstream webhook processing
  */
 
 import { NextResponse } from 'next/server';
@@ -28,14 +34,62 @@ import { isGuestCheckoutEnabled } from '@/lib/feature-flags';
 import { verifyTurnstileToken } from '@/lib/turnstile';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { validateChildAge } from '@/lib/guest-validation';
-import { createGuestIntentSchema } from './schemas';
+import { createGuestIntentSchema, createGuestTermIntentSchema } from './schemas';
 import { kv } from '@vercel/kv';
 import * as admin from 'firebase-admin';
+import type { BookingSource } from '@/types';
 
 const MAX_PAYLOAD_BYTES = 64 * 1024; // 64KB
 
+/**
+ * Maps a social source query param (e.g. "social_whatsapp") to the
+ * corresponding BookingSource for attribution tracking.
+ * Returns null if the source is not a recognised social channel.
+ */
+function mapSocialSourceToBookingSource(source: string): BookingSource | null {
+  const mapping: Record<string, BookingSource> = {
+    social_whatsapp: 'whatsapp_express',
+    social_instagram: 'instagram_express',
+    social_messenger: 'facebook_express',
+  };
+  return mapping[source] || null;
+}
+
+/**
+ * Extracts social attribution from the request URL query parameters.
+ * Returns null if no social attribution params are present or source is not social.
+ */
+function extractSocialAttribution(url: URL): {
+  bookingSource: BookingSource;
+  campaign: string | null;
+  socialBookingSessionId: string | null;
+} | null {
+  const source = url.searchParams.get('source');
+  if (!source || !source.startsWith('social_')) {
+    return null;
+  }
+
+  const bookingSource = mapSocialSourceToBookingSource(source);
+  if (!bookingSource) {
+    return null;
+  }
+
+  const campaign = url.searchParams.get('campaign') || null;
+  const socialBookingSessionId = url.searchParams.get('socialBookingSessionId') || null;
+
+  return {
+    bookingSource,
+    campaign,
+    socialBookingSessionId,
+  };
+}
+
 export async function POST(req: Request) {
   try {
+    // Extract social attribution from URL query params (from deep-link redirect flow)
+    const requestUrl = new URL(req.url);
+    const socialAttribution = extractSocialAttribution(requestUrl);
+
     // 1. Feature flag check
     if (!isGuestCheckoutEnabled()) {
       return NextResponse.json(
@@ -137,6 +191,207 @@ export async function POST(req: Request) {
     }
 
     // 6. Zod schema validation
+    // Detect if this is a term/programme booking based on the request body
+    const rawBodyForDetection = body as Record<string, unknown>;
+    const isTermBooking = rawBodyForDetection?.bookingType === 'term' && typeof rawBodyForDetection?.classId === 'string';
+
+    if (isTermBooking) {
+      // ================================================================
+      // TERM PROGRAMME GUEST BOOKING PATH
+      // ================================================================
+      const termParseResult = createGuestTermIntentSchema.safeParse(body);
+      if (!termParseResult.success) {
+        const fieldErrors = termParseResult.error.issues.map((issue) => ({
+          path: issue.path.join('.'),
+          message: issue.message,
+        }));
+        return NextResponse.json(
+          { error: 'Validation failed.', code: 'VALIDATION_ERROR', fieldErrors },
+          { status: 400 }
+        );
+      }
+
+      const termData = termParseResult.data;
+
+      // 7t. Class lookup from Firestore (validate term, not expired, spots > 0)
+      const classDoc = await adminDb.doc(`classes/${termData.classId}`).get();
+      if (!classDoc.exists) {
+        return NextResponse.json(
+          { error: 'Class not found.', code: 'CLASS_NOT_FOUND' },
+          { status: 400 }
+        );
+      }
+
+      const classData = classDoc.data()!;
+
+      if (classData.commitment !== 'term') {
+        return NextResponse.json(
+          { error: 'This class is not a programme class.', code: 'CLASS_NOT_TERM' },
+          { status: 400 }
+        );
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      if (classData.termEndDate < today) {
+        return NextResponse.json(
+          { error: 'This programme has ended.', code: 'PROGRAMME_EXPIRED' },
+          { status: 400 }
+        );
+      }
+
+      if (typeof classData.spotsAvailable === 'number' && classData.spotsAvailable <= 0) {
+        return NextResponse.json(
+          { error: 'Sorry, this programme is now full.', code: 'PROGRAMME_FULL' },
+          { status: 400 }
+        );
+      }
+
+      // 8t. Child age validation against class ageMin/ageMax
+      const termAgeMin = classData.ageMin as number;
+      const termAgeMax = classData.ageMax as number;
+      // Use termStartDate as the reference date for age validation
+      if (!validateChildAge(termData.childDetails.dateOfBirth, classData.termStartDate, termAgeMin, termAgeMax)) {
+        return NextResponse.json(
+          {
+            error: `Child's age must be between ${termAgeMin} and ${termAgeMax} years at the start of the programme.`,
+            code: 'CHILD_AGE_INVALID',
+          },
+          { status: 400 }
+        );
+      }
+
+      // 9t. Mandatory consent validation
+      const termMandatoryConsents = [
+        'parentGuardianAuthority',
+        'accuracyOfInformation',
+        'healthSafetyDataProcessing',
+        'emergencyAssistanceAuthorisation',
+        'termsAndCancellationPolicy',
+        'privacyNoticeAcknowledgement',
+      ] as const;
+
+      for (const consent of termMandatoryConsents) {
+        if (termData.consents[consent] !== true) {
+          return NextResponse.json(
+            { error: 'All mandatory consents must be accepted.', code: 'CONSENT_MISSING' },
+            { status: 400 }
+          );
+        }
+      }
+
+      // 10t. Create Stripe PaymentIntent with Firestore-authoritative term price (GBP)
+      const termAmount: number = classData.termPrice;
+      if (!termAmount || typeof termAmount !== 'number' || termAmount <= 0) {
+        console.error('[create-guest-intent] Term class has invalid price:', {
+          classId: termData.classId,
+          termPrice: classData.termPrice,
+        });
+        return NextResponse.json(
+          { error: 'Programme pricing is unavailable. Please contact support.' },
+          { status: 500 }
+        );
+      }
+
+      const termPaymentIntent = await stripe.paymentIntents.create({
+        amount: termAmount,
+        currency: 'gbp',
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          bookingMode: 'guest',
+          bookingType: 'term',
+          classId: termData.classId,
+          source: termData.source,
+          draftId: '',
+          env: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+        },
+      });
+
+      // Update draftId metadata
+      await stripe.paymentIntents.update(termPaymentIntent.id, {
+        metadata: {
+          bookingMode: 'guest',
+          bookingType: 'term',
+          classId: termData.classId,
+          source: termData.source,
+          draftId: termPaymentIntent.id,
+          env: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+        },
+      });
+
+      // 11t. Save booking_drafts/{piId} with full term payload
+      const termConsentAudit = {
+        consents: termData.consents,
+        acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+        acceptedBy: `${termData.parentDetails.firstName} ${termData.parentDetails.lastName}`,
+        termsVersion: termData.termsVersion,
+        privacyNoticeVersion: termData.privacyNoticeVersion,
+        sourceChannel: termData.source,
+        submissionTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const termDraftData = {
+        stripePaymentIntentId: termPaymentIntent.id,
+        paymentStatus: 'pending',
+        bookingMode: 'guest',
+        bookingType: 'term' as const,
+        classId: termData.classId,
+        className: classData.name ?? null,
+        classType: classData.type ?? null,
+        venueName: classData.venueName ?? null,
+        startTime: classData.startTime ?? null,
+        endTime: classData.endTime ?? null,
+        recurrenceDays: classData.recurrenceDays ?? null,
+        termStartDate: classData.termStartDate ?? null,
+        termEndDate: classData.termEndDate ?? null,
+        source: termData.source,
+        guestContact: termData.parentDetails,
+        childDetails: termData.childDetails,
+        medicalInfo: termData.medicalInfo,
+        allergyDietaryInfo: termData.allergyDietaryInfo,
+        emergencyContact: termData.emergencyContact,
+        authorisedCollector: termData.authorisedCollector,
+        consentAudit: termConsentAudit,
+        submissionRef: termData.submissionRef,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        // Social attribution fields (only present when booking originates from a social channel deep-link)
+        ...(socialAttribution && {
+          socialAttribution: {
+            bookingSource: socialAttribution.bookingSource,
+            campaign: socialAttribution.campaign,
+            socialBookingSessionId: socialAttribution.socialBookingSessionId,
+          },
+        }),
+      };
+
+      try {
+        await adminDb.doc(`booking_drafts/${termPaymentIntent.id}`).set(termDraftData);
+        console.log('[create-guest-intent] Term booking draft saved:', termPaymentIntent.id);
+      } catch (firestoreErr: unknown) {
+        const errMessage = firestoreErr instanceof Error ? firestoreErr.message : 'Unknown error';
+        console.error('[create-guest-intent] Failed to save term booking draft:', errMessage);
+
+        try {
+          await stripe.paymentIntents.cancel(termPaymentIntent.id);
+          console.log('[create-guest-intent] PaymentIntent cancelled after term draft failure:', termPaymentIntent.id);
+        } catch (cancelErr) {
+          console.error('[create-guest-intent] Failed to cancel PaymentIntent:', cancelErr);
+        }
+
+        return NextResponse.json(
+          { error: 'Failed to initialize booking. Please try again.' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        clientSecret: termPaymentIntent.client_secret,
+        paymentIntentId: termPaymentIntent.id,
+      });
+    }
+
+    // ================================================================
+    // PER-SESSION GUEST BOOKING PATH (existing logic — unchanged)
+    // ================================================================
     const parseResult = createGuestIntentSchema.safeParse(body);
     if (!parseResult.success) {
       const fieldErrors = parseResult.error.issues.map((issue) => ({
@@ -287,6 +542,14 @@ export async function POST(req: Request) {
       consentAudit,
       submissionRef: data.submissionRef,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      // Social attribution fields (only present when booking originates from a social channel deep-link)
+      ...(socialAttribution && {
+        socialAttribution: {
+          bookingSource: socialAttribution.bookingSource,
+          campaign: socialAttribution.campaign,
+          socialBookingSessionId: socialAttribution.socialBookingSessionId,
+        },
+      }),
     };
 
     try {

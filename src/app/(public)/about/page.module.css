@@ -1,20 +1,20 @@
 .hero {
-    background: linear-gradient(135deg, var(--bt-amber-dark) 0%, var(--bt-amber) 100%);
+    background: var(--bt-cream);
     padding: var(--space-20) 0 var(--space-8) 0;
-    color: #fff;
+    color: var(--bt-charcoal);
 }
 
 .hero :global(.eyebrow) {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--bt-muted);
 }
 
 .hero h1 {
-    color: #fff;
+    color: var(--bt-charcoal);
     margin: var(--space-3) 0 var(--space-4);
 }
 
 .hero p {
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--bt-muted);
     font-size: 1.15rem;
     max-width: 560px;
 }
@@ -196,7 +196,7 @@
 }
 
 .cta {
-    background: linear-gradient(135deg, var(--bt-gray-900), #1a2e00);
+    background: linear-gradient(135deg, var(--bt-gray-900), var(--bt-charcoal));
     padding: var(--space-20) 0;
     text-align: center;
     color: #fff;

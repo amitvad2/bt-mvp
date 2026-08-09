@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
-import { usePathname, useParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { usePathname, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { BookingProvider, useBooking } from '@/context/BookingContext';
 import { ChefHat } from 'lucide-react';
 import { BTClassType } from '@/types';
@@ -20,8 +22,36 @@ const steps = [
 function WizardLayoutInner({ children }: { children: React.ReactNode }) {
     const { state, loading, classTypeRecord } = useBooking();
     const pathname = usePathname();
+    const router = useRouter();
+    const [termCheckComplete, setTermCheckComplete] = useState(false);
 
-    if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
+    // Guard: block per-session booking for sessions belonging to term classes.
+    // After the session is loaded, fetch the parent class and check if it's a term class.
+    useEffect(() => {
+        if (loading || !state.session?.classId) return;
+
+        const classId = state.session.classId;
+
+        const checkTermClass = async () => {
+            try {
+                const classDoc = await getDoc(doc(db, 'classes', classId));
+                if (classDoc.exists()) {
+                    const classData = classDoc.data();
+                    if (classData.commitment === 'term') {
+                        router.replace('/classes?error=term-session-not-bookable');
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking parent class commitment:', e);
+            }
+            setTermCheckComplete(true);
+        };
+
+        checkTermClass();
+    }, [loading, state.session, router]);
+
+    if (loading || !termCheckComplete) return <div className="loading-screen"><div className="spinner" /></div>;
 
     const filteredSteps = steps.filter(s => !s.condition || s.condition(state, classTypeRecord));
 

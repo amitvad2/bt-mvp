@@ -57,10 +57,6 @@ const makeClassTypeDoc = (overrides: Record<string, any> = {}) => ({
         badgeColor: 'amber',
         skipQuestionnaire: false,
         requireEmergencyContact: true,
-        defaultAgeMin: 5,
-        defaultAgeMax: 12,
-        defaultMaxSize: 15,
-        defaultPrice: 1500,
         order: 1,
         createdAt: { toDate: () => new Date('2025-01-01') },
         ...overrides,
@@ -76,10 +72,6 @@ const makeSecondClassTypeDoc = () => ({
         badgeColor: 'green',
         skipQuestionnaire: true,
         requireEmergencyContact: false,
-        defaultAgeMin: 18,
-        defaultAgeMax: 25,
-        defaultMaxSize: 15,
-        defaultPrice: 2500,
         order: 2,
         createdAt: { toDate: () => new Date('2025-01-01') },
     }),
@@ -149,11 +141,6 @@ describe('AdminClassTypes CRUD Page', () => {
 
         it('rejects invalid badgeColor values', () => {
             const result = classTypeSchema.shape.badgeColor.safeParse('blue');
-            expect(result.success).toBe(false);
-        });
-
-        it('rejects negative defaultPrice', () => {
-            const result = classTypeSchema.shape.defaultPrice.safeParse(-1);
             expect(result.success).toBe(false);
         });
     });

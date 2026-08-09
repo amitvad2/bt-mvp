@@ -77,10 +77,6 @@ export interface BTClassType {
     badgeColor: BadgeColor;
     skipQuestionnaire: boolean;
     requireEmergencyContact: boolean;
-    defaultAgeMin: number;
-    defaultAgeMax: number;
-    defaultMaxSize: number;
-    defaultPrice: number; // integer, pence
     order: number;
     createdAt: any; // Firestore Timestamp
 }
@@ -89,6 +85,7 @@ export interface BTClass {
     id: string;
     type: string;
     name: string;
+    description?: string; // Short description shown on public listings (e.g. "5 days of no-cook recipes for young chefs")
     dayOfWeek: string;
     startTime: string;
     endTime: string;
@@ -98,8 +95,14 @@ export interface BTClass {
     instructor: string;
     venueId: string;
     venueName?: string;
-    commitment: 'perSession';
-    price: number; // Price in pence
+    commitment: 'perSession' | 'term';
+    price: number; // Per-session price in pence (used when commitment === 'perSession')
+    // --- Term-specific fields (present only when commitment === 'term') ---
+    termStartDate?: string;            // YYYY-MM-DD
+    termEndDate?: string;              // YYYY-MM-DD
+    termPrice?: number;                // Total term price in pence
+    recurrenceDays?: string[];         // e.g. ['Monday', 'Wednesday', 'Friday']
+    spotsAvailable?: number;           // Decremented on term booking; initialised to maxSize
     createdAt: any;
 }
 
@@ -108,9 +111,14 @@ export interface Session {
     classId: string;
     className: string;
     classType: string;
+    title?: string; // Optional session title (e.g. "Day 1: Introduction"). Falls back to recipeName if absent.
     date: string;
     recipeId: string;
     recipeName?: string;
+    recipePhotoUrl?: string; // Recipe photo URL stored on session for term class schedule display
+    recipeIds?: string[]; // Array of recipe IDs when session has multiple recipes
+    // Skills/learning outcomes for this session (e.g. ['chopping', 'mixing', 'creative plating'])
+    skills?: string[];
     spotsAvailable: number;
     spotsTotal: number;
     status: 'open' | 'full' | 'cancelled' | 'closed'; // Added closed
@@ -131,6 +139,7 @@ export interface Recipe {
     name: string;
     description: string;
     photoUrl?: string;
+    skills?: string[]; // Skills/learning outcomes (e.g. ['chopping', 'mixing', 'creative plating'])
     createdAt: any;
 }
 
@@ -345,6 +354,12 @@ export interface Booking {
     bundleId?: string;
     bundleName?: string;
     overbooking?: boolean;
+    // --- Term booking fields (present when bookingType === 'term') ---
+    bookingType?: 'term';              // Absent or undefined = per-session (backward compat)
+    classId?: string;                  // Reference to the term class
+    recurrenceDays?: string[];         // Denormalized from class for portal display
+    termStartDate?: string;            // YYYY-MM-DD
+    termEndDate?: string;              // YYYY-MM-DD
     // Guest express checkout fields (optional — only present for guest bookings)
     bookingMode?: BookingMode;
     bookingSource?: BookingSource;
@@ -358,6 +373,8 @@ export interface Booking {
     authorisedCollectorSnapshot?: GuestAuthorisedCollector;
     consentAudit?: ConsentAudit;
     sessionSnapshot?: GuestSessionInfo;
+    // Social booking attribution (optional — present for social channel bookings)
+    acquisition?: AcquisitionMetadata;
     createdAt: any;
 }
 
@@ -460,3 +477,106 @@ export interface BundleBookingWizardState {
     questionnaire?: Questionnaire;
     termsAccepted?: boolean;
 }
+
+// ============================================================
+// Term Booking Wizard State
+// ============================================================
+
+export interface TermBookingWizardState {
+    classId: string;
+    termClass?: BTClass;
+    studentId?: string;
+    student?: Student | 'self';
+    medicalInfo?: MedicalInfo;
+    emergencyContact?: EmergencyContact;
+    questionnaire?: Questionnaire;
+    termsAccepted?: boolean;
+}
+
+// ============================================================
+// Social Commerce Guest Booking Types
+// ============================================================
+
+export type SocialChannel = 'whatsapp' | 'instagram' | 'messenger';
+
+export type SocialBookingState =
+    | 'started'
+    | 'selecting-session'
+    | 'checkout-created'
+    | 'payment-pending'
+    | 'confirmed'
+    | 'expired';
+
+export interface SocialBookingSession {
+    id: string;
+    channel: SocialChannel;
+    externalConversationId: string;
+    externalUserId: string;
+    state: SocialBookingState;
+    sessionId: string | null;
+    classId?: string | null;           // For term/programme bookings
+    bookingType?: 'term';              // Present when booking a programme class
+    checkoutTokenHash: string | null;
+    tokenConsumed: boolean;
+    tokenExpiresAt: any | null;       // Firestore Timestamp
+    source: BookingSource;
+    campaign: CampaignAttribution | null;
+    socialBookingSessionId: string;    // Self-reference for attribution
+    createdAt: any;                    // Firestore Timestamp
+    expiresAt: any;                    // Firestore Timestamp (createdAt + 30min)
+    updatedAt: any;                    // Firestore Timestamp
+}
+
+export interface CampaignAttribution {
+    source: string | null;    // utm_source
+    medium: string | null;    // utm_medium
+    campaign: string | null;  // utm_campaign
+}
+
+export interface AcquisitionMetadata {
+    bookingSource: BookingSource;
+    campaign: CampaignAttribution | null;
+    socialBookingSessionId: string | null;
+}
+
+export interface SessionSummary {
+    sessionId: string;
+    className: string;
+    date: string;          // "Sat 19 Jul"
+    startTime: string;     // "10:30"
+    venueName: string;
+    ageRange: string;      // "5–12"
+    spotsAvailable: number;
+    price: string;         // "£15.00"
+}
+
+export interface ProgrammeSummary {
+    classId: string;
+    className: string;
+    termStartDate: string;  // "Mon 6 Jan"
+    termEndDate: string;    // "Fri 28 Mar"
+    startTime: string;      // "15:30"
+    venueName: string;
+    ageRange: string;       // "5–12"
+    spotsAvailable: number;
+    price: string;          // "£120.00 for the programme"
+    recurrenceDays?: string[];  // e.g. ['Monday', 'Wednesday']
+}
+
+export interface BookingConfirmation {
+    className: string;
+    date: string;
+    startTime: string;
+    venueName: string;
+    bookingRef: string;    // Last 8 chars of PaymentIntent ID
+}
+
+export type TokenValidationResult =
+    | { valid: true; sessionId: string; channel: SocialChannel; campaign: CampaignAttribution | null; socialBookingSessionId: string; classId?: string; bookingType?: 'term' }
+    | { valid: false; reason: 'expired' | 'consumed' | 'invalid' | 'session_unavailable' };
+
+export type ParsedSocialEvent =
+    | { type: 'trigger'; channel: SocialChannel; senderId: string; conversationId: string; text: string }
+    | { type: 'session_selection'; channel: SocialChannel; senderId: string; conversationId: string; selectedSessionId: string }
+    | { type: 'programme_selection'; channel: SocialChannel; senderId: string; conversationId: string; selectedClassId: string }
+    | { type: 'unknown'; channel: SocialChannel; senderId: string; conversationId: string; text: string };

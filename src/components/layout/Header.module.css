@@ -4,9 +4,8 @@
     left: 0;
     right: 0;
     z-index: 1000;
-    height: 64px;
-    background: rgba(255, 251, 245, 0.85);
-    /* Warm cream glass */
+    height: 72px;
+    background: rgba(245, 237, 227, 0.9); /* --bt-cream with opacity for glass effect */
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid var(--bt-border);
@@ -20,6 +19,7 @@
     align-items: center;
     justify-content: space-between;
     height: 100%;
+    gap: var(--space-4);
 }
 
 .logo {
@@ -40,14 +40,11 @@
 .nav {
     display: flex;
     align-items: center;
-    gap: 24px;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    gap: 20px;
 }
 
 .navLink {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--bt-muted);
     transition: color var(--transition);

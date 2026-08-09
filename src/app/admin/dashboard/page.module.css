@@ -176,3 +176,50 @@
         grid-template-columns: 1fr;
     }
 }
+
+.sourceSummarySection {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow);
+}
+
+.sourceSummarySection .sectionHeader h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.sourceSummaryTable {
+    margin-top: var(--space-6);
+}
+
+.sourceSummaryTable table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sourceSummaryTable th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--bt-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 2px solid var(--bt-gray-100);
+}
+
+.sourceSummaryTable td {
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.95rem;
+    color: var(--bt-gray-700);
+    border-bottom: 1px solid var(--bt-gray-100);
+}
+
+.sourceSummaryTable .totalRow td {
+    border-bottom: none;
+    border-top: 2px solid var(--bt-gray-200);
+    padding-top: var(--space-4);
+}

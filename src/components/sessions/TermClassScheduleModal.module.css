@@ -1,0 +1,219 @@
+.modalContent {
+    max-width: 800px;
+    padding: var(--space-10);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.className {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--bt-gray-900);
+    margin: 0;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    color: var(--bt-gray-500);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.closeBtn:hover {
+    background: var(--bt-gray-100);
+    color: var(--bt-gray-900);
+}
+
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4) var(--space-6);
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    color: var(--bt-gray-700);
+}
+
+.metaItem svg {
+    color: var(--bt-gray-400);
+    flex-shrink: 0;
+}
+
+.price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--bt-gray-900);
+}
+
+.scheduleTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+    margin: 0 0 var(--space-5);
+}
+
+.scheduleList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.sessionRow {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-5);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-sm);
+    background: var(--bt-gray-50);
+    transition: background 0.15s ease;
+}
+
+.sessionRow:hover {
+    background: var(--bt-gray-100);
+}
+
+.sessionDate {
+    min-width: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 4px;
+}
+
+.dateText {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.dayText {
+    font-size: 0.9rem;
+    color: var(--bt-gray-500);
+}
+
+.recipePhoto {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.photoPlaceholder {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-sm);
+    background: var(--bt-gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--bt-gray-400);
+}
+
+.sessionRecipes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    flex: 1;
+    min-width: 0;
+}
+
+.recipeItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.recipeDetail {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.sessionInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.recipeName {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--bt-gray-800);
+}
+
+.tbaText {
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--bt-gray-400);
+}
+
+.skillsText {
+    font-size: 1rem;
+    color: var(--bt-gray-600);
+    line-height: 1.4;
+}
+
+.sessionTime {
+    font-size: 0.9rem;
+    color: var(--bt-indigo-600, #4f46e5);
+    font-weight: 500;
+}
+
+.footer {
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--bt-gray-200);
+}
+
+.disclaimer {
+    font-size: 0.95rem;
+    color: var(--bt-gray-500);
+    text-align: center;
+    font-style: italic;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-10) 0;
+    color: var(--bt-gray-500);
+}
+
+.empty {
+    text-align: center;
+    padding: var(--space-8) 0;
+    color: var(--bt-gray-500);
+    font-size: 1rem;
+}

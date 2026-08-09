@@ -85,10 +85,6 @@ interface ClassTypeSeed {
   badgeColor: string;
   skipQuestionnaire: boolean;
   requireEmergencyContact: boolean;
-  defaultAgeMin: number;
-  defaultAgeMax: number;
-  defaultMaxSize: number;
-  defaultPrice: number;
   order: number;
 }
 
@@ -100,10 +96,6 @@ const seedData: ClassTypeSeed[] = [
     badgeColor: 'amber',
     skipQuestionnaire: false,
     requireEmergencyContact: true,
-    defaultAgeMin: 5,
-    defaultAgeMax: 11,
-    defaultMaxSize: 15,
-    defaultPrice: 1500,
     order: 1,
   },
   {
@@ -113,10 +105,6 @@ const seedData: ClassTypeSeed[] = [
     badgeColor: 'green',
     skipQuestionnaire: true,
     requireEmergencyContact: false,
-    defaultAgeMin: 12,
-    defaultAgeMax: 18,
-    defaultMaxSize: 15,
-    defaultPrice: 2500,
     order: 2,
   },
 ];

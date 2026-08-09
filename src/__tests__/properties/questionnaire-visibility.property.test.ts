@@ -52,8 +52,6 @@ describe('Property 3: Flag-Driven Questionnaire Step Visibility', () => {
       requireEmergencyContact: fc.boolean(),
       displayName: fc.string(),
       slug: fc.string(),
-      defaultAgeMin: fc.nat(),
-      defaultAgeMax: fc.nat(),
     });
 
     fc.assert(

@@ -127,6 +127,22 @@ service cloud.firestore {
 
 
     // =========================================================================
+    // SOCIAL BOOKING SESSIONS  — server-side only (Admin SDK bypasses these rules)
+    // =========================================================================
+    //
+    // social_booking_sessions/{docId} documents track the lifecycle of bookings
+    // initiated through social channels (WhatsApp, Instagram, Messenger).
+    // All reads and writes are performed by the Social Booking Service using
+    // Firebase Admin SDK (server-side).
+    //
+    // No client should ever read or write this collection directly.
+    // The deny-all rule makes this explicit and prevents accidental exposure.
+    match /social_booking_sessions/{docId} {
+      allow read, write: if false;
+    }
+
+
+    // =========================================================================
     // USERS
     // =========================================================================
 

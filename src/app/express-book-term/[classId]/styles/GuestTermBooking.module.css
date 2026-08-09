@@ -1,0 +1,452 @@
+/* ============================================================
+   GUEST TERM BOOKING — Main Layout & Orchestrator Styles
+   Mobile-first (320px minimum), scales to desktop.
+   Mirrors GuestBooking.module.css from /express-booking/.
+   ============================================================ */
+
+/* Page wrapper */
+.wrapper {
+  min-height: 100vh;
+  background: var(--bt-white);
+  padding: 0 0 var(--space-16);
+}
+
+/* Site header for guest checkout */
+.siteHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  max-width: 640px;
+  margin: 0 auto var(--space-4);
+}
+
+.siteHeaderLogo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--bt-gray-900);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.siteHeaderLogo:hover {
+  color: var(--bt-berry);
+}
+
+.siteHeaderLink {
+  font-size: 0.85rem;
+  color: var(--bt-gray-500);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.siteHeaderLink:hover {
+  color: var(--bt-berry);
+}
+
+/* Main content container */
+.container {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+/* ============================================================
+   PROGRAMME INFO CARD
+   ============================================================ */
+
+.sessionCard {
+  background: var(--bt-gray-50);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.sessionDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.sessionDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sessionDetailLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--bt-gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sessionDetailValue {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--bt-gray-900);
+}
+
+.sessionPrice {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bt-leaf-dark);
+}
+
+.sessionAvailability {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--bt-leaf-dark);
+}
+
+.sessionAvailabilityLow {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--bt-amber-dark);
+}
+
+/* ============================================================
+   PROGRESS INDICATOR
+   ============================================================ */
+
+.progressContainer {
+  margin-bottom: var(--space-8);
+}
+
+.progressBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 0 var(--space-2);
+}
+
+.progressTrack {
+  position: absolute;
+  top: 50%;
+  left: var(--space-4);
+  right: var(--space-4);
+  height: 3px;
+  background: var(--bt-gray-200);
+  transform: translateY(-50%);
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.progressFill {
+  position: absolute;
+  top: 50%;
+  left: var(--space-4);
+  height: 3px;
+  background: linear-gradient(135deg, var(--bt-coral), var(--bt-orange));
+  transform: translateY(-50%);
+  border-radius: 2px;
+  z-index: 1;
+  transition: width var(--transition);
+}
+
+.progressStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  z-index: 2;
+}
+
+.progressDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bt-gray-200);
+  border: 3px solid var(--bt-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--bt-gray-600);
+  transition: all var(--transition);
+}
+
+.progressDotActive {
+  background: var(--bt-gray-900);
+  color: var(--bt-white);
+}
+
+.progressDotCompleted {
+  background: linear-gradient(135deg, var(--bt-coral), var(--bt-orange));
+  color: var(--bt-white);
+}
+
+.progressLabel {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--bt-gray-400);
+  text-align: center;
+  max-width: 56px;
+  line-height: 1.2;
+}
+
+.progressLabelActive {
+  color: var(--bt-gray-900);
+  font-weight: 600;
+}
+
+.progressLabelCompleted {
+  color: var(--bt-accent);
+}
+
+/* ============================================================
+   FORM CONTAINER
+   ============================================================ */
+
+.formContainer {
+  background: var(--bt-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--bt-gray-200);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.formHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.formTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bt-gray-900);
+  margin-bottom: 4px;
+}
+
+.formSubtitle {
+  font-size: 0.9rem;
+  color: var(--bt-gray-500);
+  line-height: 1.4;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--bt-gray-100);
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 28px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--bt-coral), var(--bt-orange));
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--bt-coral-dark), var(--bt-orange-dark));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  background: var(--bt-white);
+  color: var(--bt-gray-700);
+  border: 2px solid var(--bt-gray-200);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  border-color: var(--bt-gray-400);
+  background: var(--bt-gray-50);
+}
+
+/* ============================================================
+   GUEST BADGE & NO-ACCOUNT MESSAGING
+   ============================================================ */
+
+.guestBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bt-leaf-light);
+  color: var(--bt-leaf-dark);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+}
+
+.noAccountMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bt-sky-light);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: var(--bt-sky);
+  font-weight: 500;
+  margin-bottom: var(--space-6);
+}
+
+/* ============================================================
+   ERROR & STATUS STATES
+   ============================================================ */
+
+.errorPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-16) var(--space-4);
+  gap: var(--space-4);
+}
+
+.errorTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bt-gray-900);
+}
+
+.errorMessage {
+  font-size: 0.95rem;
+  color: var(--bt-gray-500);
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-16);
+  color: var(--bt-gray-500);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--bt-gray-200);
+  border-top-color: var(--bt-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (min-width: 480px) {
+  .container {
+    padding: 0 var(--space-6);
+  }
+
+  .formContainer {
+    padding: var(--space-8);
+  }
+
+  .progressLabel {
+    font-size: 0.7rem;
+    max-width: 64px;
+  }
+}
+
+@media (min-width: 768px) {
+  .wrapper {
+    padding: var(--space-8) 0 var(--space-20);
+  }
+
+  .container {
+    max-width: 720px;
+    padding: 0 var(--space-8);
+  }
+
+  .formContainer {
+    padding: var(--space-10);
+  }
+
+  .sessionDetails {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .progressDot {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+  }
+
+  .progressLabel {
+    font-size: 0.75rem;
+    max-width: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .wrapper {
+    padding: var(--space-12) 0 var(--space-24);
+  }
+
+  .container {
+    max-width: 800px;
+  }
+
+  .formContainer {
+    padding: var(--space-12);
+    box-shadow: var(--shadow);
+  }
+}

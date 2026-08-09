@@ -13,7 +13,7 @@
     justify-content: center;
     text-align: center;
     overflow: hidden;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: var(--bt-cream);
 }
 
 .heroBg {
@@ -45,13 +45,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    /* Strengthened top/mid stops: the static heroBg image was shown at opacity 0.35
-       so 0.3 was adequate before. A full-opacity video needs more darkening at the
-       top and centre where the headline and badge sit. Bottom stays at 0.85. */
-    background: linear-gradient(180deg,
-            rgba(15, 15, 30, 0.55) 0%,
-            rgba(15, 52, 96, 0.65) 50%,
-            rgba(26, 26, 46, 0.85) 100%);
+    background: none;
     z-index: 1;
 }
 
@@ -122,7 +116,7 @@
 
 .heroTitle {
     margin-bottom: var(--space-6);
-    color: #fff;
+    color: var(--bt-charcoal);
     font-size: clamp(3rem, 10vw, 5.5rem);
     line-height: 1.05;
     letter-spacing: -0.02em;
@@ -130,7 +124,7 @@
 }
 
 .heroGradient {
-    background: linear-gradient(135deg, #E07A7A, #E8A87C, #F0C987);
+    background: linear-gradient(135deg, var(--bt-charcoal), var(--bt-coral));
     background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -152,7 +146,7 @@
 
 .heroSub {
     font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--bt-muted);
     max-width: 700px;
     margin: 0 auto var(--space-10);
     line-height: 1.6;
@@ -192,8 +186,8 @@
     font-weight: 800;
     font-size: 1.1rem;
     color: #fff;
-    background: linear-gradient(135deg, #E07A7A, #E8A87C);
-    box-shadow: 0 4px 20px rgba(224, 122, 122, 0.3);
+    background: linear-gradient(135deg, var(--bt-coral), var(--bt-leaf-dark));
+    box-shadow: 0 4px 20px rgba(74, 124, 89, 0.3);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     border: none;
@@ -202,8 +196,8 @@
 
 .ctaPrimary:hover {
     transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 8px 30px rgba(224, 122, 122, 0.35);
-    background: linear-gradient(135deg, #C56B6B, #E07A7A);
+    box-shadow: 0 8px 30px rgba(74, 124, 89, 0.35);
+    background: linear-gradient(135deg, var(--bt-coral-dark), var(--bt-coral));
 }
 
 .ctaSecondary {
@@ -215,24 +209,23 @@
     font-family: var(--font-heading);
     font-weight: 700;
     font-size: 1.1rem;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: var(--bt-charcoal);
+    background: transparent;
+    border: 2px solid var(--bt-charcoal);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     cursor: pointer;
 }
 
 .ctaSecondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: var(--bt-charcoal);
+    color: #fff;
     transform: translateY(-2px);
 }
 
 /* ── CREDIBILITY MARQUEE ── */
 .credibilityStrip {
-    background: linear-gradient(90deg, #E8A87C, #E07A7A, #E8A87C);
+    background: linear-gradient(90deg, var(--bt-coral), var(--bt-leaf-dark), var(--bt-coral));
     padding: 14px 0;
     overflow: hidden;
     position: relative;
@@ -279,7 +272,7 @@
 }
 
 .highlightText {
-    background: linear-gradient(135deg, #FF6B6B, #FF8A65);
+    background: linear-gradient(135deg, var(--bt-coral), var(--bt-leaf));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -328,12 +321,12 @@
     position: absolute;
     bottom: 20px;
     right: 20px;
-    background: linear-gradient(135deg, #E07A7A, #E8A87C);
+    background: linear-gradient(135deg, var(--bt-coral), var(--bt-leaf-dark));
     color: white;
     padding: 16px 20px;
     border-radius: var(--radius-lg);
     text-align: center;
-    box-shadow: 0 8px 25px rgba(224, 122, 122, 0.3);
+    box-shadow: 0 8px 25px rgba(74, 124, 89, 0.3);
     animation: bubbleBounce 3s ease-in-out infinite;
 }
 
@@ -425,7 +418,7 @@
 /* ── JOURNEY SECTION ── */
 .journeySection {
     padding: var(--space-24) 0;
-    background: linear-gradient(180deg, var(--bt-cream) 0%, #fef3f0 100%);
+    background: linear-gradient(180deg, var(--bt-cream) 0%, var(--bt-white) 100%);
 }
 
 .sectionHeader {
@@ -461,7 +454,7 @@
 
 .kidsCard {
     border: 2px solid var(--bt-coral-light);
-    box-shadow: 0 4px 20px rgba(224, 122, 122, 0.06);
+    box-shadow: 0 4px 20px rgba(74, 124, 89, 0.06);
 }
 
 .teensCard {
@@ -504,7 +497,7 @@
     letter-spacing: 0.05em;
     background: var(--bt-coral);
     color: #fff;
-    box-shadow: 0 4px 12px rgba(224, 122, 122, 0.2);
+    box-shadow: 0 4px 12px rgba(74, 124, 89, 0.2);
 }
 
 .ageBubbleTeen {
@@ -633,7 +626,7 @@
 /* ── HOW IT WORKS ── */
 .howSection {
     padding: var(--space-24) 0;
-    background: linear-gradient(180deg, #fef3f0 0%, var(--bt-cream) 100%);
+    background: linear-gradient(180deg, var(--bt-white) 0%, var(--bt-cream) 100%);
 }
 
 .stepsGrid {
@@ -715,7 +708,7 @@
 }
 
 .testimonialCard {
-    background: linear-gradient(135deg, #fef3f0, #fefce8);
+    background: linear-gradient(135deg, var(--bt-white), var(--bt-white));
     padding: var(--space-12);
     border-radius: var(--radius-xl);
     position: relative;
@@ -729,7 +722,7 @@
     top: -30px;
     left: 20px;
     font-size: 10rem;
-    color: rgba(224, 122, 122, 0.08);
+    color: rgba(74, 124, 89, 0.08);
     font-family: Georgia, serif;
     line-height: 1;
     z-index: 0;
@@ -778,7 +771,7 @@
 /* ── FOUNDER SPOTLIGHT ── */
 .founderSection {
     padding: var(--space-24) 0;
-    background: linear-gradient(180deg, var(--bt-cream), #fef0f0, var(--bt-cream));
+    background: linear-gradient(180deg, var(--bt-cream), var(--bt-white), var(--bt-cream));
 }
 
 .founderGrid {
@@ -822,7 +815,7 @@
 /* ── CTA BANNER ── */
 .ctaBanner {
     padding: var(--space-24) 0;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: linear-gradient(135deg, var(--bt-gray-900) 0%, var(--bt-gray-800) 50%, var(--bt-coral-dark) 100%);
     position: relative;
     overflow: hidden;
 }

@@ -5,10 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, Venue, BTClassType } from '@/types';
+import { Session, Venue, BTClassType, BTClass } from '@/types';
+import { isTermClassActive } from '@/lib/term-utils';
 import { Calendar, MapPin, Clock, ChefHat, Map, List, Users } from 'lucide-react';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import BundleBrowser from '@/components/sessions/BundleBrowser';
+import TermClassCard from '@/components/sessions/TermClassCard';
+import TermClassScheduleModal from '@/components/sessions/TermClassScheduleModal';
 import styles from './SessionBrowser.module.css';
 
 interface Props {
@@ -29,9 +32,18 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     const [venues, setVenues] = useState<Venue[]>([]);
     const [classTypes, setClassTypes] = useState<BTClassType[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
+    const [termClassIds, setTermClassIds] = useState<Set<string>>(new Set());
+    const [termClasses, setTermClasses] = useState<BTClass[]>([]);
+    const [scheduleClass, setScheduleClass] = useState<BTClass | null>(null);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
     const [filters, setFilters] = useState({
+        venueId: 'all',
+        type: searchParams.get('type') || 'all',
+        dateRange: 'all',
+    });
+    // Applied filters — only updated when Search is clicked (or on initial load)
+    const [appliedFilters, setAppliedFilters] = useState({
         venueId: 'all',
         type: searchParams.get('type') || 'all',
         dateRange: 'all',
@@ -50,8 +62,27 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                 setClassTypes(snap.docs.map(d => ({ id: d.id, ...d.data() } as BTClassType)));
             } catch (e) { console.error('Error fetching class types:', e); }
         };
+        const fetchTermClasses = async () => {
+            try {
+                const snap = await getDocs(
+                    query(collection(db, 'classes'), where('commitment', '==', 'term'))
+                );
+                const ids = new Set(snap.docs.map(d => d.id));
+                setTermClassIds(ids);
+
+                // Filter to only active term classes (spotsAvailable > 0 AND current date <= termEndDate)
+                const allTermClasses = snap.docs.map(d => ({ id: d.id, ...d.data() } as BTClass));
+                const activeTermClasses = allTermClasses.filter(tc =>
+                    tc.termEndDate && tc.spotsAvailable !== undefined
+                        ? isTermClassActive(tc.termEndDate, tc.spotsAvailable)
+                        : false
+                );
+                setTermClasses(activeTermClasses);
+            } catch (e) { console.error('Error fetching term classes:', e); }
+        };
         fetchVenues();
         fetchClassTypes();
+        fetchTermClasses();
     }, []);
 
     const getClassTypeBadge = (slug: string) => {
@@ -63,11 +94,15 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     };
 
     const handleSearch = async () => {
+        setAppliedFilters({ ...filters });
         setLoading(true);
         try {
             const q = query(collection(db, 'sessions'), where('status', '==', 'open'));
             const snap = await getDocs(q);
             let results = snap.docs.map(d => ({ id: d.id, ...d.data() } as Session));
+
+            // Exclude sessions belonging to term classes — they are not individually bookable
+            results = results.filter(s => !termClassIds.has(s.classId));
 
             results.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
@@ -140,7 +175,8 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
             setFilters(prev => ({ ...prev, type: typeParam }));
         }
         handleSearch();
-    }, [searchParams]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams, termClassIds.size]);
 
     return (
         <>
@@ -220,7 +256,52 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                         </div>
                     </div>
 
-                    <p className={styles.resultCount}>{sessions.length} sessions available</p>
+                    <p className={styles.resultCount}>
+                        {(() => {
+                            let filteredTermCount = termClasses.length;
+                            if (appliedFilters.type !== 'all') {
+                                filteredTermCount = termClasses.filter(tc => tc.type?.toLowerCase() === appliedFilters.type.toLowerCase()).length;
+                            }
+                            if (appliedFilters.venueId !== 'all') {
+                                filteredTermCount = termClasses.filter(tc => tc.venueId === appliedFilters.venueId && (appliedFilters.type === 'all' || tc.type?.toLowerCase() === appliedFilters.type.toLowerCase())).length;
+                            }
+                            const total = sessions.length + filteredTermCount;
+                            return `${total} result${total !== 1 ? 's' : ''} available`;
+                        })()}
+                    </p>
+
+                    {(() => {
+                        // Filter term classes by applied filters (only updates on Search click)
+                        let filteredTermClasses = termClasses;
+                        if (appliedFilters.type !== 'all') {
+                            filteredTermClasses = filteredTermClasses.filter(tc =>
+                                tc.type?.toLowerCase() === appliedFilters.type.toLowerCase()
+                            );
+                        }
+                        if (appliedFilters.venueId !== 'all') {
+                            filteredTermClasses = filteredTermClasses.filter(tc =>
+                                tc.venueId === appliedFilters.venueId
+                            );
+                        }
+
+                        return filteredTermClasses.length > 0 ? (
+                        <section className={styles.termClassesSection}>
+                            <div className={styles.termClassesGrid}>
+                                {filteredTermClasses.map(tc => (
+                                    <TermClassCard
+                                        key={tc.id}
+                                        termClass={tc}
+                                        showGuestOption={showGuestOption}
+                                        onViewSchedule={(classId) => {
+                                            const cls = termClasses.find(c => c.id === classId);
+                                            if (cls) setScheduleClass(cls);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    ) : null;
+                    })()}
 
                     {loading ? (
                         <div className="loading-screen">
@@ -229,7 +310,6 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                         </div>
                     ) : sessions.length === 0 ? (
                         <div className={styles.empty}>
-                            <span>🍳</span>
                             <h3>No sessions found</h3>
                             <p>Try adjusting your filters or checking a different date range.</p>
                         </div>
@@ -290,6 +370,14 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                         </div>
                     )}
                 </>
+            )}
+
+            {/* Term Class Schedule Modal */}
+            {scheduleClass && (
+                <TermClassScheduleModal
+                    termClass={scheduleClass}
+                    onClose={() => setScheduleClass(null)}
+                />
             )}
         </>
     );

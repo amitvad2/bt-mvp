@@ -18,8 +18,31 @@ import { adminDb } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { resend } from '@/lib/resend';
 import { determineSafetyReviewStatus } from '@/lib/guest-validation';
+import { createSocialBookingService } from '@/lib/social-booking';
+import { WhatsAppAdapter } from '@/lib/social-booking/adapters/whatsapp';
+import { InstagramAdapter } from '@/lib/social-booking/adapters/instagram';
+import { MessengerAdapter } from '@/lib/social-booking/adapters/messenger';
+import { formatRecurrenceDays } from '@/lib/term-utils';
+import type { SocialChannel } from '@/types';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+// ---------------------------------------------------------------------------
+// Lazy-initialised Social Booking Service (singleton per cold start)
+// ---------------------------------------------------------------------------
+
+let _socialBookingService: ReturnType<typeof createSocialBookingService> | null = null;
+
+function getSocialBookingService() {
+  if (!_socialBookingService) {
+    const adapters = new Map<SocialChannel, InstanceType<typeof WhatsAppAdapter | typeof InstagramAdapter | typeof MessengerAdapter>>();
+    adapters.set('whatsapp', new WhatsAppAdapter());
+    adapters.set('instagram', new InstagramAdapter());
+    adapters.set('messenger', new MessengerAdapter());
+    _socialBookingService = createSocialBookingService({ adapters });
+  }
+  return _socialBookingService;
+}
 
 // ---------------------------------------------------------------------------
 // Route handler
@@ -115,8 +138,19 @@ async function handlePaymentIntentSucceeded(
         return;
     }
 
+    if (draft.bookingMode === 'guest' && draft.bookingType === 'term') {
+        // Guest term booking — route to term handler which supports guest mode
+        await handleTermPaymentSucceeded(paymentIntent, draft);
+        return;
+    }
+
     if (draft.bookingMode === 'guest') {
         await handleGuestPaymentSucceeded(paymentIntent, draft);
+        return;
+    }
+
+    if (draft.bookingType === 'term') {
+        await handleTermPaymentSucceeded(paymentIntent, draft);
         return;
     }
 
@@ -535,6 +569,33 @@ async function handleGuestPaymentSucceeded(
         bookedByEmail: draft.guestContact?.email ?? '',
     });
 
+    // 5b. Trigger social channel confirmation (fire-and-forget, best-effort)
+    //     If the draft has social attribution, asynchronously confirm the
+    //     Social_Booking_Session and send a confirmation message via the
+    //     originating social channel. This MUST NOT block the webhook response.
+    if (draft.socialAttribution?.socialBookingSessionId) {
+        const socialSessionId = draft.socialAttribution.socialBookingSessionId;
+        const bookingRef = piId.slice(-8); // Last 8 chars of PaymentIntent ID
+
+        // Fire and forget — do not await
+        void (async () => {
+            try {
+                const socialService = getSocialBookingService();
+                await socialService.confirmBooking(socialSessionId, piId);
+                await socialService.sendSocialConfirmation(socialSessionId, bookingRef);
+                console.log(
+                    `[webhook] Social confirmation sent for session ${socialSessionId}`
+                );
+            } catch (err) {
+                // Best-effort — failures must not affect booking creation or email delivery
+                console.error(
+                    `[webhook] Failed to send social confirmation for session ${socialSessionId}:`,
+                    err
+                );
+            }
+        })();
+    }
+
     // 6. Delete the draft (cleanup — non-critical if this fails)
     try {
         await draftRef.delete();
@@ -543,6 +604,299 @@ async function handleGuestPaymentSucceeded(
     }
 
     console.log(`[webhook] Guest booking ${piId} created successfully`);
+}
+
+// ---------------------------------------------------------------------------
+// Term: payment_intent.succeeded
+// ---------------------------------------------------------------------------
+
+async function handleTermPaymentSucceeded(
+    paymentIntent: Stripe.PaymentIntent,
+    draft: FirebaseFirestore.DocumentData
+) {
+    const piId = paymentIntent.id;
+    const classId: string = draft.classId;
+    const isGuest = draft.bookingMode === 'guest';
+
+    console.log(`[webhook] Term payment_intent.succeeded: ${piId}, classId=${classId}, guest=${isGuest}`);
+
+    // 1. Idempotency check: if booking already exists, skip
+    const bookingRef = adminDb.doc(`bookings/${piId}`);
+    const bookingSnap = await bookingRef.get();
+    if (bookingSnap.exists) {
+        console.log(
+            `[webhook] Term booking ${piId} already exists — duplicate event, skipping`
+        );
+        return;
+    }
+
+    // 1b. For guest bookings, validate consent records exist
+    if (isGuest && !draft.consentAudit?.consents) {
+        console.error(
+            `[webhook] Guest term draft ${piId} missing consent records. ` +
+            `Cannot create booking without valid consent audit.`
+        );
+        return;
+    }
+
+    // 2. Atomic booking creation + class spots decrement
+    const classRef = adminDb.doc(`classes/${classId}`);
+
+    // Derive student and booker names based on booking mode
+    const studentName = isGuest
+        ? `${draft.childSnapshot?.firstName ?? draft.childDetails?.firstName ?? ''} ${draft.childSnapshot?.lastName ?? draft.childDetails?.lastName ?? ''}`.trim()
+        : draft.studentName;
+    const bookedByName = isGuest
+        ? `${draft.guestContact?.firstName ?? ''} ${draft.guestContact?.lastName ?? ''}`.trim()
+        : draft.bookedByName;
+
+    await adminDb.runTransaction(async (tx) => {
+        // Read class document inside transaction
+        const classDoc = await tx.get(classRef);
+        if (!classDoc.exists) {
+            throw new Error(`Class ${classId} not found in Firestore`);
+        }
+
+        const classData = classDoc.data()!;
+        const spotsAvailable = classData.spotsAvailable ?? 0;
+
+        // Build the term booking document
+        let termBookingDoc: Record<string, any>;
+
+        if (isGuest) {
+            // Guest term booking — uses embedded snapshots, no linked user/student docs
+            const safetyReviewStatus = determineSafetyReviewStatus(draft);
+
+            // Build acquisition metadata from social attribution (if present) or default to website_express
+            const acquisition = draft.socialAttribution
+                ? {
+                    bookingSource: draft.socialAttribution.bookingSource,
+                    campaign: draft.socialAttribution.campaign ?? null,
+                    socialBookingSessionId: draft.socialAttribution.socialBookingSessionId ?? null,
+                }
+                : {
+                    bookingSource: draft.source ?? 'website_express',
+                    campaign: null,
+                    socialBookingSessionId: null,
+                };
+
+            termBookingDoc = {
+                id: piId,
+                bookingType: 'term',
+                bookingMode: 'guest',
+                bookingSource: draft.source ?? 'unknown',
+                classId,
+                className: draft.className,
+                classType: draft.classType ?? '',
+                venueName: draft.venueName,
+                startTime: draft.startTime ?? null,
+                endTime: draft.endTime ?? null,
+                recurrenceDays: draft.recurrenceDays ?? [],
+                termStartDate: draft.termStartDate ?? '',
+                termEndDate: draft.termEndDate ?? '',
+                // Session fields — not applicable for term bookings
+                sessionId: '',
+                sessionDate: '',
+                // Guest — no linked user or student
+                bookedByUid: null,
+                bookedByName,
+                studentId: null,
+                studentName,
+                // Embedded guest snapshots
+                guestContact: draft.guestContact ?? null,
+                childSnapshot: draft.childSnapshot ?? draft.childDetails ?? null,
+                medicalSnapshot: draft.medicalInfo ?? null,
+                allergyDietaryInfo: draft.allergyDietaryInfo ?? null,
+                emergencyContactSnapshot: draft.emergencyContact ?? null,
+                authorisedCollectorSnapshot: draft.authorisedCollector ?? null,
+                consentAudit: draft.consentAudit ?? null,
+                // Safety review
+                safetyReviewStatus,
+                // Acquisition attribution
+                acquisition,
+                // Status & consent
+                status: 'confirmed',
+                termsAccepted: draft.termsAccepted ?? true,
+                termsAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+                // Payment
+                payment: {
+                    stripePaymentIntentId: piId,
+                    amount: paymentIntent.amount,
+                    currency: paymentIntent.currency ?? 'gbp',
+                    status: 'paid',
+                    receiptUrl: null,
+                },
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+        } else {
+            // Authenticated term booking — uses linked user/student docs
+            termBookingDoc = {
+                bookingType: 'term',
+                classId,
+                className: draft.className,
+                classType: draft.classType ?? '',
+                venueName: draft.venueName,
+                startTime: draft.startTime ?? null,
+                endTime: draft.endTime ?? null,
+                recurrenceDays: draft.recurrenceDays ?? [],
+                termStartDate: draft.termStartDate ?? '',
+                termEndDate: draft.termEndDate ?? '',
+                // Session fields — not applicable for term bookings
+                sessionId: '',
+                sessionDate: '',
+                // User
+                bookedByUid: draft.bookedByUid,
+                bookedByName: draft.bookedByName,
+                // Student
+                studentId: draft.studentId,
+                studentName: draft.studentName,
+                // Consent & health
+                status: 'confirmed',
+                medicalInfo: draft.medicalInfo ?? null,
+                emergencyContact: draft.emergencyContact ?? null,
+                questionnaire: draft.questionnaire ?? null,
+                termsAccepted: draft.termsAccepted,
+                termsAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+                // Payment
+                payment: {
+                    stripePaymentIntentId: piId,
+                    amount: paymentIntent.amount,
+                    currency: 'gbp',
+                    status: 'paid',
+                    receiptUrl: null,
+                },
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+        }
+
+        if (spotsAvailable <= 0) {
+            // Overbooking: payment was taken but class is full
+            console.warn(
+                `[webhook] Class ${classId} has 0 spots available. ` +
+                `Overbooking detected for term booking — manual review needed.`
+            );
+            termBookingDoc.overbooking = true;
+            tx.set(bookingRef, termBookingDoc);
+            // Still decrement (will go negative to signal overbooking level)
+            tx.update(classRef, {
+                spotsAvailable: admin.firestore.FieldValue.increment(-1),
+            });
+        } else {
+            // Happy path: create booking + decrement spots atomically
+            termBookingDoc.overbooking = false;
+            tx.set(bookingRef, termBookingDoc);
+            tx.update(classRef, {
+                spotsAvailable: admin.firestore.FieldValue.increment(-1),
+            });
+        }
+    });
+
+    // 3. Fetch child sessions for the email schedule (best-effort)
+    let termSessions: Array<{ date: string; recipeName?: string; startTime?: string; endTime?: string }> = [];
+    try {
+        const sessionsSnap = await adminDb
+            .collection('sessions')
+            .where('classId', '==', classId)
+            .get();
+        termSessions = sessionsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                date: data.date ?? '',
+                recipeName: data.recipeName ?? undefined,
+                startTime: data.startTime ?? undefined,
+                endTime: data.endTime ?? undefined,
+            };
+        });
+        // Sort client-side to avoid composite index requirement
+        termSessions.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    } catch (err) {
+        console.error(`[webhook] Failed to fetch term sessions for email — continuing without schedule:`, err);
+    }
+
+    // 4. Send term confirmation email (best-effort, non-blocking)
+    // Fetch venue address for the email
+    let venueAddress = '';
+    let venuePostcode = '';
+    try {
+        const classDocForVenue = await adminDb.doc(`classes/${classId}`).get();
+        const venueId = classDocForVenue.data()?.venueId;
+        if (venueId) {
+            const venueDoc = await adminDb.doc(`venues/${venueId}`).get();
+            if (venueDoc.exists) {
+                venueAddress = venueDoc.data()?.address ?? '';
+                venuePostcode = venueDoc.data()?.postcode ?? '';
+            }
+        }
+    } catch (err) {
+        console.error('[webhook] Failed to fetch venue address for email — continuing without:', err);
+    }
+
+    // For guest bookings, send to guestContact.email; for authenticated, send to bookedByEmail
+    const emailRecipient = isGuest
+        ? draft.guestContact?.email
+        : draft.bookedByEmail;
+
+    if (emailRecipient) {
+        await sendTermConfirmationEmail({
+            to: emailRecipient,
+            className: draft.className,
+            recurrenceDays: draft.recurrenceDays ?? [],
+            termStartDate: draft.termStartDate ?? '',
+            termEndDate: draft.termEndDate ?? '',
+            startTime: draft.startTime ?? '',
+            endTime: draft.endTime ?? '',
+            venueName: draft.venueName,
+            venueAddress,
+            venuePostcode,
+            studentName,
+            amount: paymentIntent.amount,
+            isGuest,
+            sessions: termSessions,
+        });
+    }
+
+    // 5. Notify admin of new term booking (best-effort, non-blocking)
+    await sendAdminBookingNotification({
+        className: draft.className,
+        sessionDate: `${draft.termStartDate ?? ''} to ${draft.termEndDate ?? ''}`,
+        startTime: draft.startTime,
+        endTime: draft.endTime,
+        venueName: draft.venueName,
+        studentName,
+        bookedByName,
+        bookedByEmail: emailRecipient ?? '',
+    });
+
+    // 5b. Trigger social channel confirmation for guest bookings (fire-and-forget)
+    if (isGuest && draft.socialAttribution?.socialBookingSessionId) {
+        const socialSessionId = draft.socialAttribution.socialBookingSessionId;
+        const bookingRefShort = piId.slice(-8);
+
+        void (async () => {
+            try {
+                const socialService = getSocialBookingService();
+                await socialService.confirmBooking(socialSessionId, piId);
+                await socialService.sendSocialConfirmation(socialSessionId, bookingRefShort);
+                console.log(
+                    `[webhook] Social confirmation sent for term booking session ${socialSessionId}`
+                );
+            } catch (err) {
+                console.error(
+                    `[webhook] Failed to send social confirmation for term booking session ${socialSessionId}:`,
+                    err
+                );
+            }
+        })();
+    }
+
+    // 6. Delete the draft (cleanup — non-critical if this fails)
+    try {
+        await adminDb.doc(`booking_drafts/${piId}`).delete();
+    } catch (err) {
+        console.error(`[webhook] Failed to delete term booking draft ${piId}:`, err);
+    }
+
+    console.log(`[webhook] Term booking ${piId} created successfully (guest=${isGuest})`);
 }
 
 // ---------------------------------------------------------------------------
@@ -556,6 +910,19 @@ function buildGuestBookingDoc(
     sessionData: FirebaseFirestore.DocumentData
 ) {
     const piId = paymentIntent.id;
+
+    // Build acquisition metadata from social attribution (if present) or default to website_express
+    const acquisition = draft.socialAttribution
+        ? {
+            bookingSource: draft.socialAttribution.bookingSource,
+            campaign: draft.socialAttribution.campaign ?? null,
+            socialBookingSessionId: draft.socialAttribution.socialBookingSessionId ?? null,
+        }
+        : {
+            bookingSource: 'website_express' as const,
+            campaign: null,
+            socialBookingSessionId: null,
+        };
 
     return {
         id: piId,
@@ -587,6 +954,8 @@ function buildGuestBookingDoc(
         },
         // Safety review
         safetyReviewStatus,
+        // Acquisition attribution (social channel or default website_express)
+        acquisition,
         // Payment
         payment: {
             stripePaymentIntentId: piId,
@@ -1004,5 +1373,169 @@ export async function sendGuestConfirmationEmail(
         }
     } catch (err) {
         console.error('[webhook] Failed to send guest confirmation email:', err);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Term Booking Confirmation Email
+// ---------------------------------------------------------------------------
+
+async function sendTermConfirmationEmail(params: {
+    to: string;
+    className: string;
+    recurrenceDays: string[];
+    termStartDate: string;
+    termEndDate: string;
+    startTime: string;
+    endTime: string;
+    venueName: string;
+    venueAddress?: string;
+    venuePostcode?: string;
+    studentName: string;
+    amount: number; // in pence
+    isGuest?: boolean;
+    sessions?: Array<{ date: string; recipeName?: string; startTime?: string; endTime?: string }>;
+}) {
+    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_placeholder') {
+        console.warn('[webhook] RESEND_API_KEY not set — skipping term confirmation email');
+        return;
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+    // Format recurrence days into human-readable schedule
+    const scheduleDescription = formatRecurrenceDays(params.recurrenceDays);
+    const timeStr = params.startTime && params.endTime
+        ? `${params.startTime} – ${params.endTime}`
+        : '';
+
+    // Format dates for display (short format for schedule line: "6 Jan 2025")
+    const formattedStartDateShort = params.termStartDate
+        ? new Date(params.termStartDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        })
+        : '';
+    const formattedEndDateShort = params.termEndDate
+        ? new Date(params.termEndDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        })
+        : '';
+
+    // Format dates for display (long format for term period: "6 January 2025")
+    const formattedStartDateLong = params.termStartDate
+        ? new Date(params.termStartDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        })
+        : '';
+    const formattedEndDateLong = params.termEndDate
+        ? new Date(params.termEndDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        })
+        : '';
+
+    // Build full recurring schedule description per Req 8.2:
+    // "Every Mon, Wed, Fri — 3:30–4:30 pm, from 6 Jan 2025 to 28 Mar 2025"
+    let recurringSchedule = scheduleDescription;
+    if (timeStr) {
+        recurringSchedule += ` — ${timeStr}`;
+    }
+    if (formattedStartDateShort && formattedEndDateShort) {
+        recurringSchedule += `, from ${formattedStartDateShort} to ${formattedEndDateShort}`;
+    }
+
+    // Format amount
+    const formattedAmount = `£${(params.amount / 100).toFixed(2)}`;
+
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/my-classes`;
+
+    // Build session schedule HTML (Requirement 8.2 + 10.9)
+    // Include session-specific times where they differ from the class default
+    let sessionScheduleHtml = '';
+    if (params.sessions && params.sessions.length > 0) {
+        const sessionRows = params.sessions.map(session => {
+            const sessionDate = session.date
+                ? new Date(session.date + 'T00:00:00').toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                })
+                : '';
+            const recipe = session.recipeName || 'To be announced';
+
+            // Show session-specific time if it differs from the class default
+            const hasCustomTime = (session.startTime && session.endTime) &&
+                (session.startTime !== params.startTime || session.endTime !== params.endTime);
+            const timeNote = hasCustomTime
+                ? ` <span style="color:#4f46e5;font-weight:500;">(${session.startTime} – ${session.endTime})</span>`
+                : '';
+
+            return `<li style="margin-bottom:6px;font-size:14px;color:#333;">${sessionDate}${timeNote} &mdash; ${recipe}</li>`;
+        }).join('');
+
+        sessionScheduleHtml = `
+                    <div style="background:#F9FAFB;padding:16px 20px;border-radius:12px;margin-bottom:24px;">
+                        <h3 style="font-size:16px;margin-top:0;margin-bottom:12px;color:#333;">Session Schedule</h3>
+                        <ul style="list-style:none;padding:0;margin:0;">
+                            ${sessionRows}
+                        </ul>
+                    </div>`;
+    }
+
+    try {
+        const { error } = await resend.emails.send({
+            from: `Blooming Tastebuds <${fromEmail}>`,
+            to: [params.to],
+            subject: `Term Booking Confirmed: ${params.className}`,
+            html: `
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
+                    <h1 style="color:#0066CC;font-size:24px;margin-bottom:8px;">Term Booking Confirmed!</h1>
+                    <p style="color:#666;font-size:16px;margin-bottom:24px;">
+                        Your term enrolment at Blooming Tastebuds is confirmed. We can&rsquo;t wait to see you every week!
+                    </p>
+                    <div style="background:#F5F5F7;padding:20px;border-radius:12px;margin-bottom:24px;">
+                        <h2 style="font-size:18px;margin-top:0;">Term Details</h2>
+                        <ul style="list-style:none;padding:0;margin:0;color:#333;">
+                            <li style="margin-bottom:8px;"><strong>Class:</strong> ${params.className}</li>
+                            <li style="margin-bottom:8px;"><strong>Recurring Schedule:</strong> ${recurringSchedule}</li>
+                            <li style="margin-bottom:8px;"><strong>Term Period:</strong> ${formattedStartDateLong} to ${formattedEndDateLong}</li>
+                            <li style="margin-bottom:8px;"><strong>Time:</strong> ${timeStr || 'TBC'}</li>
+                            <li style="margin-bottom:8px;"><strong>Venue:</strong> ${params.venueName}${params.venueAddress ? `<br/><span style="color:#666;font-size:13px;">${params.venueAddress}${params.venuePostcode ? `, ${params.venuePostcode}` : ''}</span>` : ''}</li>
+                            <li style="margin-bottom:8px;"><strong>Participant:</strong> ${params.studentName}</li>
+                            <li style="margin-bottom:8px;"><strong>Amount Paid:</strong> ${formattedAmount}</li>
+                        </ul>
+                    </div>
+                    ${sessionScheduleHtml}
+                    <div style="background:#E8F5E9;padding:16px;border-radius:12px;margin-bottom:24px;">
+                        <p style="color:#2E7D32;font-size:14px;margin:0;">
+                            &#10003; Your child is enrolled for the full term. No need to book individual sessions &mdash; just turn up on the scheduled days!
+                        </p>
+                    </div>
+                    <p style="color:#666;font-size:14px;line-height:1.5;">
+                        ${params.isGuest
+                            ? 'If you need to make changes to your booking, please contact us at <a href="mailto:bloomingtastebuds@gmail.com" style="color:#0066CC;">bloomingtastebuds@gmail.com</a>.'
+                            : `View and manage your booking in your <a href="${portalUrl}" style="color:#0066CC;">My Classes</a> dashboard.`
+                        }
+                    </p>
+                    <hr style="border:0;border-top:1px solid #eee;margin:24px 0;" />
+                    <p style="color:#999;font-size:12px;text-align:center;">Blooming Tastebuds &mdash; Fun, hands-on cooking classes.</p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error('[webhook] Term confirmation email error:', error);
+        } else {
+            console.log(`[webhook] Term confirmation email sent to ${params.to}`);
+        }
+    } catch (err) {
+        console.error('[webhook] Failed to send term confirmation email:', err);
     }
 }

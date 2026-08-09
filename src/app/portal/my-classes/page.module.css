@@ -142,3 +142,43 @@
         padding-top: var(--space-2);
     }
 }
+
+/* Term booking card styles */
+.termCard {
+    border-left-color: var(--bt-indigo, #6366f1);
+}
+
+.termIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: var(--bt-indigo-50, #eef2ff);
+    border-radius: var(--radius);
+    border: 1px solid var(--bt-indigo-200, #c7d2fe);
+    flex-shrink: 0;
+    color: var(--bt-indigo, #6366f1);
+}
+
+.termHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: 2px;
+}
+
+.termHeader h3 {
+    font-size: 1.1rem;
+    font-family: var(--font-body);
+    margin: 0;
+}
+
+.termSchedule {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--bt-gray-600);
+    margin-bottom: 6px;
+}

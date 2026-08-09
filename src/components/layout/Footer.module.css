@@ -28,7 +28,7 @@
 }
 
 .brand p {
-    font-size: 0.9rem;
+    font-size: 1rem;
     line-height: 1.6;
     color: var(--bt-muted);
     max-width: 320px;
@@ -52,7 +52,7 @@
 }
 
 .col h4 {
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -68,7 +68,7 @@
 }
 
 .col ul li a {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     color: var(--bt-muted);
     transition: color var(--transition);
 }

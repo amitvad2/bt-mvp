@@ -231,12 +231,15 @@ describe('AdminBookings — Guest Booking Rendering', () => {
         });
 
         const AdminBookings = (await import('@/app/admin/bookings/page')).default;
-        render(<AdminBookings />);
+        const { container } = render(<AdminBookings />);
 
         await waitFor(() => {
-            expect(screen.getByText('Facebook')).toBeInTheDocument();
-            expect(screen.getByText('QR Code')).toBeInTheDocument();
-            expect(screen.getByText('Instagram')).toBeInTheDocument();
+            // Verify badges render with correct text for each booking source
+            const badges = container.querySelectorAll('.badge');
+            const badgeTexts = Array.from(badges).map(b => b.textContent);
+            expect(badgeTexts).toContain('Messenger');
+            expect(badgeTexts).toContain('QR Code');
+            expect(badgeTexts).toContain('Instagram');
         });
     });
 });

@@ -198,3 +198,33 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Term Classes Section */
+.termClassesSection {
+    margin-bottom: var(--space-8);
+}
+
+.termClassesHeading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--bt-gray-900);
+    margin-bottom: var(--space-2);
+}
+
+.termClassesSubtext {
+    font-size: 0.95rem;
+    color: var(--bt-gray-500);
+    margin-bottom: var(--space-6);
+}
+
+.termClassesGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+}
+
+@media (max-width: 900px) {
+    .termClassesGrid {
+        grid-template-columns: 1fr;
+    }
+}

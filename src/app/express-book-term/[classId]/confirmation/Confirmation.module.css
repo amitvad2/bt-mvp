@@ -1,0 +1,254 @@
+/* ============================================================
+   GUEST TERM CONFIRMATION PAGE
+   Mobile-first (320px minimum), scales to desktop.
+   Mirrors Confirmation.module.css from /express-booking/.
+   ============================================================ */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8) var(--space-4) var(--space-16);
+  gap: var(--space-6);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.iconWrap {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: var(--bt-gray-100);
+  color: var(--bt-gray-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+}
+
+.iconWrapSuccess {
+  background: var(--bt-green-light);
+  color: var(--bt-green-dark);
+}
+
+.iconWrapWarning {
+  background: var(--bt-amber-light);
+  color: var(--bt-amber-dark);
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bt-gray-900);
+  line-height: 1.3;
+}
+
+.subtitle {
+  color: var(--bt-text-muted);
+  font-size: 0.95rem;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+/* Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--bt-gray-200);
+  border-top-color: var(--bt-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Booking Details Card */
+.detailsCard {
+  width: 100%;
+  background: var(--bt-gray-50);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--bt-gray-200);
+  padding: var(--space-6);
+  text-align: left;
+}
+
+.bookingRef {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed var(--bt-gray-200);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.bookingRef span {
+  font-size: 0.85rem;
+  color: var(--bt-text-muted);
+  font-weight: 600;
+}
+
+.bookingRef strong {
+  font-family: monospace;
+  font-size: 1.2rem;
+  color: var(--bt-gray-900);
+  letter-spacing: 0.05em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+.detail {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.detail svg {
+  color: var(--bt-amber);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.detail strong {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--bt-gray-500);
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.detail p {
+  font-weight: 600;
+  color: var(--bt-gray-800);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--bt-gray-200);
+}
+
+.totalRow span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bt-gray-600);
+}
+
+.totalRow strong {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--bt-leaf-dark);
+}
+
+/* Safety Message */
+.safetyMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: var(--bt-leaf-light);
+  color: var(--bt-leaf-dark);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.safetyMessage svg {
+  flex-shrink: 0;
+}
+
+.safetyMessage p {
+  margin: 0;
+}
+
+/* Info Box */
+.infoBox {
+  width: 100%;
+  background: var(--bt-amber-light);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  color: var(--bt-amber-dark);
+  line-height: 1.5;
+}
+
+.infoBox p {
+  margin: 0;
+}
+
+/* Back Link */
+.backLink {
+  text-align: center;
+  margin-top: var(--space-4);
+}
+
+.backLink a {
+  color: var(--bt-gray-500);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.15s;
+}
+
+.backLink a:hover {
+  color: var(--bt-berry);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .bookingRef {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: var(--space-12) var(--space-6) var(--space-20);
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .iconWrap {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .detailsCard {
+    padding: var(--space-8);
+  }
+}

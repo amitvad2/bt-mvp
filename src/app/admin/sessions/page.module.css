@@ -33,6 +33,53 @@
     color: var(--bt-gray-500);
 }
 
+/* ============================================================
+   Recipe Cell (term class session schedule)
+   ============================================================ */
+
+.recipeCell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.recipeThumb {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.recipePlaceholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    background: var(--bt-gray-100);
+    color: var(--bt-gray-400);
+    flex-shrink: 0;
+}
+
+.recipeName {
+    font-size: 0.9rem;
+    color: var(--bt-gray-800);
+}
+
+.recipeInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.skillsText {
+    font-size: 0.75rem;
+    color: var(--bt-gray-500);
+    line-height: 1.3;
+}
+
 .form {
     display: flex;
     flex-direction: column;
@@ -190,6 +237,72 @@
     font-size: 0.95rem;
 }
 
+/* Register detail toggle button (medical/emergency icons) */
+.registerDetailToggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: var(--space-1);
+    border-radius: var(--radius);
+    transition: background 0.15s;
+}
+
+.registerDetailToggle:hover {
+    background: var(--bt-gray-100);
+}
+
+/* Expandable detail row */
+.registerDetailRow td {
+    padding: 0 var(--space-4) var(--space-4) var(--space-4) !important;
+    border-bottom: 1px solid var(--bt-gray-200) !important;
+    background: var(--bt-gray-50, #f9fafb);
+}
+
+.registerDetailContent {
+    display: flex;
+    gap: var(--space-8);
+    flex-wrap: wrap;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
+    font-size: 0.82rem;
+    color: var(--bt-gray-700);
+}
+
+.registerDetailSection {
+    flex: 1;
+    min-width: 200px;
+}
+
+.registerDetailSection strong {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--bt-gray-500);
+    margin-bottom: var(--space-1);
+}
+
+.registerDetailSection p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.registerDetailList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.registerDetailList li {
+    padding: var(--space-1) 0;
+    border-bottom: 1px solid var(--bt-gray-100);
+}
+
+.registerDetailList li:last-child {
+    border-bottom: none;
+}
+
 /* ============================================================
    Guest Link Copy Tooltip
    ============================================================ */
@@ -214,4 +327,179 @@
     15% { opacity: 1; transform: translateX(-50%) translateY(0); }
     85% { opacity: 1; transform: translateX(-50%) translateY(0); }
     100% { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+}
+
+
+/* ============================================================
+   Social Booking Link Generator Modal
+   ============================================================ */
+
+.socialLinkBody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-2) 0;
+}
+
+.socialLinkWarning {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    color: #92400e;
+    line-height: 1.4;
+}
+
+.socialLinkWarning svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.socialLinkSessionInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-4);
+    background: var(--bt-gray-50);
+    border-radius: var(--radius);
+}
+
+.socialLinkSessionInfo strong {
+    font-size: 0.95rem;
+    color: var(--bt-gray-900);
+}
+
+.socialLinkSessionInfo span {
+    font-size: 0.8rem;
+    color: var(--bt-gray-500);
+}
+
+.socialLinkOptional {
+    font-weight: 400;
+    color: var(--bt-gray-400);
+    font-size: 0.8rem;
+}
+
+.socialLinkError {
+    margin-top: var(--space-2);
+    font-size: 0.8rem;
+    color: #dc2626;
+}
+
+.socialLinkHint {
+    margin-top: var(--space-2);
+    font-size: 0.75rem;
+    color: var(--bt-gray-400);
+}
+
+.socialLinkResult {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--bt-gray-50);
+    border-radius: var(--radius);
+    border: 1px solid var(--bt-gray-200);
+}
+
+.socialLinkUrl {
+    font-size: 0.75rem;
+    color: var(--bt-gray-700);
+    word-break: break-all;
+    line-height: 1.5;
+}
+
+.socialLinkCopiedBadge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    padding: 2px 8px;
+    background: #10b981;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: var(--radius);
+}
+
+
+/* ============================================================
+   Skills Tag Input
+   ============================================================ */
+
+.skillsTagContainer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius);
+    background: var(--bt-white, #fff);
+    min-height: 42px;
+    cursor: text;
+}
+
+.skillsTagContainer:focus-within {
+    border-color: var(--bt-primary);
+    box-shadow: 0 0 0 2px rgba(var(--bt-primary-rgb, 99, 102, 241), 0.1);
+}
+
+.skillTag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px 8px;
+    background: var(--bt-primary-50, #eef2ff);
+    color: var(--bt-primary, #6366f1);
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: var(--radius);
+    white-space: nowrap;
+}
+
+.skillTagRemove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--bt-primary, #6366f1);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.15s;
+}
+
+.skillTagRemove:hover {
+    background: rgba(var(--bt-primary-rgb, 99, 102, 241), 0.15);
+}
+
+.skillInput {
+    flex: 1;
+    min-width: 120px;
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    padding: var(--space-1) 0;
+    background: transparent;
+    color: var(--bt-gray-800);
+}
+
+.skillInput::placeholder {
+    color: var(--bt-gray-400);
+}
+
+.skillHint {
+    display: block;
+    margin-top: var(--space-1);
+    font-size: 0.75rem;
+    color: var(--bt-gray-400);
 }

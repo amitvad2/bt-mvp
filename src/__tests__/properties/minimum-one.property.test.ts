@@ -30,10 +30,6 @@ const classTypeRecordArbitrary = fc.record({
   badgeColor: fc.constantFrom('amber', 'green', 'indigo', 'red', 'gray'),
   skipQuestionnaire: fc.boolean(),
   requireEmergencyContact: fc.boolean(),
-  defaultAgeMin: fc.integer({ min: 0, max: 100 }),
-  defaultAgeMax: fc.integer({ min: 1, max: 100 }),
-  defaultMaxSize: fc.integer({ min: 1, max: 50 }),
-  defaultPrice: fc.integer({ min: 0, max: 100000 }),
   order: fc.integer({ min: 0, max: 100 }),
 });
 

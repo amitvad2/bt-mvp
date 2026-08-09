@@ -1,0 +1,121 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    color: var(--bt-gray-900);
+}
+
+.icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--bt-amber);
+    background: var(--bt-amber-light);
+    padding: var(--space-2);
+    border-radius: var(--radius);
+    flex-shrink: 0;
+}
+
+.summary {
+    background: var(--bt-gray-50);
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.summaryItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.summaryItem strong {
+    color: var(--bt-gray-600);
+    font-weight: 500;
+}
+
+.summaryItem span {
+    color: var(--bt-gray-900);
+    font-weight: 700;
+}
+
+.price {
+    font-size: 1.25rem;
+    color: var(--bt-green-dark);
+}
+
+.termsBox {
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.termsBox h3 {
+    background: var(--bt-gray-100);
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    border-bottom: 1px solid var(--bt-gray-200);
+}
+
+.termsContent {
+    padding: var(--space-4);
+    font-size: 0.85rem;
+    color: var(--bt-gray-600);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.termsContent ul {
+    padding-left: var(--space-4);
+    margin: var(--space-3) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bt-gray-800);
+    cursor: pointer;
+}
+
+.checkboxLabel input {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--bt-amber);
+    margin-top: 2px;
+}
+
+.infoBox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    background: var(--bt-amber-light);
+    padding: var(--space-4);
+    border-radius: var(--radius);
+    color: var(--bt-amber-dark);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--bt-gray-100);
+}

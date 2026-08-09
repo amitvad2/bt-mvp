@@ -53,6 +53,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const pi = searchParams.get('pi');
     const session = searchParams.get('session');
+    const classId = searchParams.get('class');
 
     if (!pi || !pi.startsWith('pi_')) {
       return NextResponse.json(
@@ -61,9 +62,10 @@ export async function GET(req: Request) {
       );
     }
 
-    if (!session) {
+    // Must have either session or class param for verification
+    if (!session && !classId) {
       return NextResponse.json(
-        { error: 'Session parameter required.' },
+        { error: 'Session or class parameter required.' },
         { status: 400 }
       );
     }
@@ -78,18 +80,30 @@ export async function GET(req: Request) {
 
     const booking = bookingDoc.data()!;
 
-    // 5. Verify sessionId matches (prevent enumeration)
-    if (booking.sessionId !== session) {
-      // Return same error as invalid PI to prevent enumeration
-      return NextResponse.json(
-        { error: 'Invalid payment reference.' },
-        { status: 400 }
-      );
+    // 5. Verify session/class matches (prevent enumeration)
+    if (classId) {
+      // Term/programme booking — verify classId matches
+      if (booking.classId !== classId) {
+        return NextResponse.json(
+          { error: 'Invalid payment reference.' },
+          { status: 400 }
+        );
+      }
+    } else if (session) {
+      // Per-session booking — verify sessionId matches
+      if (booking.sessionId !== session) {
+        return NextResponse.json(
+          { error: 'Invalid payment reference.' },
+          { status: 400 }
+        );
+      }
     }
 
     // 6. Return non-sensitive summary only
     // Never return: medical data, allergy info, emergency contacts,
     // full PI ID, parent email/phone, child last name
+    const isTerm = booking.bookingType === 'term';
+
     return NextResponse.json({
       status: 'confirmed',
       reference: pi.slice(-8),
@@ -100,6 +114,12 @@ export async function GET(req: Request) {
       endTime: booking.endTime ?? booking.sessionSnapshot?.endTime ?? '',
       venueName: booking.venueName ?? booking.sessionSnapshot?.venueName ?? '',
       amountPaid: booking.payment?.amount ?? 0,
+      // Term-specific fields
+      ...(isTerm && {
+        termStartDate: booking.termStartDate ?? '',
+        termEndDate: booking.termEndDate ?? '',
+        recurrenceDays: booking.recurrenceDays ?? [],
+      }),
     });
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : 'Unknown error';

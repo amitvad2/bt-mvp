@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment, useRef } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Session, BTClass, Recipe, Instructor, BTClassType, Booking, BookingSource } from '@/types';
-import { Calendar, Plus, Edit2, Trash2, X, Clock, ChefHat, MapPin, UserCheck, ClipboardList, Link as LinkIcon, MessageCircle } from 'lucide-react';
+import { Calendar, Plus, Edit2, Trash2, X, Clock, ChefHat, MapPin, UserCheck, ClipboardList, Link as LinkIcon, MessageCircle, Share2, AlertTriangle } from 'lucide-react';
 import { isGuestCheckoutEnabled } from '@/lib/feature-flags';
 import styles from './page.module.css';
 
@@ -16,14 +16,28 @@ import styles from './page.module.css';
 function getSourceLabel(source?: BookingSource): string {
     switch (source) {
         case 'whatsapp_express': return 'WhatsApp';
-        case 'facebook_express': return 'Facebook';
+        case 'facebook_express': return 'Messenger';
         case 'instagram_express': return 'Instagram';
         case 'qr_express': return 'QR Code';
         case 'google_express': return 'Google';
-        case 'website_express': return 'Website (Express)';
+        case 'website_express': return 'Website (Guest)';
         case 'website': return 'Website';
         case 'unknown': return 'Unknown';
         default: return '—';
+    }
+}
+
+/** Get badge colour class for a given booking source */
+function getSourceBadgeClass(source?: BookingSource): string {
+    switch (source) {
+        case 'whatsapp_express': return 'badge-green';
+        case 'facebook_express': return 'badge-indigo';
+        case 'instagram_express': return 'badge-berry';
+        case 'qr_express': return 'badge-citrus';
+        case 'google_express': return 'badge-sky';
+        case 'website_express': return 'badge-orange';
+        case 'website': return 'badge-sky';
+        default: return 'badge-gray';
     }
 }
 
@@ -109,6 +123,83 @@ function getAuthorisedCollectorName(booking: Booking): string {
     return '—';
 }
 
+/** Get medical details summary for the expanded detail row */
+function getMedicalDetailsSummary(booking: Booking): string[] {
+    const details: string[] = [];
+
+    if (booking.bookingMode === 'guest' && booking.medicalSnapshot) {
+        const m = booking.medicalSnapshot;
+        if (m.foodAllergies) details.push('Food allergies');
+        if (m.airborneAllergies) details.push('Airborne allergies');
+        if (m.allergenDetails) details.push(`Allergens: ${m.allergenDetails}`);
+        if (m.epipenRequired) details.push('EpiPen required' + (m.epipenDetails ? ` — ${m.epipenDetails}` : ''));
+        if (m.respiratoryProblems) details.push('Respiratory problems');
+        if (m.medicalConditions) details.push(`Conditions: ${m.medicalConditions}`);
+        if (m.recentOperations) details.push(`Recent operations: ${m.recentOperations}`);
+        if (m.visionImpairment) details.push('Vision impairment');
+        if (m.hearingImpairment) details.push('Hearing impairment');
+        if (m.additionalSupportNeeds) details.push(`Support needs: ${m.additionalSupportNeeds}`);
+        if (m.medicationDetails) details.push(`Medication: ${m.medicationDetails}`);
+        if (m.otherSafetyInfo) details.push(`Other: ${m.otherSafetyInfo}`);
+        if (m.dietaryRequirements) details.push(`Dietary: ${m.dietaryRequirements}`);
+    } else if (booking.medicalInfo) {
+        const m = booking.medicalInfo;
+        if (m.allergies) details.push('Has allergies');
+        if (m.respiratoryProblems) details.push('Respiratory problems');
+        if (m.conditions) details.push('Has medical conditions');
+        if (m.recentOperations) details.push('Recent operations');
+        if (m.visionImpairment) details.push('Vision impairment');
+        if (m.hearingImpairment) details.push('Hearing impairment');
+        if (m.additionalSupportNeeds) details.push(`Support needs: ${m.additionalSupportNeeds}`);
+        if (m.otherMedicalNotes) details.push(`Notes: ${m.otherMedicalNotes}`);
+    }
+
+    // Also include allergy/dietary snapshot for guest bookings
+    if (booking.bookingMode === 'guest' && booking.allergyDietarySnapshot) {
+        const a = booking.allergyDietarySnapshot;
+        if (a.foodAllergies?.length) details.push(`Food allergies: ${a.foodAllergies.join(', ')}`);
+        if (a.dietaryRequirements?.length) details.push(`Dietary: ${a.dietaryRequirements.join(', ')}`);
+        if (a.airborneAllergies?.length) details.push(`Airborne: ${a.airborneAllergies.join(', ')}`);
+        if (a.reactionDetails) details.push(`Reactions: ${a.reactionDetails}`);
+        if (a.symptoms) details.push(`Symptoms: ${a.symptoms}`);
+    }
+
+    // Include questionnaire dietary info for account bookings
+    if (booking.questionnaire) {
+        if (booking.questionnaire.dietaryRequirements) {
+            details.push(`Dietary: ${booking.questionnaire.dietaryRequirements}`);
+        }
+        if (booking.questionnaire.airborneAllergy) {
+            details.push(`Airborne allergy: ${booking.questionnaire.airborneAllergy}`);
+        }
+    }
+
+    return details;
+}
+
+/** Get emergency contact details for the expanded detail row */
+function getEmergencyContactDetails(booking: Booking): { name: string; relationship: string; phone: string; email?: string } | null {
+    if (booking.bookingMode === 'guest' && booking.emergencyContactSnapshot) {
+        const ec = booking.emergencyContactSnapshot;
+        return {
+            name: ec.name,
+            relationship: ec.relationship,
+            phone: ec.mobile || ec.alternativePhone || '—',
+            email: ec.email || undefined,
+        };
+    }
+    if (booking.emergencyContact) {
+        const ec = booking.emergencyContact;
+        return {
+            name: ec.name,
+            relationship: ec.relationship,
+            phone: ec.phone || '—',
+            email: ec.email || undefined,
+        };
+    }
+    return null;
+}
+
 export default function AdminSessions() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [classes, setClasses] = useState<BTClass[]>([]);
@@ -125,6 +216,7 @@ export default function AdminSessions() {
     const [registerLoading, setRegisterLoading] = useState(false);
     const [signInTimes, setSignInTimes] = useState<Record<string, string>>({});
     const [signOutTimes, setSignOutTimes] = useState<Record<string, string>>({});
+    const [expandedDetailId, setExpandedDetailId] = useState<string | null>(null);
 
     // Guest link management
     const guestCheckoutEnabled = isGuestCheckoutEnabled();
@@ -149,14 +241,96 @@ export default function AdminSessions() {
         setTimeout(() => setCopiedLinkId(null), 2000);
     };
 
+    // Social booking link generator state
+    const [socialLinkSession, setSocialLinkSession] = useState<Session | null>(null);
+    const [socialCampaignName, setSocialCampaignName] = useState('');
+    const [socialCampaignError, setSocialCampaignError] = useState('');
+    const [socialLinkCopied, setSocialLinkCopied] = useState(false);
+    const [generatedSocialLink, setGeneratedSocialLink] = useState('');
+
+    const CAMPAIGN_REGEX = /^[A-Za-z0-9_-]*$/;
+
+    const handleOpenSocialLinkModal = (session: Session) => {
+        setSocialLinkSession(session);
+        setSocialCampaignName('');
+        setSocialCampaignError('');
+        setSocialLinkCopied(false);
+        setGeneratedSocialLink('');
+    };
+
+    const handleCloseSocialLinkModal = () => {
+        setSocialLinkSession(null);
+        setSocialCampaignName('');
+        setSocialCampaignError('');
+        setSocialLinkCopied(false);
+        setGeneratedSocialLink('');
+    };
+
+    const handleCampaignNameChange = (value: string) => {
+        setSocialCampaignName(value);
+        setSocialLinkCopied(false);
+        setGeneratedSocialLink('');
+        if (value && !CAMPAIGN_REGEX.test(value)) {
+            setSocialCampaignError('Only letters, numbers, hyphens, and underscores allowed');
+        } else if (value.length > 50) {
+            setSocialCampaignError('Maximum 50 characters');
+        } else {
+            setSocialCampaignError('');
+        }
+    };
+
+    const handleGenerateSocialLink = async () => {
+        if (socialCampaignName && !CAMPAIGN_REGEX.test(socialCampaignName)) return;
+        if (socialCampaignName.length > 50) return;
+
+        // Generate direct guest booking link (no token needed)
+        let url = `${window.location.origin}/express-booking/${socialLinkSession?.id || ''}?source=social_link`;
+        if (socialCampaignName.trim()) {
+            url += `&utm_campaign=${encodeURIComponent(socialCampaignName.trim())}`;
+        }
+
+        setGeneratedSocialLink(url);
+        await navigator.clipboard.writeText(url);
+        setSocialLinkCopied(true);
+        setTimeout(() => setSocialLinkCopied(false), 3000);
+    };
+
     const [formData, setFormData] = useState({
         classId: '',
+        title: '',
         date: '',
-        recipeId: '',
+        recipeIds: [] as string[],
         instructorId: '',
         status: 'open' as Session['status'],
         spotsAvailable: 15,
+        startTime: '',
+        endTime: '',
     });
+    const [recipeDropdownValue, setRecipeDropdownValue] = useState('');
+
+    // Modal drag state
+    const [modalPos, setModalPos] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const dragOffset = useRef({ x: 0, y: 0 });
+
+    const handleDragStart = (e: React.MouseEvent) => {
+        setIsDragging(true);
+        dragOffset.current = { x: e.clientX - modalPos.x, y: e.clientY - modalPos.y };
+    };
+
+    useEffect(() => {
+        if (!isDragging) return;
+        const handleMove = (e: MouseEvent) => {
+            setModalPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
+        };
+        const handleUp = () => setIsDragging(false);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMove);
+            window.removeEventListener('mouseup', handleUp);
+        };
+    }, [isDragging]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -187,10 +361,39 @@ export default function AdminSessions() {
         setSignInTimes({});
         setSignOutTimes({});
         try {
-            const bookingsSnap = await getDocs(
+            // Always query per-session bookings
+            const perSessionSnap = await getDocs(
                 query(collection(db, 'bookings'), where('sessionId', '==', session.id))
             );
-            setRegisterBookings(bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Booking)));
+            const perSessionBookings = perSessionSnap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+
+            // Check if the session belongs to a term/programme class
+            const parentClass = classes.find(c => c.id === session.classId);
+            let termBookings: Booking[] = [];
+            if (parentClass?.commitment === 'term') {
+                const termSnap = await getDocs(
+                    query(
+                        collection(db, 'bookings'),
+                        where('classId', '==', session.classId),
+                        where('bookingType', '==', 'term'),
+                        where('status', '==', 'confirmed')
+                    )
+                );
+                termBookings = termSnap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+            }
+
+            // Merge and deduplicate by booking ID
+            const bookingMap = new Map<string, Booking>();
+            for (const b of perSessionBookings) {
+                bookingMap.set(b.id, b);
+            }
+            for (const b of termBookings) {
+                if (!bookingMap.has(b.id)) {
+                    bookingMap.set(b.id, b);
+                }
+            }
+
+            setRegisterBookings(Array.from(bookingMap.values()));
         } catch (e) {
             console.error('[SessionRegister]', e);
             setRegisterBookings([]);
@@ -202,6 +405,7 @@ export default function AdminSessions() {
     const handleCloseRegister = () => {
         setRegisterSession(null);
         setRegisterBookings([]);
+        setExpandedDetailId(null);
     };
 
     const handleOpenModal = (s?: Session) => {
@@ -209,37 +413,58 @@ export default function AdminSessions() {
             setEditingSession(s);
             setFormData({
                 classId: s.classId,
+                title: s.title || '',
                 date: s.date,
-                recipeId: s.recipeId || '',
+                recipeIds: s.recipeIds || (s.recipeId ? [s.recipeId] : []),
                 instructorId: s.instructorId || '',
                 status: s.status,
                 spotsAvailable: s.spotsAvailable,
+                startTime: s.startTime || '',
+                endTime: s.endTime || '',
             });
         } else {
             setEditingSession(null);
-            setFormData({ classId: '', date: '', recipeId: '', instructorId: '', status: 'open', spotsAvailable: 15 });
+            setFormData({ classId: '', title: '', date: '', recipeIds: [], instructorId: '', status: 'open', spotsAvailable: 15, startTime: '', endTime: '' });
         }
+        setRecipeDropdownValue('');
+        setModalPos({ x: 0, y: 0 });
         setShowModal(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const parentClass = classes.find(c => c.id === formData.classId);
-        const recipe = recipes.find(r => r.id === formData.recipeId);
+        const selectedRecipes = recipes.filter(r => formData.recipeIds.includes(r.id));
+        const firstRecipe = selectedRecipes[0];
         const instructor = instructors.find(i => i.id === formData.instructorId);
         const classType = classTypes.find(ct => ct.slug === parentClass?.type);
 
+        // Aggregate skills from all selected recipes
+        const aggregatedSkills = Array.from(new Set(selectedRecipes.flatMap(r => r.skills || [])));
+
         const data = {
-            ...formData,
-            className: classType?.displayName || parentClass?.type || 'Unknown',
+            classId: formData.classId,
+            title: formData.title,
+            date: formData.date,
+            instructorId: formData.instructorId,
+            status: formData.status,
+            spotsAvailable: formData.spotsAvailable,
+            startTime: formData.startTime || parentClass?.startTime || '',
+            endTime: formData.endTime || parentClass?.endTime || '',
+            className: parentClass?.name || classType?.displayName || parentClass?.type || 'Unknown',
             classType: parentClass?.type || '',
             venueId: parentClass?.venueId || '',
             venueName: parentClass?.venueName || '',
-            recipeName: recipe?.name || '',
+            // Legacy single-recipe fields (backward compat)
+            recipeId: firstRecipe?.id || '',
+            recipeName: firstRecipe?.name || '',
+            recipePhotoUrl: firstRecipe?.photoUrl || '',
+            // New multi-recipe field
+            recipeIds: formData.recipeIds,
+            // Skills aggregated from selected recipes
+            skills: aggregatedSkills,
             instructorName: instructor?.name || '',
             price: parentClass?.price || 1500,
-            startTime: parentClass?.startTime || '',
-            endTime: parentClass?.endTime || '',
             spotsTotal: parentClass?.maxSize || 15,
             ageMin: parentClass?.ageMin || 5,
             ageMax: parentClass?.ageMax || 12,
@@ -308,6 +533,7 @@ export default function AdminSessions() {
                             <tr>
                                 <th>Date</th>
                                 <th>Class</th>
+                                <th>Recipe</th>
                                 <th>Venue</th>
                                 <th>Spots</th>
                                 <th>Status</th>
@@ -315,7 +541,10 @@ export default function AdminSessions() {
                             </tr>
                         </thead>
                         <tbody>
-                            {sessions.map(s => (
+                            {sessions.map(s => {
+                                const parentClass = classes.find(c => c.id === s.classId);
+                                const isTermClass = parentClass?.commitment === 'term';
+                                return (
                                 <tr key={s.id}>
                                     <td><strong>{s.date ? new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</strong></td>
                                     <td>
@@ -326,10 +555,36 @@ export default function AdminSessions() {
                                                     <span className={`badge badge-${ct?.badgeColor || 'gray'}`}>
                                                         {ct?.shortLabel || s.classType || 'Unknown'}
                                                     </span>
+                                                    {isTermClass && <span className="badge badge-indigo" style={{ marginLeft: '4px' }}>Term</span>}
                                                     {' '}{s.className}
                                                 </>
                                             );
                                         })()}
+                                    </td>
+                                    <td>
+                                        {s.recipeName ? (
+                                            <div className={styles.recipeCell}>
+                                                {s.recipePhotoUrl ? (
+                                                    <img
+                                                        src={s.recipePhotoUrl}
+                                                        alt={`Photo of ${s.recipeName}`}
+                                                        className={styles.recipeThumb}
+                                                    />
+                                                ) : (
+                                                    <span className={styles.recipePlaceholder}>
+                                                        <ChefHat size={14} />
+                                                    </span>
+                                                )}
+                                                <div className={styles.recipeInfo}>
+                                                    <span className={styles.recipeName}>{s.recipeName}</span>
+                                                    {s.skills && s.skills.length > 0 && (
+                                                        <span className={styles.skillsText}>{s.skills.join(', ')}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <span className={styles.mutedText}>—</span>
+                                        )}
                                     </td>
                                     <td className={styles.mutedText}>{s.venueName}</td>
                                     <td>
@@ -366,13 +621,22 @@ export default function AdminSessions() {
                                                     </button>
                                                 </>
                                             )}
+                                            <button
+                                                className="btn btn-ghost btn-sm"
+                                                title="Generate Social Link"
+                                                onClick={() => handleOpenSocialLinkModal(s)}
+                                                aria-label={`Generate social booking link for session on ${s.date}`}
+                                            >
+                                                <Share2 size={16} strokeWidth={1.5} />
+                                            </button>
                                             <button className="btn btn-ghost btn-sm" title="View Register" onClick={() => handleOpenRegister(s)}><ClipboardList size={16} strokeWidth={1.5} /></button>
-                                            <button className="btn btn-ghost btn-sm" onClick={() => handleOpenModal(s)}><Edit2 size={16} strokeWidth={1.5} /></button>
-                                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleDelete(s)}><Trash2 size={16} strokeWidth={1.5} /></button>
+                                            <button className="btn btn-ghost btn-sm" title="Edit Session" onClick={() => handleOpenModal(s)}><Edit2 size={16} strokeWidth={1.5} /></button>
+                                            <button className="btn btn-ghost btn-sm text-danger" title="Delete Session" onClick={() => handleDelete(s)}><Trash2 size={16} strokeWidth={1.5} /></button>
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -380,18 +644,35 @@ export default function AdminSessions() {
 
             {showModal && (
                 <div className="modal-overlay">
-                    <div className="modal">
-                        <div className="modal-header">
+                    <div
+                        className="modal"
+                        style={{ transform: `translate(${modalPos.x}px, ${modalPos.y}px)`, transition: isDragging ? 'none' : undefined }}
+                    >
+                        <div
+                            className="modal-header"
+                            style={{ cursor: 'grab', userSelect: 'none' }}
+                            onMouseDown={handleDragStart}
+                        >
                             <h2 className="modal-title">{editingSession ? 'Edit Session' : 'Add Session'}</h2>
                             <button className="modal-close" onClick={() => setShowModal(false)}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
                             <div className="form-group">
-                                <label className="form-label">Base Class Type</label>
+                                <label className="form-label">Class</label>
                                 <select className="form-select" value={formData.classId} onChange={e => setFormData({ ...formData, classId: e.target.value })} required>
                                     <option value="">Select Class...</option>
-                                    {classes.map(c => <option key={c.id} value={c.id}>{c.type} — {c.venueName}</option>)}
+                                    {classes.map(c => <option key={c.id} value={c.id}>{c.name || c.type} — {c.venueName}</option>)}
                                 </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Session Title (Optional)</label>
+                                <input
+                                    className="form-input"
+                                    value={formData.title}
+                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                    placeholder="e.g. Day 1: Introduction (leave blank to use recipe name)"
+                                />
                             </div>
 
                             <div className="form-row">
@@ -407,11 +688,41 @@ export default function AdminSessions() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Recipe (Optional)</label>
-                                    <select className="form-select" value={formData.recipeId} onChange={e => setFormData({ ...formData, recipeId: e.target.value })}>
-                                        <option value="">None</option>
-                                        {recipes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                    <label className="form-label">Recipes (Optional)</label>
+                                    <select
+                                        className="form-select"
+                                        value={recipeDropdownValue}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val && !formData.recipeIds.includes(val)) {
+                                                setFormData({ ...formData, recipeIds: [...formData.recipeIds, val] });
+                                            }
+                                            setRecipeDropdownValue('');
+                                        }}
+                                    >
+                                        <option value="">Add a recipe...</option>
+                                        {recipes.filter(r => !formData.recipeIds.includes(r.id)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                     </select>
+                                    {formData.recipeIds.length > 0 && (
+                                        <div className={styles.skillsTagContainer} style={{ marginTop: '8px' }}>
+                                            {formData.recipeIds.map(rid => {
+                                                const r = recipes.find(rec => rec.id === rid);
+                                                return (
+                                                    <span key={rid} className={styles.skillTag}>
+                                                        {r?.name || rid}
+                                                        <button
+                                                            type="button"
+                                                            className={styles.skillTagRemove}
+                                                            onClick={() => setFormData({ ...formData, recipeIds: formData.recipeIds.filter(id => id !== rid) })}
+                                                            aria-label={`Remove recipe: ${r?.name || rid}`}
+                                                        >
+                                                            &times;
+                                                        </button>
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Instructor (Optional)</label>
@@ -429,6 +740,29 @@ export default function AdminSessions() {
                                     <option value="closed">Closed</option>
                                     <option value="cancelled">Cancelled</option>
                                 </select>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Start Time (optional — defaults to class time)</label>
+                                    <input
+                                        type="time"
+                                        className="form-input"
+                                        value={formData.startTime}
+                                        onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                                        placeholder={classes.find(c => c.id === formData.classId)?.startTime || ''}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">End Time (optional — defaults to class time)</label>
+                                    <input
+                                        type="time"
+                                        className="form-input"
+                                        value={formData.endTime}
+                                        onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+                                        placeholder={classes.find(c => c.id === formData.classId)?.endTime || ''}
+                                    />
+                                </div>
                             </div>
 
                             <div className={styles.modalActions}>
@@ -489,9 +823,13 @@ export default function AdminSessions() {
                                             const collectorName = getAuthorisedCollectorName(booking);
                                             const mode = booking.bookingMode || 'account';
                                             const source = booking.bookingSource;
+                                            const isExpanded = expandedDetailId === booking.id;
+                                            const medicalDetails = getMedicalDetailsSummary(booking);
+                                            const emergencyDetails = getEmergencyContactDetails(booking);
 
                                             return (
-                                                <tr key={booking.id}>
+                                                <Fragment key={booking.id}>
+                                                <tr>
                                                     <td>
                                                         <div className={styles.registerNameCell}>
                                                             <strong>{participantName}</strong>
@@ -504,17 +842,51 @@ export default function AdminSessions() {
                                                             {mode === 'guest' ? 'Guest' : 'Account'}
                                                         </span>
                                                     </td>
-                                                    <td className={styles.mutedText}>{getSourceLabel(source)}</td>
+                                                    <td>
+                                                        {source ? (
+                                                            <span className={`badge ${getSourceBadgeClass(source)}`}>
+                                                                {getSourceLabel(source)}
+                                                            </span>
+                                                        ) : (
+                                                            <span className={styles.mutedText}>—</span>
+                                                        )}
+                                                    </td>
                                                     <td>
                                                         <span className={`badge ${booking.status === 'confirmed' ? 'badge-green' : 'badge-red'}`}>
                                                             {booking.status}
                                                         </span>
                                                     </td>
                                                     <td className={styles.flagCell}>
-                                                        {medicalFlag && <span title="Has medical declarations">🏥</span>}
+                                                        {medicalFlag ? (
+                                                            <button
+                                                                type="button"
+                                                                className={styles.registerDetailToggle}
+                                                                title="View medical details"
+                                                                aria-expanded={isExpanded}
+                                                                aria-label={`View medical details for ${participantName}`}
+                                                                onClick={() => setExpandedDetailId(isExpanded ? null : booking.id)}
+                                                            >
+                                                                🏥
+                                                            </button>
+                                                        ) : (
+                                                            <span className={styles.mutedText}>—</span>
+                                                        )}
                                                     </td>
                                                     <td className={styles.flagCell}>
-                                                        {emergencyFlag && <span title="Emergency contact provided">📞</span>}
+                                                        {emergencyFlag ? (
+                                                            <button
+                                                                type="button"
+                                                                className={styles.registerDetailToggle}
+                                                                title="View emergency contact"
+                                                                aria-expanded={isExpanded}
+                                                                aria-label={`View emergency contact for ${participantName}`}
+                                                                onClick={() => setExpandedDetailId(isExpanded ? null : booking.id)}
+                                                            >
+                                                                📞
+                                                            </button>
+                                                        ) : (
+                                                            <span className={styles.mutedText}>—</span>
+                                                        )}
                                                     </td>
                                                     <td className={styles.mutedText}>{collectorName}</td>
                                                     <td>
@@ -536,12 +908,118 @@ export default function AdminSessions() {
                                                         />
                                                     </td>
                                                 </tr>
+                                                {isExpanded && (medicalDetails.length > 0 || emergencyDetails) && (
+                                                    <tr className={styles.registerDetailRow}>
+                                                        <td colSpan={10}>
+                                                            <div className={styles.registerDetailContent}>
+                                                                {medicalDetails.length > 0 && (
+                                                                    <div className={styles.registerDetailSection}>
+                                                                        <strong>Medical / Dietary</strong>
+                                                                        <ul className={styles.registerDetailList}>
+                                                                            {medicalDetails.map((detail, i) => (
+                                                                                <li key={i}>{detail}</li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                )}
+                                                                {emergencyDetails && (
+                                                                    <div className={styles.registerDetailSection}>
+                                                                        <strong>Emergency Contact</strong>
+                                                                        <p>{emergencyDetails.name} ({emergencyDetails.relationship}) — {emergencyDetails.phone}{emergencyDetails.email ? ` — ${emergencyDetails.email}` : ''}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                </Fragment>
                                             );
                                         })}
                                     </tbody>
                                 </table>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Social Booking Link Generator Modal */}
+            {socialLinkSession && (
+                <div className="modal-overlay">
+                    <div className="modal" style={{ maxWidth: '480px' }}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Generate Social Link</h2>
+                            <button className="modal-close" onClick={handleCloseSocialLinkModal}><X size={20} /></button>
+                        </div>
+
+                        <div className={styles.socialLinkBody}>
+                            {/* Warning if session is not open or no spots available */}
+                            {(socialLinkSession.status !== 'open' || socialLinkSession.spotsAvailable === 0) && (
+                                <div className={styles.socialLinkWarning}>
+                                    <AlertTriangle size={16} />
+                                    <span>
+                                        {socialLinkSession.status !== 'open'
+                                            ? `This session is currently "${socialLinkSession.status}".`
+                                            : 'No spots available for this session.'}
+                                        {' '}Link can still be generated.
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className={styles.socialLinkSessionInfo}>
+                                <strong>{socialLinkSession.className}</strong>
+                                <span>
+                                    {socialLinkSession.date
+                                        ? new Date(socialLinkSession.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                                        : 'N/A'}
+                                    {' · '}{socialLinkSession.venueName}
+                                    {' · '}{socialLinkSession.spotsAvailable} spot{socialLinkSession.spotsAvailable !== 1 ? 's' : ''} left
+                                </span>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="social-campaign-name">
+                                    Campaign Name <span className={styles.socialLinkOptional}>(optional)</span>
+                                </label>
+                                <input
+                                    id="social-campaign-name"
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g. summer_2025, instagram_promo"
+                                    value={socialCampaignName}
+                                    onChange={e => handleCampaignNameChange(e.target.value)}
+                                    maxLength={50}
+                                    aria-describedby={socialCampaignError ? 'social-campaign-error' : undefined}
+                                    aria-invalid={!!socialCampaignError}
+                                />
+                                {socialCampaignError && (
+                                    <p id="social-campaign-error" className={styles.socialLinkError}>
+                                        {socialCampaignError}
+                                    </p>
+                                )}
+                                <p className={styles.socialLinkHint}>
+                                    Letters, numbers, hyphens, and underscores only. Max 50 characters.
+                                </p>
+                            </div>
+
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleGenerateSocialLink}
+                                disabled={!!socialCampaignError}
+                                style={{ width: '100%' }}
+                            >
+                                {socialLinkCopied ? '✓ Copied to Clipboard!' : 'Generate & Copy Link'}
+                            </button>
+
+                            {generatedSocialLink && (
+                                <div className={styles.socialLinkResult}>
+                                    <code className={styles.socialLinkUrl}>{generatedSocialLink}</code>
+                                    {socialLinkCopied && (
+                                        <span className={styles.socialLinkCopiedBadge}>Copied!</span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

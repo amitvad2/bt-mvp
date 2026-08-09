@@ -94,3 +94,20 @@ export const createGuestIntentSchema = z.object({
   termsVersion: z.string().min(1).max(50),
   privacyNoticeVersion: z.string().min(1).max(50),
 });
+
+export const createGuestTermIntentSchema = z.object({
+  classId: z.string().min(1).max(128),
+  bookingType: z.literal('term'),
+  source: bookingSourceSchema,
+  submissionRef: z.string().uuid(),
+  turnstileToken: z.string().min(1),
+  parentDetails: parentDetailsSchema,
+  childDetails: childDetailsSchema,
+  medicalInfo: medicalInfoSchema,
+  allergyDietaryInfo: allergyDietaryInfoSchema,
+  emergencyContact: emergencyContactSchema,
+  authorisedCollector: authorisedCollectorSchema,
+  consents: consentsSchema,
+  termsVersion: z.string().min(1).max(50),
+  privacyNoticeVersion: z.string().min(1).max(50),
+});

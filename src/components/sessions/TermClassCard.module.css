@@ -1,0 +1,141 @@
+.card {
+    background: #fff;
+    padding: var(--space-10);
+    border-radius: var(--radius-xl);
+    border: none;
+    box-shadow: var(--shadow);
+    transition: transform var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    transform: scale(1.02);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+}
+
+.description {
+    font-size: 1rem;
+    color: var(--bt-gray-600);
+    line-height: 1.4;
+    margin: 0 0 var(--space-5);
+}
+
+.className {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+    margin: 0;
+}
+
+.details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    flex: 1;
+}
+
+.detailRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: var(--bt-gray-600);
+}
+
+.detailRow svg {
+    color: var(--bt-gray-400);
+    flex-shrink: 0;
+}
+
+.recurrence {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--bt-gray-900);
+}
+
+.price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--bt-gray-900);
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    gap: var(--space-4);
+}
+
+.spots {
+    font-size: 0.85rem;
+    color: var(--bt-gray-500);
+    font-weight: 500;
+}
+
+.spotsLow {
+    color: var(--bt-danger);
+    font-weight: 600;
+}
+
+.actions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+}
+
+.viewScheduleBtn {
+    padding: 10px 16px;
+    border: 1.5px solid var(--bt-accent);
+    border-radius: var(--radius-sm);
+    color: var(--bt-accent);
+    font-size: 0.95rem;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.viewScheduleBtn:hover {
+    background: var(--bt-accent);
+    color: #fff;
+}
+
+.fullBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    background: var(--bt-gray-200);
+    color: var(--bt-gray-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+
+.guestBookLink {
+    display: block;
+    text-align: center;
+    padding: 10px 16px;
+    border: 1.5px solid var(--bt-accent);
+    border-radius: var(--radius-sm);
+    color: var(--bt-accent);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+    margin-top: var(--space-2);
+}
+
+.guestBookLink:hover {
+    background: var(--bt-accent);
+    color: #fff;
+}

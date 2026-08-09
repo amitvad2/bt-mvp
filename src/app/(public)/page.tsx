@@ -15,42 +15,13 @@ export default function HomePage() {
         <>
             {/* ── HERO ── */}
             <section className={styles.hero}>
-                {/* Static image — shown before video loads or when reduced-motion is on */}
-                <div className={styles.heroBg} aria-hidden="true"></div>
-                {/* Looping background video. Hidden via CSS when prefers-reduced-motion is set. */}
-                <video
-                    className={styles.heroBgVideo}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    poster="/images/hero-dynamic.png"
-                    aria-hidden="true"
-                >
-                    <source src="/videos/hero-loop.mp4" type="video/mp4" />
-                </video>
-                {/* Floating food emojis */}
-                <div className={styles.floatingEmojis} aria-hidden="true">
-                    <span className={styles.floater} style={{ left: '5%', animationDelay: '0s', animationDuration: '6s' }}>🥕</span>
-                    <span className={styles.floater} style={{ left: '15%', animationDelay: '1s', animationDuration: '8s' }}>🍅</span>
-                    <span className={styles.floater} style={{ left: '25%', animationDelay: '2s', animationDuration: '7s' }}>🥦</span>
-                    <span className={styles.floater} style={{ left: '40%', animationDelay: '0.5s', animationDuration: '9s' }}>🌽</span>
-                    <span className={styles.floater} style={{ left: '55%', animationDelay: '3s', animationDuration: '6.5s' }}>🍋</span>
-                    <span className={styles.floater} style={{ left: '70%', animationDelay: '1.5s', animationDuration: '7.5s' }}>🫑</span>
-                    <span className={styles.floater} style={{ left: '85%', animationDelay: '2.5s', animationDuration: '8.5s' }}>🍊</span>
-                    <span className={styles.floater} style={{ left: '92%', animationDelay: '0.8s', animationDuration: '6.8s' }}>🧁</span>
-                </div>
                 <div className={`container ${styles.heroContent}`}>
-                    <div className={styles.heroBadge}>
-                        <Sparkles size={16} /> Helping Kids Discover the Joy of Cooking
-                    </div>
                     <h1 className={styles.heroTitle}>
                         Welcome to<br />
                         <span className={styles.heroGradient}>Blooming Tastebuds</span>
                     </h1>
                     <p className={styles.heroSub}>
-                        Where junior cooks and teen chefs learn confidence, creativity, and conscious eating — one delicious meal at a time. 🌱
+                        Where junior cooks and teen chefs learn confidence, creativity, and conscious eating — one delicious meal at a time.
                     </p>
                     <HeroCtas />
                 </div>
@@ -60,16 +31,16 @@ export default function HomePage() {
             <div className={styles.credibilityStrip}>
                 <div className={styles.marquee}>
                     <div className={styles.marqueeInner}>
-                        <span>🌱 100% Vegetarian</span>
-                        <span>👩‍🍳 Hands-on Learning</span>
-                        <span>🔬 Kitchen Science</span>
-                        <span>🎓 200+ Students Skilled</span>
-                        <span>🛡️ DBS Certified</span>
-                        <span>🌱 100% Vegetarian</span>
-                        <span>👩‍🍳 Hands-on Learning</span>
-                        <span>🔬 Kitchen Science</span>
-                        <span>🎓 200+ Students Skilled</span>
-                        <span>🛡️ DBS Certified</span>
+                        <span>100% Vegetarian</span>
+                        <span>Hands-on Learning</span>
+                        <span>Kitchen Science</span>
+                        <span>200+ Students Skilled</span>
+                        <span>DBS Certified</span>
+                        <span>100% Vegetarian</span>
+                        <span>Hands-on Learning</span>
+                        <span>Kitchen Science</span>
+                        <span>200+ Students Skilled</span>
+                        <span>DBS Certified</span>
                     </div>
                 </div>
             </div>
@@ -120,7 +91,7 @@ export default function HomePage() {
             <section className={styles.journeySection}>
                 <div className="container">
                     <div className={styles.sectionHeader}>
-                        <span className={styles.sectionEyebrow}>🎯 Classes for Every Age</span>
+                        <span className={styles.sectionEyebrow}>Classes for Every Age</span>
                         <h2>Choose your cooking journey</h2>
                     </div>
 
@@ -132,7 +103,7 @@ export default function HomePage() {
                                 <div className={styles.ageBubble}>Ages 5–11</div>
                             </div>
                             <div className={styles.journeyContent}>
-                                <h3>🍳 Junior Cooks</h3>
+                                <h3>Junior Cooks</h3>
                                 <p>A fun, safe introduction to healthy cooking. Kids explore fresh ingredients, basic kitchen skills, and the joy of making food from scratch in a supportive group setting.</p>
                                 <ul className={styles.featureChips}>
                                     <li>Build confidence</li>
@@ -152,7 +123,7 @@ export default function HomePage() {
                                 <div className={`${styles.ageBubble} ${styles.ageBubbleTeen}`}>Ages 12–18</div>
                             </div>
                             <div className={styles.journeyContent}>
-                                <h3>🔥 Teen Chefs</h3>
+                                <h3>Teen Chefs</h3>
                                 <p>Real-world cooking skills for growing independence. From knife technique to budget meal planning — ideal for Duke of Edinburgh and life beyond the family kitchen.</p>
                                 <ul className={styles.featureChips}>
                                     <li>Duke of Edinburgh</li>
@@ -175,7 +146,7 @@ export default function HomePage() {
             <section className={styles.learnSection}>
                 <div className="container">
                     <div className={styles.sectionHeader}>
-                        <span className={styles.sectionEyebrow}>📚 The Syllabus</span>
+                        <span className={styles.sectionEyebrow}>The Syllabus</span>
                         <h2>What they&apos;ll learn</h2>
                     </div>
                     <div className={styles.learnGrid}>
@@ -201,15 +172,15 @@ export default function HomePage() {
             <section className={styles.howSection}>
                 <div className="container">
                     <div className={styles.sectionHeader}>
-                        <span className={styles.sectionEyebrow}>🧑‍🍳 How a Session Works</span>
+                        <span className={styles.sectionEyebrow}>How a Session Works</span>
                         <h2>Simple as a recipe</h2>
                     </div>
                     <div className={styles.stepsGrid}>
                         {[
-                            { emoji: '📋', n: '1', title: 'Register', desc: 'Create your free account in under 2 minutes.' },
-                            { emoji: '🔍', n: '2', title: 'Find', desc: 'Pick the perfect class, date & location.' },
-                            { emoji: '💳', n: '3', title: 'Book', desc: 'Secure your spot with easy online payment.' },
-                            { emoji: '👨‍🍳', n: '4', title: 'Cook!', desc: 'Show up, get messy, and start creating!' },
+                            { emoji: '', n: '1', title: 'Register', desc: 'Create your free account in under 2 minutes.' },
+                            { emoji: '', n: '2', title: 'Find', desc: 'Pick the perfect class, date & location.' },
+                            { emoji: '', n: '3', title: 'Book', desc: 'Secure your spot with easy online payment.' },
+                            { emoji: '', n: '4', title: 'Cook!', desc: 'Show up, get messy, and start creating!' },
                         ].map((s) => (
                             <div key={s.n} className={styles.stepCard}>
                                 <div className={styles.stepEmoji}>{s.emoji}</div>
@@ -226,7 +197,7 @@ export default function HomePage() {
             <section className={styles.testimonialsSection}>
                 <div className="container">
                     <div className={styles.sectionHeader}>
-                        <span className={styles.sectionEyebrow}>💬 Reviews</span>
+                        <span className={styles.sectionEyebrow}>Reviews</span>
                         <h2>Loved by parents and kids</h2>
                     </div>
                     <div className={styles.testimonialGrid}>
@@ -255,7 +226,7 @@ export default function HomePage() {
                         </div>
                     </div>
                     <div className={styles.founderText}>
-                        <span className={styles.sectionEyebrow}>👩‍🍳 Meet the Founder</span>
+                        <span className={styles.sectionEyebrow}>Meet the Founder</span>
                         <h2>Nisha Vadhel</h2>
                         <p>
                             With over 2 years teaching cooking at Ark Elvin Academy and leading sessions at Fun Fest holiday club, Nisha is passionate about equipping young minds with essential culinary and life skills.
@@ -274,7 +245,7 @@ export default function HomePage() {
             <section className={styles.ctaBanner}>
                 <div className="container">
                     <div className={styles.ctaBannerInner}>
-                        <h2>Ready to start cooking? 🍽️</h2>
+                        <h2>Ready to start cooking?</h2>
                         <p>Join hundreds of London families who&apos;ve discovered the joy of healthy homecooking.</p>
                         <BannerCtas />
                     </div>

@@ -7,7 +7,7 @@ import { BTClassType } from '@/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { classTypeSchema, ClassTypeFormData, BADGE_COLORS } from './schema';
-import { Tag, Plus, Edit2, X, Users, Clock, DollarSign, Trash2 } from 'lucide-react';
+import { Tag, Plus, Edit2, X, Clock, Trash2 } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminClassTypes() {
@@ -52,10 +52,6 @@ export default function AdminClassTypes() {
                 badgeColor: ct.badgeColor,
                 skipQuestionnaire: ct.skipQuestionnaire,
                 requireEmergencyContact: ct.requireEmergencyContact,
-                defaultAgeMin: ct.defaultAgeMin,
-                defaultAgeMax: ct.defaultAgeMax,
-                defaultMaxSize: ct.defaultMaxSize,
-                defaultPrice: ct.defaultPrice,
                 order: ct.order,
             });
         } else {
@@ -67,10 +63,6 @@ export default function AdminClassTypes() {
                 badgeColor: 'gray',
                 skipQuestionnaire: false,
                 requireEmergencyContact: false,
-                defaultAgeMin: 0,
-                defaultAgeMax: 12,
-                defaultMaxSize: 15,
-                defaultPrice: 1500,
                 order: classTypes.length + 1,
             });
         }
@@ -202,8 +194,6 @@ export default function AdminClassTypes() {
                             </div>
                             <h3>{ct.displayName}</h3>
                             <div className={styles.classTypeMeta}>
-                                <p><Users size={14} strokeWidth={1.5} /> Ages {ct.defaultAgeMin}–{ct.defaultAgeMax} • Max {ct.defaultMaxSize}</p>
-                                <p><DollarSign size={14} strokeWidth={1.5} /> £{(ct.defaultPrice / 100).toFixed(2)} default</p>
                                 <p><Clock size={14} strokeWidth={1.5} /> Order: {ct.order}</p>
                             </div>
                             <div className={styles.flags}>
@@ -271,48 +261,6 @@ export default function AdminClassTypes() {
                                         ))}
                                     </select>
                                     {errors.badgeColor && <span className="form-error">{errors.badgeColor.message}</span>}
-                                </div>
-                            </div>
-
-                            <div className={styles.formRow}>
-                                <div className="form-group">
-                                    <label className="form-label">Default Min Age</label>
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        {...register('defaultAgeMin', { valueAsNumber: true })}
-                                    />
-                                    {errors.defaultAgeMin && <span className="form-error">{errors.defaultAgeMin.message}</span>}
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Default Max Age</label>
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        {...register('defaultAgeMax', { valueAsNumber: true })}
-                                    />
-                                    {errors.defaultAgeMax && <span className="form-error">{errors.defaultAgeMax.message}</span>}
-                                </div>
-                            </div>
-
-                            <div className={styles.formRow}>
-                                <div className="form-group">
-                                    <label className="form-label">Default Max Size</label>
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        {...register('defaultMaxSize', { valueAsNumber: true })}
-                                    />
-                                    {errors.defaultMaxSize && <span className="form-error">{errors.defaultMaxSize.message}</span>}
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Default Price (pence)</label>
-                                    <input
-                                        type="number"
-                                        className="form-input"
-                                        {...register('defaultPrice', { valueAsNumber: true })}
-                                    />
-                                    {errors.defaultPrice && <span className="form-error">{errors.defaultPrice.message}</span>}
                                 </div>
                             </div>
 

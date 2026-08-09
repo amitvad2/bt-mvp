@@ -11,10 +11,6 @@ export const classTypeSchema = z.object({
   badgeColor: z.enum(BADGE_COLORS),
   skipQuestionnaire: z.boolean(),
   requireEmergencyContact: z.boolean(),
-  defaultAgeMin: z.number().int().min(0),
-  defaultAgeMax: z.number().int().min(1),
-  defaultMaxSize: z.number().int().min(1),
-  defaultPrice: z.number().int().min(0, 'Price must be a non-negative integer (pence)'),
   order: z.number().int().min(0),
 });
 

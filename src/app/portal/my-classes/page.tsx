@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, getDocs, orderBy, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
-import { Booking, Session } from '@/types';
-import { Calendar, Clock, MapPin, ChefHat, AlertCircle, XCircle, CheckCircle } from 'lucide-react';
+import { Booking } from '@/types';
+import { Calendar, Clock, MapPin, XCircle, Repeat } from 'lucide-react';
 import BundleGroupCard from '@/components/portal/BundleGroupCard';
+import { formatRecurrenceDays } from '@/lib/term-utils';
 import styles from './page.module.css';
 
 export default function MyClassesPage() {
@@ -23,7 +24,7 @@ export default function MyClassesPage() {
                     where('bookedByUid', '==', user.uid)
                 );
                 const snap = await getDocs(q);
-                let bookingData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+                const bookingData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
 
                 // Client-side sort by createdAt desc
                 bookingData.sort((a, b) => {
@@ -80,59 +81,59 @@ export default function MyClassesPage() {
         }
     };
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const handleTermCancel = async (booking: Booking) => {
+        if (!confirm('Are you sure you want to cancel this term booking? This action is subject to our cancellation policy.')) return;
 
-    // Separate bundle bookings from individual bookings
-    const bundleBookings = bookings.filter(b => !!b.bundleId);
-    const individualBookings = bookings.filter(b => !b.bundleId);
+        try {
+            // Update booking status to 'cancelled'
+            await updateDoc(doc(db, 'bookings', booking.id), {
+                status: 'cancelled',
+                cancelledAt: new Date()
+            });
 
-    // Group bundle bookings by bundleId
-    const bundleGroups = useMemo(() => {
-        const groups = new Map<string, Booking[]>();
-        for (const booking of bundleBookings) {
-            const key = booking.bundleId!;
-            if (!groups.has(key)) {
-                groups.set(key, []);
+            // Increment spotsAvailable on the class document
+            if (booking.classId) {
+                await updateDoc(doc(db, 'classes', booking.classId), {
+                    spotsAvailable: increment(1)
+                });
             }
-            groups.get(key)!.push(booking);
+
+            // Send cancellation email
+            const startTime = (booking as Booking & { startTime?: string }).startTime || '';
+            const endTime = (booking as Booking & { endTime?: string }).endTime || '';
+            const scheduleDesc = booking.recurrenceDays && booking.recurrenceDays.length > 0
+                ? `${formatRecurrenceDays(booking.recurrenceDays)} — ${startTime}–${endTime}`
+                : '';
+
+            user?.getIdToken().then(idToken =>
+                fetch('/api/emails/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({
+                        to: user?.email,
+                        subject: `Term Booking Cancelled: ${booking.className}`,
+                        type: 'cancellation',
+                        data: {
+                            className: booking.className,
+                            sessionDate: scheduleDesc || `${booking.termStartDate} to ${booking.termEndDate}`,
+                            venueName: booking.venueName,
+                        }
+                    })
+                })
+            ).catch(err => console.error('Failed to send term cancellation email:', err));
+
+            setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'cancelled' } : b));
+            alert('Term booking cancelled successfully.');
+        } catch (e) {
+            console.error(e);
+            alert('Error cancelling term booking. Please contact support.');
         }
-        return groups;
-    }, [bundleBookings]);
+    };
 
-    // Separate upcoming/active bundle groups from past/cancelled ones
-    const upcomingBundleGroups = useMemo(() => {
-        const result: Map<string, Booking[]> = new Map();
-        for (const [bundleId, group] of bundleGroups) {
-            // A bundle group is "upcoming" if at least one booking is confirmed and has a future date
-            const hasUpcoming = group.some(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
-            if (hasUpcoming) {
-                result.set(bundleId, group);
-            }
-        }
-        return result;
-    }, [bundleGroups, today]);
-
-    const pastBundleGroups = useMemo(() => {
-        const result: Map<string, Booking[]> = new Map();
-        for (const [bundleId, group] of bundleGroups) {
-            const hasUpcoming = group.some(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
-            if (!hasUpcoming) {
-                result.set(bundleId, group);
-            }
-        }
-        return result;
-    }, [bundleGroups, today]);
-
-    const upcomingBookings = individualBookings.filter(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
-    const pastBookings = individualBookings.filter(b => b.status === 'cancelled' || new Date(b.sessionDate!) < today);
-
-    // TODO: Spots increment limitation — The client-side doesn't have permission to update
-    // session.spotsAvailable (that's admin-only). For the MVP, spots are NOT auto-incremented
-    // on cancellation from the client. The admin can manually adjust spots, or a server-side
-    // Cloud Function can be added later to listen for booking status changes and update spots.
     const handleBundleCancel = async (bundleId: string) => {
-        // Get all bookings for this bundle from local state
         const bundleBookingsToCancel = bookings.filter(b => b.bundleId === bundleId && b.status !== 'cancelled');
 
         if (bundleBookingsToCancel.length === 0) return;
@@ -142,10 +143,6 @@ export default function MyClassesPage() {
         if (!confirm(`Are you sure you want to cancel the entire "${bundleName}" bundle? This will cancel all ${bundleBookingsToCancel.length} session(s) in this bundle.`)) return;
 
         try {
-            // Update all bundle bookings status to 'cancelled' (client-side updateDoc for each booking)
-            // Note: We can't do a true Firestore transaction from the client SDK, but since security
-            // rules only allow the owner to update status to 'cancelled', this is safe. If any update
-            // fails, we show an error.
             const cancelPromises = bundleBookingsToCancel.map(booking =>
                 updateDoc(doc(db, 'bookings', booking.id), {
                     status: 'cancelled',
@@ -155,12 +152,10 @@ export default function MyClassesPage() {
 
             await Promise.all(cancelPromises);
 
-            // Update local state to mark all bundle bookings as cancelled
             setBookings(prev => prev.map(b =>
                 b.bundleId === bundleId ? { ...b, status: 'cancelled' as const } : b
             ));
 
-            // Send bundle cancellation email
             const sortedCancelledBookings = [...bundleBookingsToCancel].sort((a, b) =>
                 a.sessionDate.localeCompare(b.sessionDate)
             );
@@ -204,6 +199,86 @@ export default function MyClassesPage() {
         }
     };
 
+    /**
+     * Formats a term booking into a human-readable schedule description.
+     * E.g. "Every Mon, Wed, Fri — 3:30–4:30 pm, 6 Jan – 28 Mar 2025"
+     */
+    const formatTermSchedule = (booking: Booking): string => {
+        const days = booking.recurrenceDays || [];
+        const startTime = (booking as Booking & { startTime?: string }).startTime || '';
+        const endTime = (booking as Booking & { endTime?: string }).endTime || '';
+
+        const daysStr = formatRecurrenceDays(days);
+        const timeStr = startTime && endTime ? `${startTime}–${endTime}` : '';
+
+        const formatDate = (dateStr?: string) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        };
+
+        const periodStr = booking.termStartDate && booking.termEndDate
+            ? `${formatDate(booking.termStartDate)} – ${formatDate(booking.termEndDate)}`
+            : '';
+
+        const parts = [daysStr, timeStr, periodStr].filter(Boolean);
+        return parts.join(' — ');
+    };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Separate term bookings from other bookings
+    const termBookings = bookings.filter(b => b.bookingType === 'term');
+    const nonTermBookings = bookings.filter(b => b.bookingType !== 'term');
+
+    // Separate bundle bookings from individual bookings (only non-term)
+    const bundleBookings = nonTermBookings.filter(b => !!b.bundleId);
+    const individualBookings = nonTermBookings.filter(b => !b.bundleId);
+
+    // Term bookings: active vs past/cancelled
+    const activeTermBookings = termBookings.filter(b => b.status === 'confirmed');
+    const pastTermBookings = termBookings.filter(b => b.status === 'cancelled');
+
+    // Group bundle bookings by bundleId
+    const bundleGroups = useMemo(() => {
+        const groups = new Map<string, Booking[]>();
+        for (const booking of bundleBookings) {
+            const key = booking.bundleId!;
+            if (!groups.has(key)) {
+                groups.set(key, []);
+            }
+            groups.get(key)!.push(booking);
+        }
+        return groups;
+    }, [bundleBookings]);
+
+    // Separate upcoming/active bundle groups from past/cancelled ones
+    const upcomingBundleGroups = useMemo(() => {
+        const result: Map<string, Booking[]> = new Map();
+        for (const [bundleId, group] of bundleGroups) {
+            const hasUpcoming = group.some(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
+            if (hasUpcoming) {
+                result.set(bundleId, group);
+            }
+        }
+        return result;
+    }, [bundleGroups, today]);
+
+    const pastBundleGroups = useMemo(() => {
+        const result: Map<string, Booking[]> = new Map();
+        for (const [bundleId, group] of bundleGroups) {
+            const hasUpcoming = group.some(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
+            if (!hasUpcoming) {
+                result.set(bundleId, group);
+            }
+        }
+        return result;
+    }, [bundleGroups, today]);
+
+    const upcomingBookings = individualBookings.filter(b => b.status === 'confirmed' && new Date(b.sessionDate!) >= today);
+    const pastBookings = individualBookings.filter(b => b.status === 'cancelled' || new Date(b.sessionDate!) < today);
+
     return (
         <div className={styles.page}>
             <div className={styles.header}>
@@ -220,13 +295,52 @@ export default function MyClassesPage() {
                 <div className={styles.empty}>
                     <Calendar size={48} />
                     <h3>No bookings found</h3>
-                    <p>You haven't booked any classes yet. Head over to class discovery to find your first session!</p>
+                    <p>You haven&apos;t booked any classes yet. Head over to class discovery to find your first session!</p>
                     <button className="btn btn-primary" onClick={() => window.location.href = '/portal/find-class'}>
                         Find a Class
                     </button>
                 </div>
             ) : (
                 <div className={styles.sections}>
+                    {/* Active Term Bookings */}
+                    {activeTermBookings.length > 0 && (
+                        <section className={styles.section}>
+                            <h2 className={styles.sectionTitle}>Term Enrolments</h2>
+                            <div className={styles.list}>
+                                {activeTermBookings.map(booking => (
+                                    <div key={booking.id} className={`card ${styles.bookingCard} ${styles.termCard}`}>
+                                        <div className={styles.cardInfo}>
+                                            <div className={styles.termIcon}>
+                                                <Repeat size={24} />
+                                            </div>
+                                            <div className={styles.details}>
+                                                <div className={styles.termHeader}>
+                                                    <h3>{booking.className}</h3>
+                                                    <span className="badge badge-indigo">Term</span>
+                                                </div>
+                                                <p className={styles.studentName}>
+                                                    Participant: <strong>{booking.studentName || 'Self'}</strong>
+                                                </p>
+                                                <p className={styles.termSchedule}>
+                                                    <Clock size={14} /> {formatTermSchedule(booking)}
+                                                </p>
+                                                <div className={styles.meta}>
+                                                    <span><MapPin size={14} /> {booking.venueName}</span>
+                                                    <span className="badge badge-green">Active</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className={styles.cardActions}>
+                                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleTermCancel(booking)}>
+                                                <XCircle size={16} /> Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* Upcoming Bundle Bookings */}
                     {upcomingBundleGroups.size > 0 && (
                         <section className={styles.section}>
@@ -243,7 +357,7 @@ export default function MyClassesPage() {
                         </section>
                     )}
 
-                    {/* Upcoming */}
+                    {/* Upcoming Individual Sessions */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>Upcoming Sessions</h2>
                         {upcomingBookings.length > 0 ? (
@@ -283,10 +397,33 @@ export default function MyClassesPage() {
                         )}
                     </section>
 
-                    {/* Past / Cancelled */}
+                    {/* Past & Cancelled */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>Past & Cancelled</h2>
                         <div className={styles.list}>
+                            {/* Past/cancelled term bookings */}
+                            {pastTermBookings.map(booking => (
+                                <div key={booking.id} className={`card ${styles.bookingCard} ${styles.pastCard}`}>
+                                    <div className={styles.cardInfo}>
+                                        <div className={styles.termIcon}>
+                                            <Repeat size={24} />
+                                        </div>
+                                        <div className={styles.details}>
+                                            <div className={styles.termHeader}>
+                                                <h3>{booking.className}</h3>
+                                                <span className="badge badge-indigo">Term</span>
+                                            </div>
+                                            <p className={styles.studentName}>Participant: {booking.studentName || 'Self'}</p>
+                                            <p className={styles.termSchedule}>
+                                                <Clock size={14} /> {formatTermSchedule(booking)}
+                                            </p>
+                                            <div className={styles.meta}>
+                                                <span className="badge badge-red">Cancelled</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                             {/* Past/cancelled bundle groups */}
                             {Array.from(pastBundleGroups.entries()).map(([bundleId, group]) => (
                                 <BundleGroupCard
