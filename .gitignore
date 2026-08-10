@@ -47,3 +47,5 @@ compile_errors.txt
 
 .vercel
 .env*
+users-prod.json
+users-dev.json
