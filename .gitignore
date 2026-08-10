@@ -49,3 +49,5 @@ compile_errors.txt
 .env*
 users-prod.json
 users-dev.json
+users-prod.json
+users-dev.json
