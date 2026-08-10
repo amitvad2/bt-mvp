@@ -856,9 +856,16 @@ async function handleTermPaymentSucceeded(
     }
 
     // 5. Notify admin of new term booking (best-effort, non-blocking)
+    const termStart = draft.termStartDate
+        ? new Date(draft.termStartDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '';
+    const termEnd = draft.termEndDate
+        ? new Date(draft.termEndDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '';
+    const termDateDisplay = termStart && termEnd ? `${termStart} to ${termEnd}` : termStart || termEnd || 'N/A';
     await sendAdminBookingNotification({
         className: draft.className,
-        sessionDate: `${draft.termStartDate ?? ''} to ${draft.termEndDate ?? ''}`,
+        sessionDate: termDateDisplay,
         startTime: draft.startTime,
         endTime: draft.endTime,
         venueName: draft.venueName,
@@ -1025,11 +1032,20 @@ async function sendConfirmationEmail(params: {
         return;
     }
 
-    const formattedDate = new Date(params.sessionDate).toLocaleDateString('en-GB', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-    });
+    let formattedDate = 'Date not available';
+    if (params.sessionDate) {
+        const parsed = new Date(params.sessionDate);
+        if (!isNaN(parsed.getTime())) {
+            formattedDate = parsed.toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+            });
+        } else {
+            // Fallback for non-standard date strings (e.g. term date ranges)
+            formattedDate = params.sessionDate;
+        }
+    }
 
     const timeStr = params.startTime && params.endTime
         ? `${params.startTime} – ${params.endTime}`
@@ -1189,14 +1205,21 @@ async function sendAdminBookingNotification(params: {
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
-    const formattedDate = params.sessionDate
-        ? new Date(params.sessionDate).toLocaleDateString('en-GB', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-        })
-        : 'N/A';
+    let formattedDate = 'N/A';
+    if (params.sessionDate) {
+        const parsed = new Date(params.sessionDate);
+        if (!isNaN(parsed.getTime())) {
+            formattedDate = parsed.toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            });
+        } else {
+            // Fallback for non-standard date strings (e.g. term date ranges like "2025-07-21 to 2025-07-25")
+            formattedDate = params.sessionDate;
+        }
+    }
 
     const timeStr = params.startTime && params.endTime
         ? `${params.startTime} – ${params.endTime}`
@@ -1304,13 +1327,19 @@ export async function sendGuestConfirmationEmail(
     const formattedAmount = `£${(amountPence / 100).toFixed(2)}`;
 
     // Format date for display
-    const formattedDate = sessionDate
-        ? new Date(sessionDate).toLocaleDateString('en-GB', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-        })
-        : '';
+    let formattedDate = '';
+    if (sessionDate) {
+        const parsed = new Date(sessionDate);
+        if (!isNaN(parsed.getTime())) {
+            formattedDate = parsed.toLocaleDateString('en-GB', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+            });
+        } else {
+            formattedDate = sessionDate;
+        }
+    }
 
     const timeStr = startTime && endTime ? `${startTime} – ${endTime}` : '';
 
