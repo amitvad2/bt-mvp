@@ -139,8 +139,12 @@ async function handlePaymentIntentSucceeded(
     }
 
     if (draft.bookingMode === 'guest' && draft.bookingType === 'term') {
-        // Guest term booking — route to term handler which supports guest mode
-        await handleTermPaymentSucceeded(paymentIntent, draft);
+        // Guest term booking — route based on whether it's class-based or session-based
+        if (draft.classId && !draft.sessionId) {
+            await handleTermPaymentSucceeded(paymentIntent, draft);
+        } else {
+            await handleSessionTermPaymentSucceeded(paymentIntent, draft);
+        }
         return;
     }
 
@@ -149,8 +153,15 @@ async function handlePaymentIntentSucceeded(
         return;
     }
 
+    // Route to term handler only when bookingType is explicitly 'term'.
+    // Absent/undefined bookingType defaults to per-session (backward compat).
     if (draft.bookingType === 'term') {
-        await handleTermPaymentSucceeded(paymentIntent, draft);
+        // Route based on whether it's class-based or session-based term booking
+        if (draft.classId && !draft.sessionId) {
+            await handleTermPaymentSucceeded(paymentIntent, draft);
+        } else {
+            await handleSessionTermPaymentSucceeded(paymentIntent, draft);
+        }
         return;
     }
 
@@ -604,6 +615,159 @@ async function handleGuestPaymentSucceeded(
     }
 
     console.log(`[webhook] Guest booking ${piId} created successfully`);
+}
+
+// ---------------------------------------------------------------------------
+// Session-based Term: payment_intent.succeeded
+// ---------------------------------------------------------------------------
+
+async function handleSessionTermPaymentSucceeded(
+    paymentIntent: Stripe.PaymentIntent,
+    draft: FirebaseFirestore.DocumentData
+) {
+    const piId = paymentIntent.id;
+    const sessionId: string = draft.sessionId;
+
+    console.log(`[webhook] Session-based term payment_intent.succeeded: ${piId}, sessionId=${sessionId}`);
+
+    // 1. Atomic booking creation + session capacity decrement within a transaction
+    const bookingRef = adminDb.doc(`bookings/${piId}`);
+    const sessionRef = adminDb.doc(`sessions/${sessionId}`);
+
+    let alreadyProcessed = false;
+    let overbooking = false;
+
+    await adminDb.runTransaction(async (tx) => {
+        // --- Idempotency check ---
+        const existingBooking = await tx.get(bookingRef);
+        if (existingBooking.exists) {
+            console.log(
+                `[webhook] Session-based term booking ${piId} already exists — duplicate event, skipping`
+            );
+            alreadyProcessed = true;
+            return;
+        }
+
+        // --- Read session document inside transaction ---
+        const sessionDoc = await tx.get(sessionRef);
+        if (!sessionDoc.exists) {
+            throw new Error(`Term session ${sessionId} not found in Firestore`);
+        }
+
+        const sessionData = sessionDoc.data()!;
+        const spotsAvailable = sessionData.spotsAvailable ?? 0;
+
+        // Build the term booking document
+        const termBookingDoc: Record<string, any> = {
+            bookingType: 'term',
+            sessionId,
+            sessionDate: draft.termStartDate ?? sessionData.termStartDate ?? '',
+            className: draft.className ?? sessionData.className ?? '',
+            classType: draft.classType ?? sessionData.classType ?? '',
+            venueName: draft.venueName ?? sessionData.venueName ?? '',
+            startTime: draft.startTime ?? sessionData.startTime ?? null,
+            endTime: draft.endTime ?? sessionData.endTime ?? null,
+            termStartDate: draft.termStartDate ?? sessionData.termStartDate ?? '',
+            termEndDate: draft.termEndDate ?? sessionData.termEndDate ?? '',
+            // User
+            bookedByUid: draft.bookedByUid,
+            bookedByName: draft.bookedByName,
+            bookedByEmail: draft.bookedByEmail ?? null,
+            // Student
+            studentId: draft.studentId,
+            studentName: draft.studentName,
+            // Consent & health
+            status: 'confirmed',
+            medicalInfo: draft.medicalInfo ?? null,
+            emergencyContact: draft.emergencyContact ?? null,
+            questionnaire: draft.questionnaire ?? null,
+            termsAccepted: draft.termsAccepted,
+            termsAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+            // Payment
+            payment: {
+                stripePaymentIntentId: piId,
+                amount: paymentIntent.amount,
+                currency: paymentIntent.currency ?? 'gbp',
+                status: 'paid',
+                receiptUrl: null,
+            },
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        if (spotsAvailable <= 0) {
+            // Overbooking: payment was taken but session is full
+            console.warn(
+                `[webhook] Term session ${sessionId} has ${spotsAvailable} spots available. ` +
+                `Overbooking detected — booking created with overbooking flag.`
+            );
+            termBookingDoc.overbooking = true;
+            overbooking = true;
+            tx.set(bookingRef, termBookingDoc);
+            // Do not decrement below 0
+        } else {
+            // Happy path: create booking + decrement spots atomically
+            termBookingDoc.overbooking = false;
+            tx.set(bookingRef, termBookingDoc);
+
+            // Decrement spots and auto-transition to 'full' if needed
+            const updateData: Record<string, any> = {
+                spotsAvailable: admin.firestore.FieldValue.increment(-1),
+            };
+            if (spotsAvailable - 1 === 0) {
+                updateData.status = 'full';
+                console.log(
+                    `[webhook] Term session ${sessionId} is now full — status updated to 'full'`
+                );
+            }
+            tx.update(sessionRef, updateData);
+        }
+    });
+
+    if (alreadyProcessed) return;
+
+    // 2. Send term booking confirmation email (best-effort, non-blocking)
+    if (draft.bookedByEmail) {
+        await sendSessionTermConfirmationEmail({
+            to: draft.bookedByEmail,
+            className: draft.className ?? '',
+            termStartDate: draft.termStartDate ?? '',
+            termEndDate: draft.termEndDate ?? '',
+            startTime: draft.startTime ?? '',
+            endTime: draft.endTime ?? '',
+            venueName: draft.venueName ?? '',
+            studentName: draft.studentName ?? '',
+            amount: paymentIntent.amount,
+            overbooking,
+        });
+    }
+
+    // 3. Notify admin of new term booking (best-effort, non-blocking)
+    const termStart = draft.termStartDate
+        ? new Date(draft.termStartDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '';
+    const termEnd = draft.termEndDate
+        ? new Date(draft.termEndDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '';
+    const termDateDisplay = termStart && termEnd ? `${termStart} to ${termEnd}` : termStart || termEnd || 'N/A';
+    await sendAdminBookingNotification({
+        className: draft.className ?? '',
+        sessionDate: termDateDisplay,
+        startTime: draft.startTime,
+        endTime: draft.endTime,
+        venueName: draft.venueName ?? '',
+        studentName: draft.studentName ?? '',
+        bookedByName: draft.bookedByName ?? '',
+        bookedByEmail: draft.bookedByEmail ?? '',
+    });
+
+    // 4. Delete the draft (cleanup — non-critical if this fails)
+    try {
+        await adminDb.doc(`booking_drafts/${piId}`).delete();
+    } catch (err) {
+        console.error(`[webhook] Failed to delete session-based term booking draft ${piId}:`, err);
+    }
+
+    console.log(`[webhook] Session-based term booking ${piId} created successfully`);
 }
 
 // ---------------------------------------------------------------------------
@@ -1566,5 +1730,104 @@ async function sendTermConfirmationEmail(params: {
         }
     } catch (err) {
         console.error('[webhook] Failed to send term confirmation email:', err);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Session-based Term Booking Confirmation Email
+// ---------------------------------------------------------------------------
+
+async function sendSessionTermConfirmationEmail(params: {
+    to: string;
+    className: string;
+    termStartDate: string;
+    termEndDate: string;
+    startTime: string;
+    endTime: string;
+    venueName: string;
+    studentName: string;
+    amount: number; // in pence
+    overbooking: boolean;
+}) {
+    if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_placeholder') {
+        console.warn('[webhook] RESEND_API_KEY not set — skipping session term confirmation email');
+        return;
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+    const timeStr = params.startTime && params.endTime
+        ? `${params.startTime} – ${params.endTime}`
+        : '';
+
+    // Format dates for display
+    const formattedStartDate = params.termStartDate
+        ? new Date(params.termStartDate + 'T00:00:00').toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        })
+        : '';
+    const formattedEndDate = params.termEndDate
+        ? new Date(params.termEndDate + 'T00:00:00').toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        })
+        : '';
+
+    const termDateRange = formattedStartDate && formattedEndDate
+        ? `${formattedStartDate} to ${formattedEndDate}`
+        : formattedStartDate || formattedEndDate || 'N/A';
+
+    // Format amount
+    const formattedAmount = `£${(params.amount / 100).toFixed(2)}`;
+
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/my-classes`;
+
+    try {
+        const { error } = await resend.emails.send({
+            from: `Blooming Tastebuds <${fromEmail}>`,
+            to: [params.to],
+            subject: `Term Booking Confirmed: ${params.className}`,
+            html: `
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
+                    <h1 style="color:#0066CC;font-size:24px;margin-bottom:8px;">Term Booking Confirmed!</h1>
+                    <p style="color:#666;font-size:16px;margin-bottom:24px;">
+                        Your term enrolment at Blooming Tastebuds is confirmed. We can&rsquo;t wait to see you every week!
+                    </p>
+                    <div style="background:#F5F5F7;padding:20px;border-radius:12px;margin-bottom:24px;">
+                        <h2 style="font-size:18px;margin-top:0;">Term Details</h2>
+                        <ul style="list-style:none;padding:0;margin:0;color:#333;">
+                            <li style="margin-bottom:8px;"><strong>Class:</strong> ${params.className}</li>
+                            <li style="margin-bottom:8px;"><strong>Term Period:</strong> ${termDateRange}</li>
+                            ${timeStr ? `<li style="margin-bottom:8px;"><strong>Time:</strong> ${timeStr}</li>` : ''}
+                            <li style="margin-bottom:8px;"><strong>Venue:</strong> ${params.venueName}</li>
+                            <li style="margin-bottom:8px;"><strong>Participant:</strong> ${params.studentName}</li>
+                            <li style="margin-bottom:8px;"><strong>Amount Paid:</strong> ${formattedAmount}</li>
+                        </ul>
+                    </div>
+                    <div style="background:#E8F5E9;padding:16px;border-radius:12px;margin-bottom:24px;">
+                        <p style="color:#2E7D32;font-size:14px;margin:0;">
+                            &#10003; Your child is enrolled for the full term. No need to book individual sessions &mdash; just turn up on the scheduled days!
+                        </p>
+                    </div>
+                    <p style="color:#666;font-size:14px;line-height:1.5;">
+                        View and manage your booking in your
+                        <a href="${portalUrl}" style="color:#0066CC;">My Classes</a> dashboard.
+                    </p>
+                    <hr style="border:0;border-top:1px solid #eee;margin:24px 0;" />
+                    <p style="color:#999;font-size:12px;text-align:center;">Blooming Tastebuds &mdash; Fun, hands-on cooking classes.</p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            console.error('[webhook] Session term confirmation email error:', error);
+        } else {
+            console.log(`[webhook] Session term confirmation email sent to ${params.to}`);
+        }
+    } catch (err) {
+        console.error('[webhook] Failed to send session term confirmation email:', err);
     }
 }

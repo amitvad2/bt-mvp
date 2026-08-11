@@ -1,0 +1,298 @@
+/* ============================================================
+   TermScheduleEditor — recipe assignment & schedule management
+   ============================================================ */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  background: var(--bt-gray-50);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--bt-gray-200);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--bt-gray-900);
+  margin: 0;
+}
+
+.activeCount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--bt-gray-600);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bt-white, #fff);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius);
+}
+
+.error {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: #dc2626;
+}
+
+/* ============================================================
+   Schedule Entry List
+   ============================================================ */
+
+.scheduleList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entryRow {
+  display: grid;
+  grid-template-columns: 200px 1fr auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bt-white, #fff);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius);
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.entryRow:hover {
+  background: var(--bt-gray-50);
+}
+
+/* Skipped entries — muted with strikethrough */
+.entrySkipped {
+  opacity: 0.55;
+  background: var(--bt-gray-100);
+  border-style: dashed;
+}
+
+.entrySkipped .dateText {
+  text-decoration: line-through;
+  color: var(--bt-gray-500);
+}
+
+/* ============================================================
+   Entry: Date column
+   ============================================================ */
+
+.entryDate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dateText {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--bt-gray-800);
+  white-space: nowrap;
+}
+
+.skippedBadge {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: var(--radius);
+}
+
+/* ============================================================
+   Entry: Recipe column
+   ============================================================ */
+
+.entryRecipe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.recipeThumb {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.recipePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  background: var(--bt-gray-100);
+  color: var(--bt-gray-400);
+  flex-shrink: 0;
+}
+
+.recipeSelect {
+  flex: 1;
+  min-width: 0;
+  max-width: 280px;
+  font-size: 0.85rem !important;
+  padding: var(--space-2) var(--space-3) !important;
+}
+
+.clearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius);
+  background: var(--bt-white, #fff);
+  color: var(--bt-gray-500);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.clearBtn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.clearBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Entry: Actions column
+   ============================================================ */
+
+.entryActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.skipBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--bt-gray-200);
+  border-radius: var(--radius);
+  background: var(--bt-white, #fff);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--bt-gray-600);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.skipBtn:hover {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.skipBtnActive {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+
+.skipBtnActive:hover {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #34d399;
+}
+
+.skipBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Saving indicator
+   ============================================================ */
+
+.savingIndicator {
+  font-size: 0.75rem;
+  color: var(--bt-gray-400);
+  font-style: italic;
+}
+
+/* ============================================================
+   Add Make-up Date
+   ============================================================ */
+
+.addMakeUp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--bt-gray-200);
+}
+
+.addMakeUpLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bt-gray-700);
+}
+
+.addMakeUpRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.addMakeUpRow input {
+  max-width: 200px;
+}
+
+/* ============================================================
+   Responsive adjustments
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .entryRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .entryRecipe {
+    flex-wrap: wrap;
+  }
+
+  .recipeSelect {
+    max-width: 100%;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

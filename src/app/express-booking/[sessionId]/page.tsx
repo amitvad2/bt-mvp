@@ -60,16 +60,18 @@ export default async function ExpressBookingPage({
     );
   }
 
-  // Session date is in the past
-  const sessionDate = new Date(sessionData.date + 'T00:00:00');
+  // Session date is in the past (for term sessions, check termEndDate instead)
+  const isTermSession = sessionData.sessionType === 'term';
+  const relevantDate = isTermSession ? (sessionData.termEndDate || sessionData.date) : sessionData.date;
+  const sessionDate = new Date(relevantDate + 'T00:00:00');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   if (sessionDate < today) {
     return (
       <main style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>Session Passed</h1>
-        <p>This session has already taken place.</p>
+        <h1>{isTermSession ? 'Term Ended' : 'Session Passed'}</h1>
+        <p>{isTermSession ? 'This term has already ended.' : 'This session has already taken place.'}</p>
       </main>
     );
   }
@@ -98,6 +100,13 @@ export default async function ExpressBookingPage({
     price: sessionData.price,
     spotsAvailable: sessionData.spotsAvailable,
     status: sessionData.status,
+    // Term session fields
+    ...(isTermSession && {
+      sessionType: 'term' as const,
+      termStartDate: sessionData.termStartDate,
+      termEndDate: sessionData.termEndDate,
+      dayOfWeek: sessionData.dayOfWeek,
+    }),
   };
 
   // Valid session — render GuestBookingClient with session data and source prop

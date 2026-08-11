@@ -6,7 +6,8 @@ import { Elements } from '@stripe/react-stripe-js';
 import { useBooking } from '@/context/BookingContext';
 import { useAuth } from '@/context/AuthContext';
 import { Student } from '@/types';
-import { CreditCard, ShieldCheck } from 'lucide-react';
+import { getActiveSessionCount } from '@/lib/term-schedule-utils';
+import { CreditCard, ShieldCheck, Calendar } from 'lucide-react';
 import CheckoutForm from './CheckoutForm';
 import styles from './page.module.css';
 
@@ -16,8 +17,18 @@ if (!stripeKey) {
 }
 const stripePromise = loadStripe(stripeKey || '');
 
+/**
+ * Formats a YYYY-MM-DD date string for term display (e.g. "8 Sep 2025").
+ */
+function formatTermDate(dateStr: string | undefined): string {
+    if (!dateStr) return '...';
+    const date = new Date(dateStr + 'T00:00:00');
+    if (isNaN(date.getTime())) return '...';
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export default function PaymentPage() {
-    const { state, loading: bookingLoading } = useBooking();
+    const { state, loading: bookingLoading, isTermSession, termStartDate, termEndDate, schedule } = useBooking();
     const { user, btUser, loading: authLoading } = useAuth();
 
     const [clientSecret, setClientSecret] = useState('');
@@ -126,8 +137,30 @@ export default function PaymentPage() {
             </div>
 
             <div className={styles.amountSummary}>
-                <span>Total Amount</span>
-                <strong>£{((state.session?.price || 0) / 100).toFixed(2)}</strong>
+                {isTermSession ? (
+                    <div className={styles.termSummary}>
+                        <div className={styles.termLabel}>
+                            <Calendar size={18} strokeWidth={1.5} />
+                            <span>Term booking</span>
+                        </div>
+                        <div className={styles.termDateRange}>
+                            {formatTermDate(termStartDate)} – {formatTermDate(termEndDate)}
+                        </div>
+                        <div className={styles.termDetails}>
+                            <span className={styles.termSessionCount}>
+                                {schedule ? getActiveSessionCount(schedule) : 0} sessions included
+                            </span>
+                            <strong className={styles.termPrice}>
+                                £{((state.session?.price || 0) / 100).toFixed(2)}
+                            </strong>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <span>Total Amount</span>
+                        <strong>£{((state.session?.price || 0) / 100).toFixed(2)}</strong>
+                    </>
+                )}
             </div>
 
             {!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (

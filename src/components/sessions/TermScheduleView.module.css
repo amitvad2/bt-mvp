@@ -1,0 +1,116 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sessionCount {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bt-gray-600);
+  margin: 0;
+}
+
+.scheduleList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.entryRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-sm);
+  background: var(--bt-gray-50);
+  transition: background 0.15s ease;
+}
+
+.entryRow:hover {
+  background: var(--bt-gray-100);
+}
+
+.entryDate {
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.dateText {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bt-gray-900);
+}
+
+.entryRecipe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+}
+
+.recipePhoto {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.photoFallback {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--bt-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--bt-gray-400);
+}
+
+.recipeName {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--bt-gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipeTba {
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--bt-gray-400);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) 0;
+  color: var(--bt-gray-400);
+}
+
+.emptyText {
+  font-size: 1rem;
+  color: var(--bt-gray-500);
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .entryRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .entryDate {
+    min-width: unset;
+  }
+}

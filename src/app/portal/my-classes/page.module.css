@@ -146,6 +146,7 @@
 /* Term booking card styles */
 .termCard {
     border-left-color: var(--bt-indigo, #6366f1);
+    flex-wrap: wrap;
 }
 
 .termIcon {
@@ -181,4 +182,23 @@
     font-size: 0.85rem;
     color: var(--bt-gray-600);
     margin-bottom: 6px;
+}
+
+/* Next upcoming session line */
+.nextSession {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--bt-green-dark, #15803d);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+/* Schedule panel (expanded inline) */
+.schedulePanel {
+    width: 100%;
+    border-top: 1px solid var(--bt-gray-100);
+    padding-top: var(--space-4);
+    margin-top: var(--space-3);
 }

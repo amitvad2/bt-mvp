@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import styles from './page.module.css';
 import ClassesClient from './ClassesClient';
 
@@ -29,6 +30,9 @@ export default function ClassesPage() {
                                 <span className={styles.pathAge}>Ages 5–11</span>
                             </div>
                             <p>A fun, safe introduction to healthy cooking. Kids explore fresh ingredients, basic kitchen skills, and the joy of making food from scratch in a supportive group setting.</p>
+                            <Link href="?type=kids-weekend#sessions" className={styles.pathLink}>
+                                Browse Junior Cook sessions →
+                            </Link>
                         </div>
                         <div className={`${styles.pathCard} ${styles.pathCardTeen}`}>
                             <div>
@@ -36,6 +40,9 @@ export default function ClassesPage() {
                                 <span className={`${styles.pathAge} ${styles.pathAgeTeen}`}>Ages 12–18</span>
                             </div>
                             <p>Real-world cooking skills for growing independence. From knife technique to budget meal planning — ideal for Duke of Edinburgh and life beyond the family kitchen.</p>
+                            <Link href="?type=young-weekend#sessions" className={`${styles.pathLink} ${styles.pathLinkTeen}`}>
+                                Browse Teen Chef sessions →
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -55,7 +62,7 @@ export default function ClassesPage() {
             </div>
 
             {/* ── SESSION BROWSER ── */}
-            <section className={`section ${styles.content}`}>
+            <section id="sessions" className={`section ${styles.content}`}>
                 <div className="container">
                     <ClassesClient />
                 </div>

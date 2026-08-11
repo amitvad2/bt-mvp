@@ -414,7 +414,7 @@ export async function POST(req: Request) {
         }
 
         // ================================================================
-        // SINGLE-SESSION CODE PATH (existing logic — unchanged)
+        // SESSION-BASED CODE PATH (single + term sessions via sessionId)
         // ================================================================
 
         // --- Basic validation ---
@@ -452,8 +452,13 @@ export async function POST(req: Request) {
             );
         }
 
+        // --- Determine if this is a term session ---
+        // Absent/undefined sessionType defaults to 'single' (backward compat)
+        const isTermSession = (sessionData.sessionType ?? 'single') === 'term';
+
         console.log('[create-intent] Creating PaymentIntent:', {
             sessionId,
+            sessionType: isTermSession ? 'term' : 'single',
             amount,
             bookedByUid: verifiedUid,
         });
@@ -466,6 +471,7 @@ export async function POST(req: Request) {
             // Minimal metadata: IDs only (Stripe metadata values are strings, 500-char limit)
             metadata: {
                 sessionId,
+                ...(isTermSession && { bookingType: 'term' }),
                 studentId: studentId ?? 'self',
                 bookedByUid: verifiedUid,
                 className: className ?? '',
@@ -484,14 +490,22 @@ export async function POST(req: Request) {
             // Payment reference
             stripePaymentIntentId: paymentIntent.id,
             paymentStatus: 'pending',
+            // Booking type — 'term' for term sessions, absent for single sessions (backward compat)
+            ...(isTermSession && { bookingType: 'term' as const }),
             // Session
             sessionId,
-            sessionDate: sessionDate ?? null,
+            // For term sessions, use termStartDate for display; for single sessions, use client-supplied date
+            sessionDate: isTermSession ? (sessionData.termStartDate ?? sessionDate ?? null) : (sessionDate ?? null),
             className: className ?? null,
             venueName: venueName ?? null,
             startTime: startTime ?? null,
             endTime: endTime ?? null,
             classType: classType ?? null,
+            // Term-specific fields (only present for term sessions)
+            ...(isTermSession && {
+                termStartDate: sessionData.termStartDate ?? null,
+                termEndDate: sessionData.termEndDate ?? null,
+            }),
             // User — UID is taken from the verified token, not the request body
             bookedByUid: verifiedUid,
             bookedByName: bookedByName ?? null,

@@ -4,7 +4,7 @@
  * Tests end-to-end logic by calling route handlers directly with mocked
  * Firestore and Stripe dependencies.
  *
- * Validates: Requirements 4.2, 4.4, 5.3, 7.1, 7.2
+ * Validates: Requirements 5.1, 5.3, 5.4, 8.1, 8.2
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -779,6 +779,626 @@ describe('Integration: Term Booking Flows', () => {
           amount: 6000, // Server price, not client-supplied
         })
       );
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // 5. Session-based term booking: create-intent with sessionId (sessionType: 'term')
+  // Validates: Requirements 5.1, 8.1, 8.2
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  describe('Session-based term booking: create-intent with term session (sessionId path)', () => {
+    const termSessionData = {
+      id: 'session-term-001',
+      sessionType: 'term',
+      classId: 'cls_afterschool',
+      className: 'After School Club',
+      classType: 'kidsAfterSchool',
+      termStartDate: '2025-09-08',
+      termEndDate: '2025-12-15',
+      dayOfWeek: 'Monday',
+      venueId: 'ven_001',
+      venueName: 'Bloomsbury Kitchen',
+      instructorId: 'inst_001',
+      instructorName: 'Chef Amy',
+      startTime: '15:30',
+      endTime: '16:30',
+      ageMin: 5,
+      ageMax: 12,
+      price: 18000, // £180.00 for the term
+      spotsAvailable: 12,
+      spotsTotal: 15,
+      status: 'open',
+      date: '2025-09-08',
+      schedule: [],
+      createdAt: 'SERVER_TIMESTAMP',
+    };
+
+    function makeSessionTermRequest(body: object): Request {
+      return new Request('http://localhost/api/payments/create-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid-token-123',
+        },
+        body: JSON.stringify(body),
+      });
+    }
+
+    const sessionTermBody = {
+      sessionId: 'session-term-001',
+      bookedByName: 'Jane Smith',
+      bookedByEmail: 'jane@example.com',
+      studentId: 'student-001',
+      studentName: 'Oliver Smith',
+      sessionDate: '2025-09-08',
+      className: 'After School Club',
+      venueName: 'Bloomsbury Kitchen',
+      startTime: '15:30',
+      endTime: '16:30',
+      classType: 'kidsAfterSchool',
+      medicalInfo: { conditions: 'none' },
+      emergencyContact: { name: 'John Smith', phone: '07700900111' },
+      questionnaire: null,
+      termsAccepted: true,
+    };
+
+    it('returns clientSecret when session is open with spots available', async () => {
+      mockVerifyIdToken.mockResolvedValue({ uid: 'user-uid-parent-001' });
+
+      // Mock student validation + session doc
+      mockDocGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ parentUid: 'user-uid-parent-001' }),
+        }) // students/{studentId}
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => termSessionData,
+        }); // sessions/{sessionId}
+
+      mockDocSet.mockResolvedValue(undefined);
+      mockStripeCreate.mockResolvedValue({
+        id: 'pi_session_term_001',
+        client_secret: 'pi_session_term_001_secret_abc',
+      });
+
+      const res = await createIntent(makeSessionTermRequest(sessionTermBody));
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.clientSecret).toBe('pi_session_term_001_secret_abc');
+      expect(json.paymentIntentId).toBe('pi_session_term_001');
+
+      // Verify price read from session doc (server-authoritative)
+      expect(mockStripeCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: 18000,
+          currency: 'gbp',
+        })
+      );
+    });
+
+    it('returns 400 when session status is not open', async () => {
+      mockVerifyIdToken.mockResolvedValue({ uid: 'user-uid-parent-001' });
+
+      mockDocGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ parentUid: 'user-uid-parent-001' }),
+        }) // students/{studentId}
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionData, status: 'closed' }),
+        }); // sessions/{sessionId}
+
+      const res = await createIntent(makeSessionTermRequest(sessionTermBody));
+
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBe('This session is no longer accepting bookings.');
+      expect(mockStripeCreate).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when spotsAvailable <= 0', async () => {
+      mockVerifyIdToken.mockResolvedValue({ uid: 'user-uid-parent-001' });
+
+      mockDocGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ parentUid: 'user-uid-parent-001' }),
+        }) // students/{studentId}
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionData, spotsAvailable: 0 }),
+        }); // sessions/{sessionId}
+
+      const res = await createIntent(makeSessionTermRequest(sessionTermBody));
+
+      expect(res.status).toBe(400);
+      const json = await res.json();
+      expect(json.error).toBe('Sorry, this session is now full.');
+      expect(mockStripeCreate).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 when session has no price', async () => {
+      mockVerifyIdToken.mockResolvedValue({ uid: 'user-uid-parent-001' });
+
+      mockDocGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ parentUid: 'user-uid-parent-001' }),
+        }) // students/{studentId}
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionData, price: null }),
+        }); // sessions/{sessionId}
+
+      const res = await createIntent(makeSessionTermRequest(sessionTermBody));
+
+      expect(res.status).toBe(500);
+      const json = await res.json();
+      expect(json.error).toBe('Session pricing is unavailable. Please contact support.');
+      expect(mockStripeCreate).not.toHaveBeenCalled();
+    });
+
+    it('includes bookingType: "term" in the draft document', async () => {
+      mockVerifyIdToken.mockResolvedValue({ uid: 'user-uid-parent-001' });
+
+      mockDocGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ parentUid: 'user-uid-parent-001' }),
+        }) // students/{studentId}
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => termSessionData,
+        }); // sessions/{sessionId}
+
+      mockDocSet.mockResolvedValue(undefined);
+      mockStripeCreate.mockResolvedValue({
+        id: 'pi_session_term_002',
+        client_secret: 'pi_session_term_002_secret_def',
+      });
+
+      await createIntent(makeSessionTermRequest(sessionTermBody));
+
+      // Verify draft was saved with bookingType: 'term'
+      expect(mockDoc).toHaveBeenCalledWith('booking_drafts/pi_session_term_002');
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bookingType: 'term',
+          sessionId: 'session-term-001',
+          stripePaymentIntentId: 'pi_session_term_002',
+          bookedByUid: 'user-uid-parent-001',
+        })
+      );
+    });
+
+    it('sets sessionDate to termStartDate for term sessions', async () => {
+      mockVerifyIdToken.mockResolvedValue({ uid: 'user-uid-parent-001' });
+
+      mockDocGet
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ parentUid: 'user-uid-parent-001' }),
+        }) // students/{studentId}
+        .mockResolvedValueOnce({
+          exists: true,
+          data: () => termSessionData,
+        }); // sessions/{sessionId}
+
+      mockDocSet.mockResolvedValue(undefined);
+      mockStripeCreate.mockResolvedValue({
+        id: 'pi_session_term_003',
+        client_secret: 'pi_session_term_003_secret_ghi',
+      });
+
+      await createIntent(makeSessionTermRequest(sessionTermBody));
+
+      // Verify draft sessionDate is set to termStartDate from the session doc
+      expect(mockDocSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionDate: '2025-09-08', // termStartDate from termSessionData
+          termStartDate: '2025-09-08',
+          termEndDate: '2025-12-15',
+        })
+      );
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // 6. Session-based term webhook: handleSessionTermPaymentSucceeded
+  // Validates: Requirements 5.3, 5.4, 5.5, 8.3
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  describe('Session-based term webhook: handleSessionTermPaymentSucceeded', () => {
+    const sessionTermDraft = {
+      stripePaymentIntentId: 'pi_sess_term_wh_001',
+      paymentStatus: 'pending',
+      bookingType: 'term' as const,
+      sessionId: 'session-term-001',
+      sessionDate: '2025-09-08',
+      className: 'After School Club',
+      classType: 'kidsAfterSchool',
+      venueName: 'Bloomsbury Kitchen',
+      startTime: '15:30',
+      endTime: '16:30',
+      termStartDate: '2025-09-08',
+      termEndDate: '2025-12-15',
+      bookedByUid: 'user-uid-parent-001',
+      bookedByName: 'Jane Smith',
+      bookedByEmail: 'jane@example.com',
+      studentId: 'student-001',
+      studentName: 'Oliver Smith',
+      medicalInfo: { conditions: 'none' },
+      emergencyContact: { name: 'John Smith', phone: '07700900111' },
+      questionnaire: null,
+      termsAccepted: true,
+    };
+
+    const termSessionDocData = {
+      id: 'session-term-001',
+      sessionType: 'term',
+      className: 'After School Club',
+      classType: 'kidsAfterSchool',
+      termStartDate: '2025-09-08',
+      termEndDate: '2025-12-15',
+      venueName: 'Bloomsbury Kitchen',
+      startTime: '15:30',
+      endTime: '16:30',
+      spotsAvailable: 5,
+      spotsTotal: 15,
+      status: 'open',
+    };
+
+    function makeTermWebhookRequest(): Request {
+      return new Request('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: {
+          'stripe-signature': 'test_sig_valid',
+          'Content-Type': 'application/json',
+        },
+        body: 'raw-body',
+      });
+    }
+
+    it('creates booking with bookingType: "term" and correct fields', async () => {
+      const piId = 'pi_sess_term_wh_001';
+
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_sess_term_001',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: piId,
+            amount: 18000,
+            currency: 'gbp',
+            status: 'succeeded',
+            last_payment_error: null,
+          },
+        },
+      });
+
+      // Draft read
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => sessionTermDraft,
+      });
+
+      mockResendSend.mockResolvedValue({ data: { id: 'email_001' }, error: null });
+      mockDocDelete.mockResolvedValue(undefined);
+
+      // Mock the transaction
+      mockRunTransaction.mockImplementation(async (callback: any) => {
+        const txGet = vi.fn();
+        const txSet = vi.fn();
+        const txUpdate = vi.fn();
+        const tx = { get: txGet, set: txSet, update: txUpdate };
+
+        // Idempotency check: booking doesn't exist yet
+        txGet.mockResolvedValueOnce({ exists: false });
+        // Session doc read inside transaction
+        txGet.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionDocData, spotsAvailable: 5 }),
+        });
+
+        await callback(tx);
+        (mockRunTransaction as any)._txSet = txSet;
+        (mockRunTransaction as any)._txUpdate = txUpdate;
+      });
+
+      const res = await webhookHandler(makeTermWebhookRequest());
+      expect(res.status).toBe(200);
+
+      // Verify booking doc was created
+      const txSet = (mockRunTransaction as any)._txSet;
+      expect(txSet).toHaveBeenCalledTimes(1);
+
+      const bookingDoc = txSet.mock.calls[0][1];
+      expect(bookingDoc.bookingType).toBe('term');
+      expect(bookingDoc.sessionId).toBe('session-term-001');
+      expect(bookingDoc.sessionDate).toBe('2025-09-08');
+      expect(bookingDoc.className).toBe('After School Club');
+      expect(bookingDoc.venueName).toBe('Bloomsbury Kitchen');
+      expect(bookingDoc.bookedByUid).toBe('user-uid-parent-001');
+      expect(bookingDoc.bookedByName).toBe('Jane Smith');
+      expect(bookingDoc.studentId).toBe('student-001');
+      expect(bookingDoc.studentName).toBe('Oliver Smith');
+      expect(bookingDoc.status).toBe('confirmed');
+      expect(bookingDoc.overbooking).toBe(false);
+      expect(bookingDoc.payment.stripePaymentIntentId).toBe(piId);
+      expect(bookingDoc.payment.amount).toBe(18000);
+      expect(bookingDoc.payment.currency).toBe('gbp');
+      expect(bookingDoc.payment.status).toBe('paid');
+    });
+
+    it('decrements spotsAvailable by 1', async () => {
+      const piId = 'pi_sess_term_wh_002';
+
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_sess_term_002',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: piId,
+            amount: 18000,
+            currency: 'gbp',
+            status: 'succeeded',
+            last_payment_error: null,
+          },
+        },
+      });
+
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ ...sessionTermDraft, stripePaymentIntentId: piId }),
+      });
+
+      mockResendSend.mockResolvedValue({ data: { id: 'email_002' }, error: null });
+      mockDocDelete.mockResolvedValue(undefined);
+
+      mockRunTransaction.mockImplementation(async (callback: any) => {
+        const txGet = vi.fn();
+        const txSet = vi.fn();
+        const txUpdate = vi.fn();
+        const tx = { get: txGet, set: txSet, update: txUpdate };
+
+        txGet.mockResolvedValueOnce({ exists: false }); // booking doesn't exist
+        txGet.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionDocData, spotsAvailable: 10 }),
+        });
+
+        await callback(tx);
+        (mockRunTransaction as any)._txUpdate = txUpdate;
+      });
+
+      const res = await webhookHandler(makeTermWebhookRequest());
+      expect(res.status).toBe(200);
+
+      const txUpdate = (mockRunTransaction as any)._txUpdate;
+      expect(txUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          spotsAvailable: { _increment: -1 },
+        })
+      );
+    });
+
+    it('sets status to "full" when spots reach 0', async () => {
+      const piId = 'pi_sess_term_wh_003';
+
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_sess_term_003',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: piId,
+            amount: 18000,
+            currency: 'gbp',
+            status: 'succeeded',
+            last_payment_error: null,
+          },
+        },
+      });
+
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ ...sessionTermDraft, stripePaymentIntentId: piId }),
+      });
+
+      mockResendSend.mockResolvedValue({ data: { id: 'email_003' }, error: null });
+      mockDocDelete.mockResolvedValue(undefined);
+
+      mockRunTransaction.mockImplementation(async (callback: any) => {
+        const txGet = vi.fn();
+        const txSet = vi.fn();
+        const txUpdate = vi.fn();
+        const tx = { get: txGet, set: txSet, update: txUpdate };
+
+        txGet.mockResolvedValueOnce({ exists: false }); // booking doesn't exist
+        // Session has exactly 1 spot left — after decrement it becomes 0
+        txGet.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionDocData, spotsAvailable: 1 }),
+        });
+
+        await callback(tx);
+        (mockRunTransaction as any)._txUpdate = txUpdate;
+      });
+
+      const res = await webhookHandler(makeTermWebhookRequest());
+      expect(res.status).toBe(200);
+
+      const txUpdate = (mockRunTransaction as any)._txUpdate;
+      expect(txUpdate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          spotsAvailable: { _increment: -1 },
+          status: 'full',
+        })
+      );
+    });
+
+    it('sets overbooking: true when spots were already <= 0', async () => {
+      const piId = 'pi_sess_term_wh_004';
+
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_sess_term_004',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: piId,
+            amount: 18000,
+            currency: 'gbp',
+            status: 'succeeded',
+            last_payment_error: null,
+          },
+        },
+      });
+
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ ...sessionTermDraft, stripePaymentIntentId: piId }),
+      });
+
+      mockResendSend.mockResolvedValue({ data: { id: 'email_004' }, error: null });
+      mockDocDelete.mockResolvedValue(undefined);
+
+      mockRunTransaction.mockImplementation(async (callback: any) => {
+        const txGet = vi.fn();
+        const txSet = vi.fn();
+        const txUpdate = vi.fn();
+        const tx = { get: txGet, set: txSet, update: txUpdate };
+
+        txGet.mockResolvedValueOnce({ exists: false }); // booking doesn't exist
+        // Session has 0 spots — overbooking scenario
+        txGet.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionDocData, spotsAvailable: 0 }),
+        });
+
+        await callback(tx);
+        (mockRunTransaction as any)._txSet = txSet;
+        (mockRunTransaction as any)._txUpdate = txUpdate;
+      });
+
+      const res = await webhookHandler(makeTermWebhookRequest());
+      expect(res.status).toBe(200);
+
+      // Booking should be created with overbooking: true
+      const txSet = (mockRunTransaction as any)._txSet;
+      expect(txSet).toHaveBeenCalledTimes(1);
+      const bookingDoc = txSet.mock.calls[0][1];
+      expect(bookingDoc.overbooking).toBe(true);
+      expect(bookingDoc.bookingType).toBe('term');
+      expect(bookingDoc.status).toBe('confirmed');
+
+      // Should NOT decrement spots (already 0)
+      const txUpdate = (mockRunTransaction as any)._txUpdate;
+      expect(txUpdate).not.toHaveBeenCalled();
+    });
+
+    it('skips if booking already exists (idempotency)', async () => {
+      const piId = 'pi_sess_term_wh_005';
+
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_sess_term_005',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: piId,
+            amount: 18000,
+            currency: 'gbp',
+            status: 'succeeded',
+            last_payment_error: null,
+          },
+        },
+      });
+
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ ...sessionTermDraft, stripePaymentIntentId: piId }),
+      });
+
+      mockResendSend.mockResolvedValue({ data: { id: 'email_005' }, error: null });
+      mockDocDelete.mockResolvedValue(undefined);
+
+      mockRunTransaction.mockImplementation(async (callback: any) => {
+        const txGet = vi.fn();
+        const txSet = vi.fn();
+        const txUpdate = vi.fn();
+        const tx = { get: txGet, set: txSet, update: txUpdate };
+
+        // Booking ALREADY exists — duplicate webhook delivery
+        txGet.mockResolvedValueOnce({ exists: true });
+
+        await callback(tx);
+        (mockRunTransaction as any)._txSet = txSet;
+        (mockRunTransaction as any)._txUpdate = txUpdate;
+      });
+
+      const res = await webhookHandler(makeTermWebhookRequest());
+      expect(res.status).toBe(200);
+
+      // No booking creation or spots decrement should have occurred
+      const txSet = (mockRunTransaction as any)._txSet;
+      const txUpdate = (mockRunTransaction as any)._txUpdate;
+      expect(txSet).not.toHaveBeenCalled();
+      expect(txUpdate).not.toHaveBeenCalled();
+
+      // Email should NOT be sent for duplicate
+      expect(mockResendSend).not.toHaveBeenCalled();
+    });
+
+    it('deletes booking draft after successful processing', async () => {
+      const piId = 'pi_sess_term_wh_006';
+
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_sess_term_006',
+        type: 'payment_intent.succeeded',
+        data: {
+          object: {
+            id: piId,
+            amount: 18000,
+            currency: 'gbp',
+            status: 'succeeded',
+            last_payment_error: null,
+          },
+        },
+      });
+
+      mockDocGet.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ ...sessionTermDraft, stripePaymentIntentId: piId }),
+      });
+
+      mockResendSend.mockResolvedValue({ data: { id: 'email_006' }, error: null });
+      mockDocDelete.mockResolvedValue(undefined);
+
+      mockRunTransaction.mockImplementation(async (callback: any) => {
+        const txGet = vi.fn();
+        const txSet = vi.fn();
+        const txUpdate = vi.fn();
+        const tx = { get: txGet, set: txSet, update: txUpdate };
+
+        txGet.mockResolvedValueOnce({ exists: false }); // booking doesn't exist
+        txGet.mockResolvedValueOnce({
+          exists: true,
+          data: () => ({ ...termSessionDocData, spotsAvailable: 8 }),
+        });
+
+        await callback(tx);
+      });
+
+      const res = await webhookHandler(makeTermWebhookRequest());
+      expect(res.status).toBe(200);
+
+      // Verify draft was deleted
+      expect(mockDoc).toHaveBeenCalledWith(`booking_drafts/${piId}`);
+      expect(mockDocDelete).toHaveBeenCalled();
     });
   });
 });

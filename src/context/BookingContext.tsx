@@ -15,12 +15,16 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, Student, BookingWizardState, MedicalInfo, EmergencyContact, Questionnaire, BTClassType } from '@/types';
+import { Session, Student, BookingWizardState, MedicalInfo, EmergencyContact, Questionnaire, BTClassType, ScheduleEntry } from '@/types';
 
 interface BookingContextType {
     state: BookingWizardState;
     loading: boolean;
     classTypeRecord: BTClassType | null;
+    isTermSession: boolean;
+    termStartDate: string | undefined;
+    termEndDate: string | undefined;
+    schedule: ScheduleEntry[] | undefined;
     setSession: (session: Session) => void;
     setStudent: (student: Student | 'self') => void;
     setMedicalInfo: (info: MedicalInfo) => void;
@@ -111,10 +115,19 @@ export function BookingProvider({ sessionId, children }: { sessionId: string; ch
         sessionStorage.removeItem(`booking_${sessionId}`);
     }, [sessionId]);
 
+    // Compute term session fields from the fetched session data.
+    // Absent/undefined sessionType defaults to 'single' (backward compat) — only
+    // explicit 'term' activates term-specific behaviour.
+    const isTermSession = useMemo(() => (state.session?.sessionType ?? 'single') === 'term', [state.session?.sessionType]);
+    const termStartDate = useMemo(() => state.session?.termStartDate, [state.session?.termStartDate]);
+    const termEndDate = useMemo(() => state.session?.termEndDate, [state.session?.termEndDate]);
+    const schedule = useMemo(() => state.session?.schedule, [state.session?.schedule]);
+
     const contextValue = useMemo(() => ({
-        state, loading, classTypeRecord, setSession, setStudent, setMedicalInfo,
+        state, loading, classTypeRecord, isTermSession, termStartDate, termEndDate, schedule,
+        setSession, setStudent, setMedicalInfo,
         setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState
-    }), [state, loading, classTypeRecord, setSession, setStudent, setMedicalInfo, setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState]);
+    }), [state, loading, classTypeRecord, isTermSession, termStartDate, termEndDate, schedule, setSession, setStudent, setMedicalInfo, setEmergencyContact, setQuestionnaire, setTermsAccepted, clearState]);
 
     return (
         <BookingContext.Provider value={contextValue}>

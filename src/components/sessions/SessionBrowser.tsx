@@ -5,13 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, Venue, BTClassType, BTClass } from '@/types';
-import { isTermClassActive } from '@/lib/term-utils';
-import { Calendar, MapPin, Clock, ChefHat, Map, List, Users } from 'lucide-react';
+import { Session, Venue, BTClassType } from '@/types';
+import { getActiveSessionCount } from '@/lib/term-schedule-utils';
+import { Map, List, ChevronDown, ChevronUp } from 'lucide-react';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import BundleBrowser from '@/components/sessions/BundleBrowser';
-import TermClassCard from '@/components/sessions/TermClassCard';
-import TermClassScheduleModal from '@/components/sessions/TermClassScheduleModal';
+import TermScheduleView from '@/components/sessions/TermScheduleView';
 import styles from './SessionBrowser.module.css';
 
 interface Props {
@@ -32,9 +31,9 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     const [venues, setVenues] = useState<Venue[]>([]);
     const [classTypes, setClassTypes] = useState<BTClassType[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
+    const [termSessions, setTermSessions] = useState<Session[]>([]);
+    const [expandedTermSchedule, setExpandedTermSchedule] = useState<string | null>(null);
     const [termClassIds, setTermClassIds] = useState<Set<string>>(new Set());
-    const [termClasses, setTermClasses] = useState<BTClass[]>([]);
-    const [scheduleClass, setScheduleClass] = useState<BTClass | null>(null);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
     const [filters, setFilters] = useState({
@@ -69,15 +68,6 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                 );
                 const ids = new Set(snap.docs.map(d => d.id));
                 setTermClassIds(ids);
-
-                // Filter to only active term classes (spotsAvailable > 0 AND current date <= termEndDate)
-                const allTermClasses = snap.docs.map(d => ({ id: d.id, ...d.data() } as BTClass));
-                const activeTermClasses = allTermClasses.filter(tc =>
-                    tc.termEndDate && tc.spotsAvailable !== undefined
-                        ? isTermClassActive(tc.termEndDate, tc.spotsAvailable)
-                        : false
-                );
-                setTermClasses(activeTermClasses);
             } catch (e) { console.error('Error fetching term classes:', e); }
         };
         fetchVenues();
@@ -93,24 +83,31 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
         return { label: slug, displayName: slug, color: 'gray' as const };
     };
 
-    const handleSearch = async () => {
-        setAppliedFilters({ ...filters });
+    const handleSearch = async (typeOverride?: string) => {
+        const activeType = typeOverride ?? filters.type;
+        setAppliedFilters({ ...filters, type: activeType });
         setLoading(true);
         try {
             const q = query(collection(db, 'sessions'), where('status', '==', 'open'));
             const snap = await getDocs(q);
             let results = snap.docs.map(d => ({ id: d.id, ...d.data() } as Session));
 
-            // Exclude sessions belonging to term classes — they are not individually bookable
-            results = results.filter(s => !termClassIds.has(s.classId));
+            // Exclude individual per-date sessions belonging to term classes — they are not individually bookable.
+            // But keep term sessions (sessionType === 'term') even if linked to a term class.
+            results = results.filter(s => s.sessionType === 'term' || !termClassIds.has(s.classId));
 
-            results.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            // Separate term sessions from single sessions.
+            // Absent/undefined sessionType defaults to 'single' (backward compat).
+            const termSessionResults = results.filter(s => s.sessionType === 'term');
+            let singleResults = results.filter(s => (s.sessionType ?? 'single') !== 'term');
+
+            singleResults.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
             if (filters.venueId !== 'all') {
-                results = results.filter(s => s.venueId === filters.venueId);
+                singleResults = singleResults.filter(s => s.venueId === filters.venueId);
             }
-            if (filters.type !== 'all') {
-                results = results.filter(s => s.classType?.toLowerCase() === filters.type.toLowerCase());
+            if (activeType !== 'all') {
+                singleResults = singleResults.filter(s => s.classType?.toLowerCase() === activeType.toLowerCase());
             }
 
             const now = new Date();
@@ -125,45 +122,63 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                 const sunday = new Date(saturday);
                 sunday.setDate(saturday.getDate() + 1);
                 sunday.setHours(23, 59, 59, 999);
-                results = results.filter(s => {
+                singleResults = singleResults.filter(s => {
                     const d = new Date(s.date);
                     return d >= saturday && d <= sunday;
                 });
             } else if (filters.dateRange === 'this-week') {
                 const nextWeek = new Date();
                 nextWeek.setDate(now.getDate() + 7);
-                results = results.filter(s => {
+                singleResults = singleResults.filter(s => {
                     const d = new Date(s.date);
                     return d >= now && d <= nextWeek;
                 });
             } else if (filters.dateRange === 'next-2-weeks') {
                 const twoWeeks = new Date();
                 twoWeeks.setDate(now.getDate() + 14);
-                results = results.filter(s => {
+                singleResults = singleResults.filter(s => {
                     const d = new Date(s.date);
                     return d >= now && d <= twoWeeks;
                 });
             } else if (filters.dateRange === 'this-month') {
                 const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                results = results.filter(s => {
+                singleResults = singleResults.filter(s => {
                     const d = new Date(s.date);
                     return d >= now && d <= endOfMonth;
                 });
             } else if (filters.dateRange === 'next-month') {
                 const startNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
                 const endNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
-                results = results.filter(s => {
+                singleResults = singleResults.filter(s => {
                     const d = new Date(s.date);
                     return d >= startNextMonth && d <= endNextMonth;
                 });
             } else {
-                results = results.filter(s => new Date(s.date) >= now);
+                singleResults = singleResults.filter(s => new Date(s.date) >= now);
             }
 
-            setSessions(results);
+            // Filter term sessions by venue and type (date range doesn't apply the same way)
+            let filteredTermSessions = termSessionResults;
+            if (filters.venueId !== 'all') {
+                filteredTermSessions = filteredTermSessions.filter(s => s.venueId === filters.venueId);
+            }
+            if (activeType !== 'all') {
+                filteredTermSessions = filteredTermSessions.filter(s => s.classType?.toLowerCase() === activeType.toLowerCase());
+            }
+            // For term sessions, filter out those whose termEndDate has passed
+            filteredTermSessions = filteredTermSessions.filter(s => {
+                if (s.termEndDate) {
+                    return new Date(s.termEndDate) >= now;
+                }
+                return true;
+            });
+
+            setSessions(singleResults);
+            setTermSessions(filteredTermSessions);
         } catch (e) {
             console.error('Error fetching sessions:', e);
             setSessions([]);
+            setTermSessions([]);
         } finally {
             setLoading(false);
         }
@@ -173,8 +188,10 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
         const typeParam = searchParams.get('type');
         if (typeParam) {
             setFilters(prev => ({ ...prev, type: typeParam }));
+            handleSearch(typeParam);
+        } else {
+            handleSearch();
         }
-        handleSearch();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams, termClassIds.size]);
 
@@ -247,7 +264,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                 </select>
                             </div>
                             <button
-                                onClick={handleSearch}
+                                onClick={() => handleSearch()}
                                 className={`btn btn-primary ${styles.searchBtn}`}
                                 disabled={loading}
                             >
@@ -258,97 +275,269 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
 
                     <p className={styles.resultCount}>
                         {(() => {
-                            let filteredTermCount = termClasses.length;
-                            if (appliedFilters.type !== 'all') {
-                                filteredTermCount = termClasses.filter(tc => tc.type?.toLowerCase() === appliedFilters.type.toLowerCase()).length;
-                            }
-                            if (appliedFilters.venueId !== 'all') {
-                                filteredTermCount = termClasses.filter(tc => tc.venueId === appliedFilters.venueId && (appliedFilters.type === 'all' || tc.type?.toLowerCase() === appliedFilters.type.toLowerCase())).length;
-                            }
-                            const total = sessions.length + filteredTermCount;
+                            const total = sessions.length + termSessions.length;
                             return `${total} result${total !== 1 ? 's' : ''} available`;
                         })()}
                     </p>
 
-                    {(() => {
-                        // Filter term classes by applied filters (only updates on Search click)
-                        let filteredTermClasses = termClasses;
-                        if (appliedFilters.type !== 'all') {
-                            filteredTermClasses = filteredTermClasses.filter(tc =>
-                                tc.type?.toLowerCase() === appliedFilters.type.toLowerCase()
-                            );
-                        }
-                        if (appliedFilters.venueId !== 'all') {
-                            filteredTermClasses = filteredTermClasses.filter(tc =>
-                                tc.venueId === appliedFilters.venueId
-                            );
-                        }
+                    {/* Term Sessions (sessionType === 'term') */}
+                    {!loading && termSessions.length > 0 && (
+                        <section className={styles.termSessionsSection}>
+                            <div className={styles.sessionGrid}>
+                                {termSessions.map(ts => {
+                                    const badge = getClassTypeBadge(ts.classType);
+                                    const startDate = ts.termStartDate ? new Date(ts.termStartDate + 'T00:00:00') : null;
+                                    const endDate = ts.termEndDate ? new Date(ts.termEndDate + 'T00:00:00') : null;
+                                    const dateRangeStr = startDate && endDate
+                                        ? `${startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                                        : '';
+                                    const activeCount = ts.schedule ? getActiveSessionCount(ts.schedule) : 0;
+                                    const isExpanded = expandedTermSchedule === ts.id;
 
-                        return filteredTermClasses.length > 0 ? (
-                        <section className={styles.termClassesSection}>
-                            <div className={styles.termClassesGrid}>
-                                {filteredTermClasses.map(tc => (
-                                    <TermClassCard
-                                        key={tc.id}
-                                        termClass={tc}
-                                        showGuestOption={showGuestOption}
-                                        onViewSchedule={(classId) => {
-                                            const cls = termClasses.find(c => c.id === classId);
-                                            if (cls) setScheduleClass(cls);
-                                        }}
-                                    />
-                                ))}
+                                    const [sh, sm] = ts.startTime.split(':').map(Number);
+                                    const period = sh >= 12 ? 'pm' : 'am';
+                                    const displayHour = sh % 12 || 12;
+                                    const timeDisplay = `${displayHour}:${sm.toString().padStart(2, '0')}`;
+
+                                    return (
+                                        <div key={ts.id} className={`card ${styles.sessionCard}`}>
+                                            {/* Header: date range + title */}
+                                            <div className={styles.cardTop}>
+                                                <div className={`${styles.dateBadge} ${styles[`dateBadge_${badge.color}`]}`}>
+                                                    <span className={styles.badgeDay}>{startDate ? startDate.getDate() : '—'}</span>
+                                                    <span className={styles.badgeMonth}>{startDate ? startDate.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase() : 'TERM'}</span>
+                                                </div>
+                                                <div className={styles.cardTitleBlock}>
+                                                    <h3 className={styles.sessionName}>{ts.className}</h3>
+                                                    <p className={styles.sessionSchedule}>{dateRangeStr}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Term badge */}
+                                            <div className={styles.termBadgeRow}>
+                                                <span className="badge badge-indigo">Term</span>
+                                                {activeCount > 0 && (
+                                                    <span className={styles.termSessionCount}>
+                                                        {activeCount} session{activeCount !== 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Details table */}
+                                            <dl className={styles.detailsTable}>
+                                                <div className={styles.detailRow}>
+                                                    <dt>Term Period</dt>
+                                                    <dd>{dateRangeStr}</dd>
+                                                </div>
+                                                <div className={styles.detailRow}>
+                                                    <dt>Day</dt>
+                                                    <dd>{ts.dayOfWeek || '—'}</dd>
+                                                </div>
+                                                <div className={styles.detailRow}>
+                                                    <dt>Time</dt>
+                                                    <dd>{timeDisplay} {period.toUpperCase()}</dd>
+                                                </div>
+                                                <div className={styles.detailRow}>
+                                                    <dt>Spaces Available</dt>
+                                                    <dd>{ts.spotsAvailable === 0 ? 'Full' : `${ts.spotsAvailable} spot${ts.spotsAvailable === 1 ? '' : 's'}`}</dd>
+                                                </div>
+                                                <div className={styles.detailRow}>
+                                                    <dt>Category</dt>
+                                                    <dd>{badge.displayName}</dd>
+                                                </div>
+                                                {ts.ageMin != null && ts.ageMax != null && (
+                                                    <div className={styles.detailRow}>
+                                                        <dt>Ages</dt>
+                                                        <dd>{ts.ageMin}–{ts.ageMax} yrs</dd>
+                                                    </div>
+                                                )}
+                                                {ts.venueName && (
+                                                    <div className={styles.detailRow}>
+                                                        <dt>Venue</dt>
+                                                        <dd>{ts.venueName}</dd>
+                                                    </div>
+                                                )}
+                                                {ts.instructorName && (
+                                                    <div className={styles.detailRow}>
+                                                        <dt>Instructor</dt>
+                                                        <dd>{ts.instructorName}</dd>
+                                                    </div>
+                                                )}
+                                            </dl>
+
+                                            {/* Price */}
+                                            <div className={styles.priceRow}>
+                                                <span className={styles.priceLabel}>Term price</span>
+                                                <span className={styles.priceValue}>£{(ts.price / 100).toFixed(2)}</span>
+                                            </div>
+
+                                            {/* View Schedule toggle */}
+                                            {ts.schedule && ts.schedule.length > 0 && (
+                                                <div className={styles.viewScheduleSection}>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.viewScheduleToggle}
+                                                        onClick={() => setExpandedTermSchedule(isExpanded ? null : ts.id!)}
+                                                        aria-expanded={isExpanded}
+                                                    >
+                                                        View Schedule
+                                                        {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                                    </button>
+                                                    {isExpanded && (
+                                                        <div className={styles.scheduleInline}>
+                                                            <TermScheduleView schedule={ts.schedule} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* CTA */}
+                                            <button
+                                                onClick={() => onBook(ts.id!)}
+                                                className={`btn btn-primary ${styles.bookBtn}`}
+                                                disabled={ts.spotsAvailable === 0}
+                                            >
+                                                {ts.spotsAvailable === 0 ? 'Full' : 'Book Now'}
+                                            </button>
+
+                                            {showGuestOption && ts.spotsAvailable > 0 && (
+                                                <Link
+                                                    href={`/express-booking/${ts.id}?source=website_express`}
+                                                    className={styles.guestBookLink}
+                                                >
+                                                    Book as a Guest
+                                                </Link>
+                                            )}
+
+                                            {ts.spotsAvailable !== undefined && ts.spotsAvailable <= 3 && ts.spotsAvailable > 0 && (
+                                                <p className={`${styles.spots} ${styles.spotsLow}`}>
+                                                    Only {ts.spotsAvailable} spot{ts.spotsAvailable === 1 ? '' : 's'} left!
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </section>
-                    ) : null;
-                    })()}
+                    )}
 
                     {loading ? (
                         <div className="loading-screen">
                             <div className="spinner" />
                             <p>Finding sessions...</p>
                         </div>
-                    ) : sessions.length === 0 ? (
+                    ) : sessions.length === 0 && termSessions.length === 0 ? (
                         <div className={styles.empty}>
                             <h3>No sessions found</h3>
                             <p>Try adjusting your filters or checking a different date range.</p>
                         </div>
                     ) : (
+                        sessions.length > 0 && (
                         <div className={styles.sessionGrid}>
                             {sessions.map(s => {
                                 const badge = getClassTypeBadge(s.classType);
+                                const sessionDate = new Date(s.date + 'T00:00:00');
+                                const dayNum = sessionDate.getDate();
+                                const monthStr = sessionDate.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
+                                const dayFull = sessionDate.toLocaleDateString('en-GB', { weekday: 'long' });
+                                const dayAbbrev = sessionDate.toLocaleDateString('en-GB', { weekday: 'short' });
+                                const firstLesson = sessionDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: '2-digit' });
+
+                                const [sh, sm] = s.startTime.split(':').map(Number);
+                                const [eh, em] = s.endTime.split(':').map(Number);
+                                const period = sh >= 12 ? 'pm' : 'am';
+                                const displayHour = sh % 12 || 12;
+                                const timeDisplay = `${displayHour}:${sm.toString().padStart(2, '0')}`;
+                                const durationMins = (eh * 60 + em) - (sh * 60 + sm);
+                                const durationHours = durationMins / 60;
+                                const durationLabel = Number.isInteger(durationHours) ? `${durationHours}` : durationHours.toFixed(1);
+
                                 return (
                                 <div key={s.id} className={`card ${styles.sessionCard}`}>
-                                    <div className={styles.sessionHeader}>
-                                        <span className={`badge badge-${badge.color}`}>{badge.label}</span>
-                                        <h3 className={styles.sessionName}>{s.className}</h3>
-                                    </div>
-
-                                    <div className={styles.sessionDetails}>
-                                        <div className={styles.sessionDate}>
-                                            <Calendar size={18} strokeWidth={1.5} />
-                                            {new Date(s.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                    {/* Header: date badge + title */}
+                                    <div className={styles.cardTop}>
+                                        <div className={`${styles.dateBadge} ${styles[`dateBadge_${badge.color}`]}`}>
+                                            <span className={styles.badgeDay}>{dayNum}</span>
+                                            <span className={styles.badgeMonth}>{monthStr}</span>
                                         </div>
-                                        <div><Clock size={18} strokeWidth={1.5} /> {s.startTime} – {s.endTime}</div>
-                                        <div><MapPin size={18} strokeWidth={1.5} /> {s.venueName}</div>
-                                        {s.instructorName && (
-                                            <div><ChefHat size={18} strokeWidth={1.5} /> {s.instructorName}</div>
-                                        )}
-                                        {(s.ageMin != null && s.ageMax != null) && (
-                                            <div><Users size={18} strokeWidth={1.5} /> Ages {s.ageMin}–{s.ageMax}</div>
-                                        )}
+                                        <div className={styles.cardTitleBlock}>
+                                            <h3 className={styles.sessionName}>{s.className}</h3>
+                                            <p className={styles.sessionSchedule}>{dayFull} at {timeDisplay} {period.toUpperCase()}</p>
+                                        </div>
                                     </div>
 
-                                    <div className={styles.cardFooter}>
-                                        <div className="text-xl font-bold">£{(s.price / 100).toFixed(2)}</div>
-                                        <button
-                                            onClick={() => onBook(s.id!)}
-                                            className="btn btn-primary"
-                                            disabled={s.spotsAvailable === 0}
-                                        >
-                                            {s.spotsAvailable === 0 ? 'Full' : 'Book Now'}
-                                        </button>
+                                    {/* Stats strip */}
+                                    <div className={styles.statsStrip}>
+                                        <div className={styles.statItem}>
+                                            <span className={styles.statValue}>✓</span>
+                                            <span className={styles.statLabel}>spaces</span>
+                                        </div>
+                                        <div className={styles.statItem}>
+                                            <span className={styles.statValue}>{dayAbbrev}</span>
+                                            <span className={styles.statLabel}>days</span>
+                                        </div>
+                                        <div className={styles.statItem}>
+                                            <span className={styles.statValue}>{timeDisplay}</span>
+                                            <span className={styles.statLabel}>{period}</span>
+                                        </div>
+                                        <div className={styles.statItem}>
+                                            <span className={styles.statValue}>{durationLabel}</span>
+                                            <span className={styles.statLabel}>{durationHours === 1 ? 'hour' : 'hours'}</span>
+                                        </div>
                                     </div>
+
+                                    {/* Details table */}
+                                    <dl className={styles.detailsTable}>
+                                        <div className={styles.detailRow}>
+                                            <dt>First Lesson</dt>
+                                            <dd>{firstLesson}</dd>
+                                        </div>
+                                        <div className={styles.detailRow}>
+                                            <dt>Spaces Available</dt>
+                                            <dd>{s.spotsAvailable === 0 ? 'Full' : `${s.spotsAvailable} spot${s.spotsAvailable === 1 ? '' : 's'}`}</dd>
+                                        </div>
+                                        <div className={styles.detailRow}>
+                                            <dt>Category</dt>
+                                            <dd>{badge.displayName}</dd>
+                                        </div>
+                                        {s.ageMin != null && s.ageMax != null && (<>
+                                            <div className={styles.detailRow}>
+                                                <dt>Minimum Age</dt>
+                                                <dd>{s.ageMin} yrs</dd>
+                                            </div>
+                                            <div className={styles.detailRow}>
+                                                <dt>Maximum Age</dt>
+                                                <dd>{s.ageMax} yrs</dd>
+                                            </div>
+                                        </>)}
+                                        {s.venueName && (
+                                            <div className={styles.detailRow}>
+                                                <dt>Venue</dt>
+                                                <dd>{s.venueName}</dd>
+                                            </div>
+                                        )}
+                                        {s.instructorName && (
+                                            <div className={styles.detailRow}>
+                                                <dt>Instructor</dt>
+                                                <dd>{s.instructorName}</dd>
+                                            </div>
+                                        )}
+                                    </dl>
+
+                                    {/* Price */}
+                                    <div className={styles.priceRow}>
+                                        <span className={styles.priceLabel}>Cost per session from</span>
+                                        <span className={styles.priceValue}>£{(s.price / 100).toFixed(2)}</span>
+                                    </div>
+
+                                    {/* CTA */}
+                                    <button
+                                        onClick={() => onBook(s.id!)}
+                                        className={`btn btn-primary ${styles.bookBtn}`}
+                                        disabled={s.spotsAvailable === 0}
+                                    >
+                                        {s.spotsAvailable === 0 ? 'Full' : 'Book Now'}
+                                    </button>
 
                                     {showGuestOption && s.spotsAvailable > 0 && (
                                         <Link
@@ -368,17 +557,11 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                 );
                             })}
                         </div>
+                        )
                     )}
                 </>
             )}
 
-            {/* Term Class Schedule Modal */}
-            {scheduleClass && (
-                <TermClassScheduleModal
-                    termClass={scheduleClass}
-                    onClose={() => setScheduleClass(null)}
-                />
-            )}
         </>
     );
 }

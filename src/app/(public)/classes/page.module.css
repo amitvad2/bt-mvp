@@ -86,6 +86,24 @@
     margin: 0;
 }
 
+.pathLink {
+    display: inline-block;
+    margin-top: var(--space-2);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bt-coral-dark);
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
+
+.pathLink:hover {
+    opacity: 0.75;
+}
+
+.pathLinkTeen {
+    color: var(--bt-orange-dark);
+}
+
 /* ── REASSURANCE STRIP ── */
 .reassuranceStrip {
     background: var(--bt-white);

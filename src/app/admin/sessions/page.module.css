@@ -503,3 +503,111 @@
     font-size: 0.75rem;
     color: var(--bt-gray-400);
 }
+
+
+/* ============================================================
+   Session Type Toggle (Single | Term)
+   ============================================================ */
+
+.sessionTypeToggle {
+    display: inline-flex;
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.toggleBtn {
+    padding: var(--space-2) var(--space-5);
+    border: none;
+    background: var(--bt-white, #fff);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--bt-gray-600);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.toggleBtn:not(:last-child) {
+    border-right: 1px solid var(--bt-gray-200);
+}
+
+.toggleBtn:hover {
+    background: var(--bt-gray-50);
+}
+
+.toggleBtnActive {
+    background: var(--bt-primary, #6366f1);
+    color: var(--bt-white, #fff);
+}
+
+.toggleBtnActive:hover {
+    background: var(--bt-primary, #6366f1);
+}
+
+/* ============================================================
+   Term Form Error
+   ============================================================ */
+
+.termFormError {
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    color: #dc2626;
+}
+
+/* ============================================================
+   Price Hint (under price input)
+   ============================================================ */
+
+.priceHint {
+    display: block;
+    margin-top: var(--space-1);
+    font-size: 0.75rem;
+    color: var(--bt-gray-500);
+}
+
+
+/* ============================================================
+   Days of Week Checkbox Group
+   ============================================================ */
+
+.daysCheckboxGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.dayCheckbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--bt-gray-200);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--bt-gray-700);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+}
+
+.dayCheckbox:hover {
+    background: var(--bt-gray-50);
+    border-color: var(--bt-gray-300);
+}
+
+.dayCheckbox:has(input:checked) {
+    background: var(--bt-primary-50, #eef2ff);
+    border-color: var(--bt-primary, #6366f1);
+    color: var(--bt-primary, #6366f1);
+}
+
+.dayCheckbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--bt-primary, #6366f1);
+}

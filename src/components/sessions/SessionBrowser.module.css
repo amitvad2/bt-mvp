@@ -72,72 +72,168 @@
 
 .sessionCard {
     background: #fff;
-    padding: var(--space-10);
+    padding: var(--space-6);
     border: none;
     box-shadow: var(--shadow);
     transition: transform var(--transition);
     display: flex;
     flex-direction: column;
+    gap: var(--space-5);
 }
 
 .sessionCard:hover {
     transform: scale(1.02);
 }
 
-.sessionHeader {
-    margin-bottom: var(--space-6);
+/* Date badge + title row */
+.cardTop {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+}
+
+.dateBadge {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    background: var(--bt-accent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    line-height: 1;
+}
+
+.dateBadge_amber { background: var(--bt-orange-dark, #b45309); }
+.dateBadge_green { background: #2d7a4f; }
+.dateBadge_indigo { background: #4f46e5; }
+.dateBadge_red { background: var(--bt-coral-dark, #b91c1c); }
+.dateBadge_gray { background: var(--bt-gray-600, #4b5563); }
+
+.badgeDay {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: var(--font-heading);
+}
+
+.badgeMonth {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cardTitleBlock {
+    flex: 1;
+    min-width: 0;
 }
 
 .sessionName {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--bt-gray-900);
+    margin: 0 0 4px;
+    line-height: 1.3;
+}
+
+.sessionSchedule {
+    font-size: 0.9rem;
+    color: var(--bt-gray-500);
+    margin: 0;
+}
+
+/* Stats strip */
+.statsStrip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--bt-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-3) var(--space-2);
+    border-right: 1px solid var(--bt-border);
+    gap: 2px;
+}
+
+.statItem:last-child {
+    border-right: none;
+}
+
+.statValue {
+    font-size: 1rem;
+    font-weight: 700;
     color: var(--bt-gray-900);
 }
 
-.sessionDetails {
+.statLabel {
+    font-size: 0.72rem;
+    color: var(--bt-gray-500);
+    text-transform: lowercase;
+}
+
+/* Details table */
+.detailsTable {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
-    margin-bottom: var(--space-8);
+    gap: var(--space-2);
+    margin: 0;
     flex: 1;
 }
 
-.sessionDetails > div {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.95rem;
-    color: var(--bt-gray-600);
+.detailRow {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: var(--space-2);
+    font-size: 0.88rem;
+    border-bottom: 1px solid var(--bt-border);
+    padding-bottom: var(--space-2);
 }
 
-.sessionDate {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.1rem;
+.detailRow:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.detailRow dt {
     font-weight: 600;
+    color: var(--bt-gray-700);
+}
+
+.detailRow dd {
+    color: var(--bt-gray-600);
+    margin: 0;
+}
+
+/* Price row */
+.priceRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: var(--space-2);
+}
+
+.priceLabel {
+    font-size: 0.85rem;
+    color: var(--bt-gray-500);
+}
+
+.priceValue {
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--bt-gray-900);
 }
 
-.sessionDetails svg {
-    color: var(--bt-gray-400);
-    flex-shrink: 0;
-}
-
-.ageRange {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--bt-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-2);
-}
-
-.cardFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
+/* CTA */
+.bookBtn {
+    width: 100%;
+    margin-top: var(--space-1);
 }
 
 .spots {
@@ -227,4 +323,57 @@
     .termClassesGrid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Term Sessions (sessionType === 'term') */
+.termSessionsSection {
+    margin-bottom: var(--space-8);
+}
+
+.termBadgeRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.termSessionCount {
+    font-size: 0.85rem;
+    color: var(--bt-gray-500);
+    font-weight: 500;
+}
+
+.viewScheduleSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.viewScheduleToggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bt-accent);
+    background: transparent;
+    border: 1.5px solid var(--bt-accent);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    width: fit-content;
+}
+
+.viewScheduleToggle:hover {
+    background: var(--bt-accent);
+    color: #fff;
+}
+
+.scheduleInline {
+    border: 1px solid var(--bt-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background: var(--bt-gray-50);
+    max-height: 400px;
+    overflow-y: auto;
 }

@@ -106,6 +106,18 @@ export interface BTClass {
     createdAt: any;
 }
 
+// ============================================================
+// Term Session Schedule Entry
+// ============================================================
+
+export interface ScheduleEntry {
+    date: string;                  // YYYY-MM-DD
+    recipeId: string;              // Empty string if unassigned
+    recipeName: string;            // Empty string if unassigned
+    recipePhotoUrl: string;        // Empty string if unassigned
+    status: 'active' | 'skipped'; // Default: 'active'
+}
+
 export interface Session {
     id: string;
     classId: string;
@@ -121,7 +133,7 @@ export interface Session {
     skills?: string[];
     spotsAvailable: number;
     spotsTotal: number;
-    status: 'open' | 'full' | 'cancelled' | 'closed'; // Added closed
+    status: 'open' | 'full' | 'cancelled' | 'closed' | 'draft'; // Added closed, draft
     venueId: string;
     venueName: string;
     instructorId?: string;
@@ -131,6 +143,12 @@ export interface Session {
     ageMin: number;
     ageMax: number;
     price: number; // Price in pence
+    // --- Term session fields (present only when sessionType === 'term') ---
+    sessionType?: 'single' | 'term';  // Absent/undefined = 'single' (backward compat)
+    termStartDate?: string;           // YYYY-MM-DD
+    termEndDate?: string;             // YYYY-MM-DD
+    dayOfWeek?: string;               // e.g. 'Monday'
+    schedule?: ScheduleEntry[];       // Ordered array of date-recipe pairs
     createdAt: any;
 }
 
@@ -262,6 +280,11 @@ export interface GuestSessionInfo {
     price: number; // pence
     spotsAvailable: number;
     status: string;
+    // Term session fields (present only when sessionType === 'term')
+    sessionType?: 'single' | 'term';
+    termStartDate?: string;
+    termEndDate?: string;
+    dayOfWeek?: string;
 }
 
 export interface GuestBooking {

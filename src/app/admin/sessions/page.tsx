@@ -6,6 +6,8 @@ import { db } from '@/lib/firebase';
 import { Session, BTClass, Recipe, Instructor, BTClassType, Booking, BookingSource } from '@/types';
 import { Calendar, Plus, Edit2, Trash2, X, Clock, ChefHat, MapPin, UserCheck, ClipboardList, Link as LinkIcon, MessageCircle, Share2, AlertTriangle } from 'lucide-react';
 import { isGuestCheckoutEnabled } from '@/lib/feature-flags';
+import { generateSchedule, generateScheduleMultiDay, validateTermDates } from '@/lib/term-schedule-utils';
+import TermScheduleEditor from './TermScheduleEditor';
 import styles from './page.module.css';
 
 // ============================================================
@@ -295,6 +297,20 @@ export default function AdminSessions() {
         setTimeout(() => setSocialLinkCopied(false), 3000);
     };
 
+    // Session type toggle for create/edit modal
+    const [sessionTypeToggle, setSessionTypeToggle] = useState<'single' | 'term'>('single');
+    const [termFormData, setTermFormData] = useState({
+        termStartDate: '',
+        termEndDate: '',
+        daysOfWeek: [] as string[],
+        spotsTotal: 15,
+        price: 1500,
+        ageMin: 5,
+        ageMax: 12,
+        status: 'draft' as Session['status'],
+    });
+    const [termFormError, setTermFormError] = useState('');
+
     const [formData, setFormData] = useState({
         classId: '',
         title: '',
@@ -411,6 +427,7 @@ export default function AdminSessions() {
     const handleOpenModal = (s?: Session) => {
         if (s) {
             setEditingSession(s);
+            setSessionTypeToggle((s.sessionType ?? 'single') === 'term' ? 'term' : 'single');
             setFormData({
                 classId: s.classId,
                 title: s.title || '',
@@ -422,10 +439,27 @@ export default function AdminSessions() {
                 startTime: s.startTime || '',
                 endTime: s.endTime || '',
             });
+            if ((s.sessionType ?? 'single') === 'term') {
+                setTermFormData({
+                    termStartDate: s.termStartDate || '',
+                    termEndDate: s.termEndDate || '',
+                    daysOfWeek: s.dayOfWeek ? [s.dayOfWeek] : (s as any).daysOfWeek || [],
+                    spotsTotal: s.spotsTotal || 15,
+                    price: s.price || 1500,
+                    ageMin: s.ageMin || 5,
+                    ageMax: s.ageMax || 12,
+                    status: s.status || 'draft',
+                });
+            } else {
+                setTermFormData({ termStartDate: '', termEndDate: '', daysOfWeek: [], spotsTotal: 15, price: 1500, ageMin: 5, ageMax: 12, status: 'draft' });
+            }
         } else {
             setEditingSession(null);
+            setSessionTypeToggle('single');
             setFormData({ classId: '', title: '', date: '', recipeIds: [], instructorId: '', status: 'open', spotsAvailable: 15, startTime: '', endTime: '' });
+            setTermFormData({ termStartDate: '', termEndDate: '', daysOfWeek: [], spotsTotal: 15, price: 1500, ageMin: 5, ageMax: 12, status: 'draft' });
         }
+        setTermFormError('');
         setRecipeDropdownValue('');
         setModalPos({ x: 0, y: 0 });
         setShowModal(true);
@@ -433,6 +467,98 @@ export default function AdminSessions() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Handle term session creation
+        if (sessionTypeToggle === 'term') {
+            setTermFormError('');
+
+            // Validate required fields
+            if (!formData.classId) { setTermFormError('Please select a class'); return; }
+            if (!termFormData.termStartDate) { setTermFormError('Term start date is required'); return; }
+            if (!termFormData.termEndDate) { setTermFormError('Term end date is required'); return; }
+            if (termFormData.daysOfWeek.length === 0) { setTermFormError('Please select at least one day of the week'); return; }
+            if (!formData.startTime) { setTermFormError('Start time is required'); return; }
+            if (!formData.endTime) { setTermFormError('End time is required'); return; }
+            if (!formData.instructorId) { setTermFormError('Please select an instructor'); return; }
+
+            // Cross-field validation — check each selected day
+            for (const day of termFormData.daysOfWeek) {
+                const validation = validateTermDates(termFormData.termStartDate, termFormData.termEndDate, day);
+                if (!validation.valid) {
+                    setTermFormError(validation.error || 'Invalid term dates');
+                    return;
+                }
+            }
+
+            // Generate schedule for all selected days (merged chronologically)
+            // When editing, only regenerate if dates or days changed — otherwise preserve existing recipe assignments
+            let schedule;
+            if (editingSession && editingSession.schedule) {
+                const datesChanged = termFormData.termStartDate !== editingSession.termStartDate ||
+                    termFormData.termEndDate !== editingSession.termEndDate;
+                const daysChanged = JSON.stringify(termFormData.daysOfWeek.sort()) !== JSON.stringify(
+                    ((editingSession as any).daysOfWeek || (editingSession.dayOfWeek ? [editingSession.dayOfWeek] : [])).sort()
+                );
+                if (datesChanged || daysChanged) {
+                    schedule = generateScheduleMultiDay(termFormData.termStartDate, termFormData.termEndDate, termFormData.daysOfWeek);
+                } else {
+                    schedule = editingSession.schedule; // Preserve existing schedule with recipe assignments
+                }
+            } else {
+                schedule = generateScheduleMultiDay(termFormData.termStartDate, termFormData.termEndDate, termFormData.daysOfWeek);
+            }
+
+            const parentClass = classes.find(c => c.id === formData.classId);
+            const instructor = instructors.find(i => i.id === formData.instructorId);
+            const classType = classTypes.find(ct => ct.slug === parentClass?.type);
+
+            const termData = {
+                sessionType: 'term' as const,
+                classId: formData.classId,
+                className: parentClass?.name || classType?.displayName || parentClass?.type || 'Unknown',
+                classType: parentClass?.type || '',
+                venueId: parentClass?.venueId || '',
+                venueName: parentClass?.venueName || '',
+                instructorId: formData.instructorId,
+                instructorName: instructor?.name || '',
+                startTime: formData.startTime || parentClass?.startTime || '',
+                endTime: formData.endTime || parentClass?.endTime || '',
+                termStartDate: termFormData.termStartDate,
+                termEndDate: termFormData.termEndDate,
+                dayOfWeek: termFormData.daysOfWeek.join(', '),
+                daysOfWeek: termFormData.daysOfWeek,
+                schedule,
+                price: termFormData.price,
+                spotsTotal: termFormData.spotsTotal,
+                spotsAvailable: editingSession ? (editingSession.spotsAvailable ?? termFormData.spotsTotal) : termFormData.spotsTotal,
+                ageMin: termFormData.ageMin,
+                ageMax: termFormData.ageMax,
+                status: termFormData.status,
+                // Backward-compatible fields
+                date: termFormData.termStartDate, // For sorting
+                recipeId: '',
+                recipeName: '',
+                recipePhotoUrl: '',
+                updatedAt: serverTimestamp(),
+            };
+
+            try {
+                if (editingSession) {
+                    await updateDoc(doc(db, 'sessions', editingSession.id), termData);
+                    setSessions(prev => prev.map(s => s.id === editingSession.id ? { ...s, ...termData } as unknown as Session : s));
+                } else {
+                    const docRef = await addDoc(collection(db, 'sessions'), { ...termData, createdAt: serverTimestamp() });
+                    setSessions(prev => [{ id: docRef.id, ...termData, createdAt: new Date() } as unknown as Session, ...prev]);
+                }
+                setShowModal(false);
+            } catch (err) {
+                console.error(err);
+                alert('Error saving term session.');
+            }
+            return;
+        }
+
+        // Existing single session submit logic
         const parentClass = classes.find(c => c.id === formData.classId);
         const selectedRecipes = recipes.filter(r => formData.recipeIds.includes(r.id));
         const firstRecipe = selectedRecipes[0];
@@ -544,9 +670,21 @@ export default function AdminSessions() {
                             {sessions.map(s => {
                                 const parentClass = classes.find(c => c.id === s.classId);
                                 const isTermClass = parentClass?.commitment === 'term';
+                                // Absent/undefined sessionType defaults to 'single' (backward compat)
+                                const isTermSession = (s.sessionType ?? 'single') === 'term';
                                 return (
                                 <tr key={s.id}>
-                                    <td><strong>{s.date ? new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</strong></td>
+                                    <td>
+                                        {isTermSession && s.termStartDate && s.termEndDate ? (
+                                            <strong>
+                                                {new Date(s.termStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                                {' – '}
+                                                {new Date(s.termEndDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </strong>
+                                        ) : (
+                                            <strong>{s.date ? new Date(s.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</strong>
+                                        )}
+                                    </td>
                                     <td>
                                         {(() => {
                                             const ct = classTypes.find(t => t.slug === s.classType);
@@ -556,13 +694,34 @@ export default function AdminSessions() {
                                                         {ct?.shortLabel || s.classType || 'Unknown'}
                                                     </span>
                                                     {isTermClass && <span className="badge badge-indigo" style={{ marginLeft: '4px' }}>Term</span>}
+                                                    {isTermSession && <span className="badge badge-amber" style={{ marginLeft: '4px' }}>Term Session</span>}
                                                     {' '}{s.className}
                                                 </>
                                             );
                                         })()}
                                     </td>
                                     <td>
-                                        {s.recipeName ? (
+                                        {isTermSession && s.schedule ? (() => {
+                                            const assignedCount = s.schedule.filter(e => e.recipeId && e.status === 'active').length;
+                                            const activeCount = s.schedule.filter(e => e.status === 'active').length;
+                                            if (assignedCount === 0) {
+                                                return <span className={styles.mutedText}>0 of {activeCount} assigned</span>;
+                                            }
+                                            const firstAssigned = s.schedule.find(e => e.recipeId && e.status === 'active');
+                                            return (
+                                                <div className={styles.recipeCell}>
+                                                    {firstAssigned?.recipePhotoUrl ? (
+                                                        <img src={firstAssigned.recipePhotoUrl} alt={firstAssigned.recipeName} className={styles.recipeThumb} />
+                                                    ) : (
+                                                        <span className={styles.recipePlaceholder}><ChefHat size={14} /></span>
+                                                    )}
+                                                    <div className={styles.recipeInfo}>
+                                                        <span className={styles.recipeName}>{assignedCount} of {activeCount} assigned</span>
+                                                        <span className={styles.skillsText}>{firstAssigned?.recipeName}{assignedCount > 1 ? ` +${assignedCount - 1} more` : ''}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })() : s.recipeName ? (
                                             <div className={styles.recipeCell}>
                                                 {s.recipePhotoUrl ? (
                                                     <img
@@ -657,117 +816,326 @@ export default function AdminSessions() {
                             <button className="modal-close" onClick={() => setShowModal(false)}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
+                            {/* Session Type Toggle */}
+                            {!editingSession && (
+                                <div className="form-group">
+                                    <label className="form-label">Session Type</label>
+                                    <div className={styles.sessionTypeToggle}>
+                                        <button
+                                            type="button"
+                                            className={`${styles.toggleBtn} ${sessionTypeToggle === 'single' ? styles.toggleBtnActive : ''}`}
+                                            onClick={() => setSessionTypeToggle('single')}
+                                        >
+                                            Single
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`${styles.toggleBtn} ${sessionTypeToggle === 'term' ? styles.toggleBtnActive : ''}`}
+                                            onClick={() => setSessionTypeToggle('term')}
+                                        >
+                                            Term
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="form-group">
                                 <label className="form-label">Class</label>
-                                <select className="form-select" value={formData.classId} onChange={e => setFormData({ ...formData, classId: e.target.value })} required>
+                                <select className="form-select" value={formData.classId} onChange={e => {
+                                    const selectedClass = classes.find(c => c.id === e.target.value);
+                                    setFormData({ ...formData, classId: e.target.value });
+                                    if (selectedClass && sessionTypeToggle === 'term') {
+                                        setTermFormData(prev => ({
+                                            ...prev,
+                                            ageMin: selectedClass.ageMin || prev.ageMin,
+                                            ageMax: selectedClass.ageMax || prev.ageMax,
+                                            spotsTotal: selectedClass.maxSize || prev.spotsTotal,
+                                            price: selectedClass.price || prev.price,
+                                        }));
+                                    }
+                                }} required>
                                     <option value="">Select Class...</option>
                                     {classes.map(c => <option key={c.id} value={c.id}>{c.name || c.type} — {c.venueName}</option>)}
                                 </select>
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Session Title (Optional)</label>
-                                <input
-                                    className="form-input"
-                                    value={formData.title}
-                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                    placeholder="e.g. Day 1: Introduction (leave blank to use recipe name)"
-                                />
-                            </div>
+                            {sessionTypeToggle === 'single' && (
+                                <>
+                                    <div className="form-group">
+                                        <label className="form-label">Session Title (Optional)</label>
+                                        <input
+                                            className="form-input"
+                                            value={formData.title}
+                                            onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                            placeholder="e.g. Day 1: Introduction (leave blank to use recipe name)"
+                                        />
+                                    </div>
 
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Session Date</label>
-                                    <input type="date" className="form-input" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Availability (Spots)</label>
-                                    <input type="number" className="form-input" value={formData.spotsAvailable} onChange={e => setFormData({ ...formData, spotsAvailable: parseInt(e.target.value) })} required />
-                                </div>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Recipes (Optional)</label>
-                                    <select
-                                        className="form-select"
-                                        value={recipeDropdownValue}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (val && !formData.recipeIds.includes(val)) {
-                                                setFormData({ ...formData, recipeIds: [...formData.recipeIds, val] });
-                                            }
-                                            setRecipeDropdownValue('');
-                                        }}
-                                    >
-                                        <option value="">Add a recipe...</option>
-                                        {recipes.filter(r => !formData.recipeIds.includes(r.id)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                    </select>
-                                    {formData.recipeIds.length > 0 && (
-                                        <div className={styles.skillsTagContainer} style={{ marginTop: '8px' }}>
-                                            {formData.recipeIds.map(rid => {
-                                                const r = recipes.find(rec => rec.id === rid);
-                                                return (
-                                                    <span key={rid} className={styles.skillTag}>
-                                                        {r?.name || rid}
-                                                        <button
-                                                            type="button"
-                                                            className={styles.skillTagRemove}
-                                                            onClick={() => setFormData({ ...formData, recipeIds: formData.recipeIds.filter(id => id !== rid) })}
-                                                            aria-label={`Remove recipe: ${r?.name || rid}`}
-                                                        >
-                                                            &times;
-                                                        </button>
-                                                    </span>
-                                                );
-                                            })}
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Session Date</label>
+                                            <input type="date" className="form-input" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
                                         </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Availability (Spots)</label>
+                                            <input type="number" className="form-input" value={formData.spotsAvailable} onChange={e => setFormData({ ...formData, spotsAvailable: parseInt(e.target.value) })} required />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Recipes (Optional)</label>
+                                            <select
+                                                className="form-select"
+                                                value={recipeDropdownValue}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    if (val && !formData.recipeIds.includes(val)) {
+                                                        setFormData({ ...formData, recipeIds: [...formData.recipeIds, val] });
+                                                    }
+                                                    setRecipeDropdownValue('');
+                                                }}
+                                            >
+                                                <option value="">Add a recipe...</option>
+                                                {recipes.filter(r => !formData.recipeIds.includes(r.id)).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                            </select>
+                                            {formData.recipeIds.length > 0 && (
+                                                <div className={styles.skillsTagContainer} style={{ marginTop: '8px' }}>
+                                                    {formData.recipeIds.map(rid => {
+                                                        const r = recipes.find(rec => rec.id === rid);
+                                                        return (
+                                                            <span key={rid} className={styles.skillTag}>
+                                                                {r?.name || rid}
+                                                                <button
+                                                                    type="button"
+                                                                    className={styles.skillTagRemove}
+                                                                    onClick={() => setFormData({ ...formData, recipeIds: formData.recipeIds.filter(id => id !== rid) })}
+                                                                    aria-label={`Remove recipe: ${r?.name || rid}`}
+                                                                >
+                                                                    &times;
+                                                                </button>
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Instructor (Optional)</label>
+                                            <select className="form-select" value={formData.instructorId} onChange={e => setFormData({ ...formData, instructorId: e.target.value })}>
+                                                <option value="">None</option>
+                                                {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">Status</label>
+                                        <select className="form-select" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
+                                            <option value="open">Open</option>
+                                            <option value="closed">Closed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Start Time (optional — defaults to class time)</label>
+                                            <input
+                                                type="time"
+                                                className="form-input"
+                                                value={formData.startTime}
+                                                onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                                                placeholder={classes.find(c => c.id === formData.classId)?.startTime || ''}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">End Time (optional — defaults to class time)</label>
+                                            <input
+                                                type="time"
+                                                className="form-input"
+                                                value={formData.endTime}
+                                                onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+                                                placeholder={classes.find(c => c.id === formData.classId)?.endTime || ''}
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {sessionTypeToggle === 'term' && (
+                                <>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Term Start Date</label>
+                                            <input
+                                                type="date"
+                                                className="form-input"
+                                                value={termFormData.termStartDate}
+                                                onChange={e => setTermFormData({ ...termFormData, termStartDate: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Term End Date</label>
+                                            <input
+                                                type="date"
+                                                className="form-input"
+                                                value={termFormData.termEndDate}
+                                                onChange={e => setTermFormData({ ...termFormData, termEndDate: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Days of Week</label>
+                                            <div className={styles.daysCheckboxGroup}>
+                                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                                                    <label key={day} className={styles.dayCheckbox}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={termFormData.daysOfWeek.includes(day)}
+                                                            onChange={e => {
+                                                                if (e.target.checked) {
+                                                                    setTermFormData({ ...termFormData, daysOfWeek: [...termFormData.daysOfWeek, day] });
+                                                                } else {
+                                                                    setTermFormData({ ...termFormData, daysOfWeek: termFormData.daysOfWeek.filter(d => d !== day) });
+                                                                }
+                                                            }}
+                                                        />
+                                                        {day.slice(0, 3)}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Spots Total</label>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                value={termFormData.spotsTotal}
+                                                onChange={e => setTermFormData({ ...termFormData, spotsTotal: parseInt(e.target.value) || 0 })}
+                                                min={1}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Price (pence)</label>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                value={termFormData.price}
+                                                onChange={e => setTermFormData({ ...termFormData, price: parseInt(e.target.value) || 0 })}
+                                                min={1}
+                                                required
+                                            />
+                                            <span className={styles.priceHint}>£{(termFormData.price / 100).toFixed(2)}</span>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Instructor</label>
+                                            <select className="form-select" value={formData.instructorId} onChange={e => setFormData({ ...formData, instructorId: e.target.value })} required>
+                                                <option value="">Select Instructor...</option>
+                                                {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Start Time</label>
+                                            <input
+                                                type="time"
+                                                className="form-input"
+                                                value={formData.startTime}
+                                                onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">End Time</label>
+                                            <input
+                                                type="time"
+                                                className="form-input"
+                                                value={formData.endTime}
+                                                onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="form-label">Min Age</label>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                value={termFormData.ageMin}
+                                                onChange={e => setTermFormData({ ...termFormData, ageMin: parseInt(e.target.value) || 0 })}
+                                                min={0}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Max Age</label>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                value={termFormData.ageMax}
+                                                onChange={e => setTermFormData({ ...termFormData, ageMax: parseInt(e.target.value) || 0 })}
+                                                min={1}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">Status</label>
+                                        <select
+                                            className="form-select"
+                                            value={termFormData.status}
+                                            onChange={e => setTermFormData({ ...termFormData, status: e.target.value as Session['status'] })}
+                                        >
+                                            <option value="draft">Draft</option>
+                                            <option value="open">Open</option>
+                                            <option value="closed">Closed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                            <option value="full">Full</option>
+                                        </select>
+                                    </div>
+
+                                    {termFormError && (
+                                        <p className={styles.termFormError}>{termFormError}</p>
                                     )}
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Instructor (Optional)</label>
-                                    <select className="form-select" value={formData.instructorId} onChange={e => setFormData({ ...formData, instructorId: e.target.value })}>
-                                        <option value="">None</option>
-                                        {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                                    </select>
-                                </div>
-                            </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Status</label>
-                                <select className="form-select" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })}>
-                                    <option value="open">Open</option>
-                                    <option value="closed">Closed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Start Time (optional — defaults to class time)</label>
-                                    <input
-                                        type="time"
-                                        className="form-input"
-                                        value={formData.startTime}
-                                        onChange={e => setFormData({ ...formData, startTime: e.target.value })}
-                                        placeholder={classes.find(c => c.id === formData.classId)?.startTime || ''}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">End Time (optional — defaults to class time)</label>
-                                    <input
-                                        type="time"
-                                        className="form-input"
-                                        value={formData.endTime}
-                                        onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                                        placeholder={classes.find(c => c.id === formData.classId)?.endTime || ''}
-                                    />
-                                </div>
-                            </div>
+                                    {/* Schedule Editor — only shown when editing an existing term session */}
+                                    {editingSession && editingSession.sessionType === 'term' && editingSession.schedule && (
+                                        <TermScheduleEditor
+                                            sessionId={editingSession.id}
+                                            schedule={editingSession.schedule}
+                                            onScheduleChange={(updatedSchedule) => {
+                                                // Update both the sessions list and the editing session reference
+                                                setSessions(prev => prev.map(s =>
+                                                    s.id === editingSession.id
+                                                        ? { ...s, schedule: updatedSchedule }
+                                                        : s
+                                                ));
+                                                setEditingSession(prev => prev ? { ...prev, schedule: updatedSchedule } : prev);
+                                            }}
+                                        />
+                                    )}
+                                </>
+                            )}
 
                             <div className={styles.modalActions}>
                                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary">Save Session</button>
+                                <button type="submit" className="btn btn-primary">
+                                    {sessionTypeToggle === 'term' ? (editingSession ? 'Save Term Session' : 'Create Term Session') : 'Save Session'}
+                                </button>
                             </div>
                         </form>
                     </div>

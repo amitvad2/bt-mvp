@@ -1,19 +1,25 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
-import { Booking } from '@/types';
-import { Calendar, Clock, MapPin, XCircle, Repeat } from 'lucide-react';
+import { Booking, ScheduleEntry } from '@/types';
+import { Calendar, Clock, MapPin, XCircle, Repeat, ChevronDown, ChevronUp } from 'lucide-react';
 import BundleGroupCard from '@/components/portal/BundleGroupCard';
+import TermScheduleView from '@/components/sessions/TermScheduleView';
 import { formatRecurrenceDays } from '@/lib/term-utils';
+import { getNextUpcoming } from '@/lib/term-schedule-utils';
 import styles from './page.module.css';
 
 export default function MyClassesPage() {
     const { user } = useAuth();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
+    // Term schedule state: maps booking ID -> schedule array (lazy-loaded)
+    const [termSchedules, setTermSchedules] = useState<Record<string, ScheduleEntry[]>>({});
+    const [expandedSchedules, setExpandedSchedules] = useState<Record<string, boolean>>({});
+    const [loadingSchedules, setLoadingSchedules] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         if (!user) return;
@@ -200,6 +206,55 @@ export default function MyClassesPage() {
     };
 
     /**
+     * Fetches and toggles the term schedule view for a booking.
+     * Lazy-loads the schedule from Firestore on first click.
+     */
+    const handleViewSchedule = async (booking: Booking) => {
+        const bookingId = booking.id;
+
+        // If already expanded, collapse it
+        if (expandedSchedules[bookingId]) {
+            setExpandedSchedules(prev => ({ ...prev, [bookingId]: false }));
+            return;
+        }
+
+        // If schedule already cached, just expand
+        if (termSchedules[bookingId]) {
+            setExpandedSchedules(prev => ({ ...prev, [bookingId]: true }));
+            return;
+        }
+
+        // Lazy-load the schedule from the session document
+        setLoadingSchedules(prev => ({ ...prev, [bookingId]: true }));
+        try {
+            const sessionDoc = await getDoc(doc(db, 'sessions', booking.sessionId));
+            if (sessionDoc.exists()) {
+                const sessionData = sessionDoc.data();
+                const schedule = (sessionData.schedule || []) as ScheduleEntry[];
+                setTermSchedules(prev => ({ ...prev, [bookingId]: schedule }));
+            } else {
+                setTermSchedules(prev => ({ ...prev, [bookingId]: [] }));
+            }
+            setExpandedSchedules(prev => ({ ...prev, [bookingId]: true }));
+        } catch (e) {
+            console.error('Failed to fetch term schedule:', e);
+        } finally {
+            setLoadingSchedules(prev => ({ ...prev, [bookingId]: false }));
+        }
+    };
+
+    /**
+     * Returns today's date as a YYYY-MM-DD string for use with getNextUpcoming().
+     */
+    const getTodayString = (): string => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    /**
      * Formats a term booking into a human-readable schedule description.
      * E.g. "Every Mon, Wed, Fri — 3:30–4:30 pm, 6 Jan – 28 Mar 2025"
      */
@@ -228,7 +283,8 @@ export default function MyClassesPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Separate term bookings from other bookings
+    // Separate term bookings from other bookings.
+    // Absent/undefined bookingType defaults to per-session (backward compat).
     const termBookings = bookings.filter(b => b.bookingType === 'term');
     const nonTermBookings = bookings.filter(b => b.bookingType !== 'term');
 
@@ -307,36 +363,66 @@ export default function MyClassesPage() {
                         <section className={styles.section}>
                             <h2 className={styles.sectionTitle}>Term Enrolments</h2>
                             <div className={styles.list}>
-                                {activeTermBookings.map(booking => (
-                                    <div key={booking.id} className={`card ${styles.bookingCard} ${styles.termCard}`}>
-                                        <div className={styles.cardInfo}>
-                                            <div className={styles.termIcon}>
-                                                <Repeat size={24} />
-                                            </div>
-                                            <div className={styles.details}>
-                                                <div className={styles.termHeader}>
-                                                    <h3>{booking.className}</h3>
-                                                    <span className="badge badge-indigo">Term</span>
+                                {activeTermBookings.map(booking => {
+                                    const schedule = termSchedules[booking.id];
+                                    const nextSession = schedule ? getNextUpcoming(schedule, getTodayString()) : null;
+                                    const isExpanded = expandedSchedules[booking.id] || false;
+                                    const isLoadingSchedule = loadingSchedules[booking.id] || false;
+
+                                    return (
+                                        <div key={booking.id} className={`card ${styles.bookingCard} ${styles.termCard}`}>
+                                            <div className={styles.cardInfo}>
+                                                <div className={styles.termIcon}>
+                                                    <Repeat size={24} />
                                                 </div>
-                                                <p className={styles.studentName}>
-                                                    Participant: <strong>{booking.studentName || 'Self'}</strong>
-                                                </p>
-                                                <p className={styles.termSchedule}>
-                                                    <Clock size={14} /> {formatTermSchedule(booking)}
-                                                </p>
-                                                <div className={styles.meta}>
-                                                    <span><MapPin size={14} /> {booking.venueName}</span>
-                                                    <span className="badge badge-green">Active</span>
+                                                <div className={styles.details}>
+                                                    <div className={styles.termHeader}>
+                                                        <h3>{booking.className}</h3>
+                                                        <span className="badge badge-indigo">Term</span>
+                                                    </div>
+                                                    <p className={styles.studentName}>
+                                                        Participant: <strong>{booking.studentName || 'Self'}</strong>
+                                                    </p>
+                                                    <p className={styles.termSchedule}>
+                                                        <Clock size={14} /> {formatTermSchedule(booking)}
+                                                    </p>
+                                                    {nextSession && (
+                                                        <p className={styles.nextSession}>
+                                                            <Calendar size={14} /> Next session: {new Date(nextSession.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                            {nextSession.recipeName && ` — ${nextSession.recipeName}`}
+                                                        </p>
+                                                    )}
+                                                    <div className={styles.meta}>
+                                                        <span><MapPin size={14} /> {booking.venueName}</span>
+                                                        <span className="badge badge-green">Active</span>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div className={styles.cardActions}>
+                                                <button
+                                                    className="btn btn-ghost btn-sm"
+                                                    onClick={() => handleViewSchedule(booking)}
+                                                    disabled={isLoadingSchedule}
+                                                >
+                                                    {isLoadingSchedule ? 'Loading...' : (
+                                                        <>
+                                                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                            {isExpanded ? 'Hide Schedule' : 'View Schedule'}
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleTermCancel(booking)}>
+                                                    <XCircle size={16} /> Cancel
+                                                </button>
+                                            </div>
+                                            {isExpanded && schedule && (
+                                                <div className={styles.schedulePanel}>
+                                                    <TermScheduleView schedule={schedule} />
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className={styles.cardActions}>
-                                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => handleTermCancel(booking)}>
-                                                <XCircle size={16} /> Cancel
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </section>
                     )}
