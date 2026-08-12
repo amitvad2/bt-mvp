@@ -220,16 +220,18 @@ export function getNextUpcoming(
  * Returns the display-ready schedule for public/portal views.
  * - Filters to only active entries
  * - Substitutes "Recipe to be announced" for unassigned recipes
- * - Returns simplified objects with date, recipeName, and recipePhotoUrl
+ * - Returns simplified objects with date, recipeName, recipePhotoUrl, description, and skills
  */
 export function getDisplaySchedule(
   schedule: ScheduleEntry[]
-): Array<{ date: string; recipeName: string; recipePhotoUrl: string }> {
+): Array<{ date: string; recipeName: string; recipePhotoUrl: string; recipeDescription: string; recipeSkills: string[] }> {
   return schedule
     .filter((entry) => entry.status === 'active')
     .map((entry) => ({
       date: entry.date,
       recipeName: entry.recipeId ? entry.recipeName : 'Recipe to be announced',
       recipePhotoUrl: entry.recipePhotoUrl,
+      recipeDescription: entry.recipeId ? (entry.recipeDescription || '') : '',
+      recipeSkills: entry.recipeId ? (entry.recipeSkills || []) : [],
     }));
 }

@@ -66,6 +66,8 @@ export default function TermScheduleEditor({
       recipeId: recipe.id,
       recipeName: recipe.name,
       recipePhotoUrl: recipe.photoUrl || '',
+      recipeDescription: recipe.description || '',
+      recipeSkills: recipe.skills || [],
     };
     await persistSchedule(updatedSchedule);
     setSaving(null);
@@ -79,6 +81,8 @@ export default function TermScheduleEditor({
       recipeId: '',
       recipeName: '',
       recipePhotoUrl: '',
+      recipeDescription: '',
+      recipeSkills: [],
     };
     await persistSchedule(updatedSchedule);
     setSaving(null);

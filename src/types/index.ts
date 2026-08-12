@@ -115,6 +115,8 @@ export interface ScheduleEntry {
     recipeId: string;              // Empty string if unassigned
     recipeName: string;            // Empty string if unassigned
     recipePhotoUrl: string;        // Empty string if unassigned
+    recipeDescription?: string;    // Recipe description (optional, from Recipe doc)
+    recipeSkills?: string[];       // Skills/learning outcomes (optional, from Recipe doc)
     status: 'active' | 'skipped'; // Default: 'active'
 }
 
@@ -128,6 +130,7 @@ export interface Session {
     recipeId: string;
     recipeName?: string;
     recipePhotoUrl?: string; // Recipe photo URL stored on session for term class schedule display
+    recipeDescription?: string; // Recipe description stored on session for display
     recipeIds?: string[]; // Array of recipe IDs when session has multiple recipes
     // Skills/learning outcomes for this session (e.g. ['chopping', 'mixing', 'creative plating'])
     skills?: string[];

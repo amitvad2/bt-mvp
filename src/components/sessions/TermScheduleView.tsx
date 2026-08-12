@@ -79,15 +79,25 @@ export default function TermScheduleView({ schedule }: TermScheduleViewProps) {
                   <ChefHat size={20} />
                 </div>
               )}
-              <span
-                className={
-                  entry.recipeName === 'Recipe to be announced'
-                    ? styles.recipeTba
-                    : styles.recipeName
-                }
-              >
-                {entry.recipeName}
-              </span>
+              <div className={styles.recipeDetails}>
+                <span
+                  className={
+                    entry.recipeName === 'Recipe to be announced'
+                      ? styles.recipeTba
+                      : styles.recipeName
+                  }
+                >
+                  {entry.recipeName}
+                </span>
+                {entry.recipeDescription && (
+                  <span className={styles.recipeDescription}>{entry.recipeDescription}</span>
+                )}
+                {entry.recipeSkills && entry.recipeSkills.length > 0 && (
+                  <span className={styles.recipeSkills}>
+                    {entry.recipeSkills.join(' · ')}
+                  </span>
+                )}
+              </div>
             </div>
           </li>
         ))}

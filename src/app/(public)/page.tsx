@@ -4,13 +4,32 @@ import { ArrowRight, Star, Sparkles, Heart, BookOpen, Shield, Leaf } from 'lucid
 import styles from './page.module.css';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import { HeroCtas, BannerCtas } from './HomeCtaButtons';
+import { adminDb } from '@/lib/firebase-admin';
 
 export const metadata: Metadata = {
     title: 'Blooming Tastebuds | Kids & Young Adult Cooking Classes',
     description: 'Empowering children and young adults through the magic of healthy cooking. Book your session today at one of our London venues.',
 };
 
-export default function HomePage() {
+async function getClassTypeSlugs(): Promise<{ kids: string; teens: string }> {
+    try {
+        const snap = await adminDb.collection('class_types').orderBy('order').get();
+        const types = snap.docs.map(d => d.data());
+        // Find kids and teens by ageMin (kids < 12, teens >= 12) or fallback to first two
+        const kids = types.find(t => t.ageMin !== undefined && t.ageMin < 12);
+        const teens = types.find(t => t.ageMin !== undefined && t.ageMin >= 12);
+        return {
+            kids: kids?.slug || types[0]?.slug || 'all',
+            teens: teens?.slug || types[1]?.slug || 'all',
+        };
+    } catch (e) {
+        console.error('Failed to fetch class type slugs:', e);
+        return { kids: 'all', teens: 'all' };
+    }
+}
+
+export default async function HomePage() {
+    const slugs = await getClassTypeSlugs();
     return (
         <>
             {/* ── HERO ── */}
@@ -110,7 +129,7 @@ export default function HomePage() {
                                     <li>Try new veggies</li>
                                     <li>Teamwork</li>
                                 </ul>
-                                <Link href="/classes?type=kids-weekend" className={styles.cardCta}>
+                                <Link href={`/classes?type=${slugs.kids}`} className={styles.cardCta}>
                                     Find Junior Cooks <ArrowRight size={16} />
                                 </Link>
                             </div>
@@ -130,7 +149,7 @@ export default function HomePage() {
                                     <li>Knife skills</li>
                                     <li>Budget meals</li>
                                 </ul>
-                                <Link href="/classes?type=young-weekend" className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
+                                <Link href={`/classes?type=${slugs.teens}`} className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
                                     Find Teen Chefs <ArrowRight size={16} />
                                 </Link>
                             </div>

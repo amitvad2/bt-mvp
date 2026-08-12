@@ -7,7 +7,7 @@ import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Session, Venue, BTClassType } from '@/types';
 import { getActiveSessionCount } from '@/lib/term-schedule-utils';
-import { Map, List, ChevronDown, ChevronUp } from 'lucide-react';
+import { Map, List, ChevronDown, ChevronUp, ChefHat } from 'lucide-react';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import BundleBrowser from '@/components/sessions/BundleBrowser';
 import TermScheduleView from '@/components/sessions/TermScheduleView';
@@ -33,6 +33,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [termSessions, setTermSessions] = useState<Session[]>([]);
     const [expandedTermSchedule, setExpandedTermSchedule] = useState<string | null>(null);
+    const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);
     const [termClassIds, setTermClassIds] = useState<Set<string>>(new Set());
     const [termClassIdsReady, setTermClassIdsReady] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -95,9 +96,16 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
             const snap = await getDocs(q);
             let results = snap.docs.map(d => ({ id: d.id, ...d.data() } as Session));
 
-            // Exclude individual per-date sessions belonging to term classes — they are not individually bookable.
-            // But keep term sessions (sessionType === 'term') even if linked to a term class.
-            results = results.filter(s => s.sessionType === 'term' || !termClassIds.has(s.classId));
+            // Exclude legacy per-date sessions belonging to term classes that are part of the old
+            // class-based term model (auto-generated per-date sessions not meant for individual booking).
+            // Keep: all term sessions, and any session not linked to a term class.
+            // For sessions linked to a term class: only exclude if they have no sessionType field
+            // AND were created as part of the old auto-generated schedule (identified by having
+            // a classId in termClassIds but no explicit sessionType).
+            // NOTE: We no longer exclude these because it causes issues when admins create
+            // standalone sessions linked to term classes. The old model's per-date sessions
+            // should be cleaned up separately if they exist.
+            // Term sessions (sessionType === 'term') are separated into their own display section below.
 
             // Separate term sessions from single sessions.
             // Absent/undefined sessionType defaults to 'single' (backward compat).
@@ -188,7 +196,6 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     };
 
     useEffect(() => {
-        if (!termClassIdsReady) return; // Wait until term class IDs are loaded
         const typeParam = searchParams.get('type');
         if (typeParam) {
             setFilters(prev => ({ ...prev, type: typeParam }));
@@ -197,7 +204,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
             handleSearch();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams, termClassIdsReady]);
+    }, [searchParams]);
 
     return (
         <>
@@ -533,6 +540,49 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                         <span className={styles.priceLabel}>Cost per session from</span>
                                         <span className={styles.priceValue}>£{(s.price / 100).toFixed(2)}</span>
                                     </div>
+
+                                    {/* View Recipe toggle */}
+                                    {s.recipeName && (
+                                        <div className={styles.viewScheduleSection}>
+                                            <button
+                                                type="button"
+                                                className={styles.viewScheduleToggle}
+                                                onClick={() => setExpandedRecipe(expandedRecipe === s.id ? null : s.id!)}
+                                                aria-expanded={expandedRecipe === s.id}
+                                            >
+                                                View Recipe
+                                                {expandedRecipe === s.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            </button>
+                                            {expandedRecipe === s.id && (
+                                                <div className={styles.scheduleInline}>
+                                                    <div className={styles.recipeDetailCard}>
+                                                        {s.recipePhotoUrl ? (
+                                                            <img
+                                                                src={s.recipePhotoUrl}
+                                                                alt={`Photo of ${s.recipeName}`}
+                                                                className={styles.recipeDetailPhoto}
+                                                            />
+                                                        ) : (
+                                                            <div className={styles.recipeDetailFallback}>
+                                                                <ChefHat size={32} />
+                                                            </div>
+                                                        )}
+                                                        <div className={styles.recipeDetailInfo}>
+                                                            <h4 className={styles.recipeDetailName}>{s.recipeName}</h4>
+                                                            {s.recipeDescription && (
+                                                                <p className={styles.recipeDetailDescription}>{s.recipeDescription}</p>
+                                                            )}
+                                                            {s.skills && s.skills.length > 0 && (
+                                                                <p className={styles.recipeDetailSkills}>
+                                                                    {s.skills.join(' · ')}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* CTA */}
                                     <button

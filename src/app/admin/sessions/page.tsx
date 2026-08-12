@@ -585,6 +585,7 @@ export default function AdminSessions() {
             recipeId: firstRecipe?.id || '',
             recipeName: firstRecipe?.name || '',
             recipePhotoUrl: firstRecipe?.photoUrl || '',
+            recipeDescription: firstRecipe?.description || '',
             // New multi-recipe field
             recipeIds: formData.recipeIds,
             // Skills aggregated from selected recipes
