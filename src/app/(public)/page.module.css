@@ -847,6 +847,17 @@
     margin: 0 auto var(--space-10);
 }
 
+.ctaBanner .ctaSecondary {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.ctaBanner .ctaSecondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #fff;
+    color: #fff;
+}
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */

@@ -34,6 +34,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     const [termSessions, setTermSessions] = useState<Session[]>([]);
     const [expandedTermSchedule, setExpandedTermSchedule] = useState<string | null>(null);
     const [termClassIds, setTermClassIds] = useState<Set<string>>(new Set());
+    const [termClassIdsReady, setTermClassIdsReady] = useState(false);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
     const [filters, setFilters] = useState({
@@ -68,7 +69,9 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                 );
                 const ids = new Set(snap.docs.map(d => d.id));
                 setTermClassIds(ids);
-            } catch (e) { console.error('Error fetching term classes:', e); }
+            } catch (e) { console.error('Error fetching term classes:', e); } finally {
+                setTermClassIdsReady(true);
+            }
         };
         fetchVenues();
         fetchClassTypes();
@@ -185,6 +188,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
     };
 
     useEffect(() => {
+        if (!termClassIdsReady) return; // Wait until term class IDs are loaded
         const typeParam = searchParams.get('type');
         if (typeParam) {
             setFilters(prev => ({ ...prev, type: typeParam }));
@@ -193,7 +197,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
             handleSearch();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams, termClassIds.size]);
+    }, [searchParams, termClassIdsReady]);
 
     return (
         <>
