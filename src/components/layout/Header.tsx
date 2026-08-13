@@ -12,10 +12,10 @@ export default function Header() {
 
     const navLinks = [
         { href: '/', label: 'Home' },
-        { href: '/about', label: 'About Us' },
+        { href: '/what-they-learn', label: 'Our Approach' },
         { href: '/classes', label: 'Classes' },
         { href: '/gallery', label: 'Gallery' },
-        { href: '/testimonies', label: 'Testimonies' },
+        { href: '/about', label: 'About' },
         { href: '/contact', label: 'Contact' },
     ];
 

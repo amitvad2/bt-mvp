@@ -1,0 +1,64 @@
+.hero { position: relative; min-height: 610px; display: flex; align-items: center; overflow: hidden; }
+.heroImage { object-fit: cover; object-position: center; z-index: -2; }
+.heroShade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(31, 26, 21, .84) 0%, rgba(31, 26, 21, .54) 39%, rgba(31, 26, 21, .08) 72%); }
+.heroContent { padding-top: var(--space-16); padding-bottom: var(--space-16); }
+.heroContent h1 { max-width: 670px; color: #fff; margin-bottom: var(--space-5); }
+.heroContent p { max-width: 575px; color: rgba(255,255,255,.93); font-size: 1.2rem; line-height: 1.6; }
+.eyebrow { display: block; color: var(--bt-citrus-light); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: var(--space-3); }
+
+.intro { text-align: center; padding-bottom: var(--space-20); }
+.intro h2, .intro p { max-width: 820px; margin-left: auto; margin-right: auto; }
+.intro p { margin-top: var(--space-5); color: var(--bt-gray-600); font-size: 1.16rem; }
+.sectionHeading { max-width: 700px; margin-bottom: var(--space-10); }
+.sectionHeading p { margin-top: var(--space-4); color: var(--bt-gray-600); }
+
+.outcomes { background: var(--bt-warm-white); }
+.outcomeGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-4); }
+.outcomeCard { padding: var(--space-6); border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-sm); }
+.outcomeCard h3 { margin: var(--space-4) 0 var(--space-2); font-size: 1.16rem; }
+.outcomeCard p { margin: 0; color: var(--bt-gray-600); font-size: .91rem; line-height: 1.55; }
+.outcomeIcon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--bt-leaf-light); color: var(--bt-leaf-dark); }
+
+.journeys { background: var(--bt-cream); }
+.journeyGrid { display: grid; grid-template-columns: 1fr 1.15fr; gap: var(--space-6); align-items: stretch; }
+.journeyCard { padding: var(--space-10); border-radius: var(--radius-xl); background: #fff; box-shadow: var(--shadow); }
+.journeyCard h3 { margin: var(--space-4) 0 var(--space-2); }
+.journeyCard h4 { margin: var(--space-6) 0 var(--space-3); font-family: var(--font-body); font-size: 1rem; }
+.journeyCard p { color: var(--bt-gray-600); }
+.journeyLead { color: var(--bt-orange-dark) !important; font-family: var(--font-heading); font-size: 1.22rem; }
+.journeyCard ul { padding-left: 1.2rem; color: var(--bt-gray-700); display: grid; gap: .45rem; }
+.ageBadge { display: inline-block; padding: 5px 10px; border-radius: var(--radius-full); color: var(--bt-leaf-dark); background: var(--bt-leaf-light); font-size: .78rem; font-weight: 700; }
+.textLink { display: inline-flex; gap: 8px; align-items: center; margin-top: var(--space-8); color: var(--bt-leaf-dark); font-weight: 700; }
+.teenJourney { padding: 0; overflow: hidden; }
+.juniorJourney { padding: 0; overflow: hidden; }
+.juniorImage, .teenImage { width: 100%; height: 280px; object-fit: cover; }
+.juniorImage { object-position: center; }
+.juniorContent, .teenContent { padding: var(--space-8) var(--space-10) var(--space-10); }
+
+.termJourney { background: #355b43; }
+.termGrid { display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: var(--space-16); }
+.termGrid :global(.eyebrow) { color: var(--bt-citrus-light); }
+.termGrid h2 { color: #fff; margin-bottom: var(--space-5); }
+.termGrid p { color: rgba(255,255,255,.84); }
+.steps { display: grid; gap: var(--space-4); list-style: none; counter-reset: none; }
+.steps li { display: grid; grid-template-columns: 52px 1fr; gap: var(--space-4); align-items: start; padding: var(--space-4); background: rgba(255,255,255,.09); border-radius: var(--radius); }
+.steps span { color: var(--bt-citrus-light); font-weight: 700; font-size: 1.1rem; }
+.steps strong { color: #fff; }
+.steps p { margin: 2px 0 0; font-size: .9rem; }
+
+.recipeSection { background: var(--bt-warm-white); }
+.recipeGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-5); }
+.recipeCard { overflow: hidden; background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.recipeIllustration { height: 145px; display: grid; place-items: center; color: #fff; }
+.recipe1 { background: linear-gradient(135deg, #9b4f36, #d88a54); }.recipe2 { background: linear-gradient(135deg, #4a7c59, #8fb86b); }.recipe3 { background: linear-gradient(135deg, #c4a035, #e2c76d); }.recipe4 { background: linear-gradient(135deg, #7b5ea7, #b190d5); }
+.recipeCopy { padding: var(--space-5); }.recipeCopy h3 { font-size: 1.15rem; margin-bottom: var(--space-2); }.recipeCopy p { color: var(--bt-gray-600); font-size: .9rem; min-height: 84px; }.recipeCopy ul { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; list-style: none; }.recipeCopy li { padding: 4px 8px; background: var(--bt-gray-100); border-radius: var(--radius-full); color: var(--bt-gray-700); font-size: .72rem; font-weight: 600; }
+.disclaimer { margin-top: var(--space-6); color: var(--bt-gray-500); font-size: .84rem; font-style: italic; }
+
+.teaching { background: var(--bt-cream); }.teachingGrid { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: var(--space-16); }.teachingGrid p { color: var(--bt-gray-600); }.teachingList { display: grid; gap: var(--space-4); padding: 0; list-style: none; }.teachingList li { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: #fff; border-radius: var(--radius); color: var(--bt-gray-700); font-weight: 600; }.teachingList svg { color: var(--bt-leaf); flex-shrink: 0; }
+
+.reassurance { background: var(--bt-warm-white); text-align: center; }.reassurance .sectionHeading { margin-left: auto; margin-right: auto; }.reassuranceGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }.reassuranceGrid p { margin: 0; padding: var(--space-5); border: 1px solid var(--bt-border); border-radius: var(--radius); color: var(--bt-gray-700); font-weight: 700; }
+.cta { padding: var(--space-20) 0; background: linear-gradient(135deg, var(--bt-leaf-dark), var(--bt-orange-dark)); text-align: center; }.cta h2 { color: #fff; }.cta p { max-width: 620px; margin: var(--space-4) auto var(--space-8); color: rgba(255,255,255,.88); font-size: 1.1rem; }
+
+@media (max-width: 1000px) { .outcomeGrid { grid-template-columns: repeat(3, 1fr); }.recipeGrid { grid-template-columns: repeat(2, 1fr); }.reassuranceGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 780px) { .hero { min-height: 560px; }.heroShade { background: linear-gradient(90deg, rgba(31,26,21,.83), rgba(31,26,21,.42)); }.journeyGrid, .termGrid, .teachingGrid { grid-template-columns: 1fr; gap: var(--space-8); }.juniorContent, .teenContent { padding: var(--space-8); }.juniorImage, .teenImage { height: 240px; } }
+@media (max-width: 560px) { .hero { min-height: 500px; }.heroImage { object-position: 66% center; }.heroContent p { font-size: 1.05rem; }.outcomeGrid, .recipeGrid, .reassuranceGrid { grid-template-columns: 1fr; }.sectionHeading { margin-bottom: var(--space-8); }.recipeCopy p { min-height: 0; }.intro { padding-bottom: var(--space-12); } }

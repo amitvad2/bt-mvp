@@ -70,6 +70,19 @@
     gap: var(--space-8);
 }
 
+/* Term programmes and one-off sessions share one grid, so mixed results fill
+   both columns rather than leaving an empty column after a term programme. */
+.combinedResults {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-8);
+}
+
+.combinedResults .termSessionsSection,
+.combinedResults .sessionGrid {
+    display: contents;
+}
+
 .sessionCard {
     background: #fff;
     padding: var(--space-6);
@@ -293,6 +306,10 @@
     .sessionGrid {
         grid-template-columns: 1fr;
     }
+
+    .combinedResults {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Term Classes Section */
@@ -376,6 +393,16 @@
     background: var(--bt-gray-50);
     max-height: 400px;
     overflow-y: auto;
+}
+
+.scheduleDisclaimer {
+    margin: var(--space-4) 0 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--bt-border);
+    color: var(--bt-gray-500);
+    font-size: 0.78rem;
+    font-style: italic;
+    line-height: 1.45;
 }
 
 

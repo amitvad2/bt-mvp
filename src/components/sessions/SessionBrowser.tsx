@@ -291,6 +291,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                         })()}
                     </p>
 
+                    <div className={styles.combinedResults}>
                     {/* Term Sessions (sessionType === 'term') */}
                     {!loading && termSessions.length > 0 && (
                         <section className={styles.termSessionsSection}>
@@ -382,21 +383,24 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                                 <span className={styles.priceValue}>£{(ts.price / 100).toFixed(2)}</span>
                                             </div>
 
-                                            {/* View Schedule toggle */}
+                                            {/* Full term menu and learning plan */}
                                             {ts.schedule && ts.schedule.length > 0 && (
                                                 <div className={styles.viewScheduleSection}>
                                                     <button
                                                         type="button"
                                                         className={styles.viewScheduleToggle}
-                                                        onClick={() => setExpandedTermSchedule(isExpanded ? null : ts.id!)}
-                                                        aria-expanded={isExpanded}
-                                                    >
-                                                        View Schedule
+                                                    onClick={() => setExpandedTermSchedule(isExpanded ? null : ts.id!)}
+                                                    aria-expanded={isExpanded}
+                                                >
+                                                        See what they&apos;ll cook &amp; learn
                                                         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                                     </button>
                                                     {isExpanded && (
                                                         <div className={styles.scheduleInline}>
                                                             <TermScheduleView schedule={ts.schedule} />
+                                                            <p className={styles.scheduleDisclaimer}>
+                                                                Planned menu subject to change for seasonal availability, allergen management, or operational reasons.
+                                                            </p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -541,7 +545,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                         <span className={styles.priceValue}>£{(s.price / 100).toFixed(2)}</span>
                                     </div>
 
-                                    {/* View Recipe toggle */}
+                                    {/* Optional recipe detail for a single-session booking. */}
                                     {s.recipeName && (
                                         <div className={styles.viewScheduleSection}>
                                             <button
@@ -563,7 +567,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                                                 className={styles.recipeDetailPhoto}
                                                             />
                                                         ) : (
-                                                            <div className={styles.recipeDetailFallback}>
+                                                            <div className={styles.recipeDetailFallback} aria-hidden="true">
                                                                 <ChefHat size={32} />
                                                             </div>
                                                         )}
@@ -573,9 +577,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                                                 <p className={styles.recipeDetailDescription}>{s.recipeDescription}</p>
                                                             )}
                                                             {s.skills && s.skills.length > 0 && (
-                                                                <p className={styles.recipeDetailSkills}>
-                                                                    {s.skills.join(' · ')}
-                                                                </p>
+                                                                <p className={styles.recipeDetailSkills}>{s.skills.join(' · ')}</p>
                                                             )}
                                                         </div>
                                                     </div>
@@ -613,6 +615,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                         </div>
                         )
                     )}
+                    </div>
                 </>
             )}
 

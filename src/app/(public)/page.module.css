@@ -933,3 +933,13 @@
         animation: none;
     }
 }
+
+.learningApproachLink {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: 8px;
+    margin: var(--space-8) auto 0;
+    color: var(--bt-leaf-dark);
+    font-weight: 700;
+}

@@ -4,32 +4,13 @@ import { ArrowRight, Star, Sparkles, Heart, BookOpen, Shield, Leaf } from 'lucid
 import styles from './page.module.css';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import { HeroCtas, BannerCtas } from './HomeCtaButtons';
-import { adminDb } from '@/lib/firebase-admin';
 
 export const metadata: Metadata = {
     title: 'Blooming Tastebuds | Kids & Young Adult Cooking Classes',
     description: 'Empowering children and young adults through the magic of healthy cooking. Book your session today at one of our London venues.',
 };
 
-async function getClassTypeSlugs(): Promise<{ kids: string; teens: string }> {
-    try {
-        const snap = await adminDb.collection('class_types').orderBy('order').get();
-        const types = snap.docs.map(d => d.data());
-        // Find kids and teens by ageMin (kids < 12, teens >= 12) or fallback to first two
-        const kids = types.find(t => t.ageMin !== undefined && t.ageMin < 12);
-        const teens = types.find(t => t.ageMin !== undefined && t.ageMin >= 12);
-        return {
-            kids: kids?.slug || types[0]?.slug || 'all',
-            teens: teens?.slug || types[1]?.slug || 'all',
-        };
-    } catch (e) {
-        console.error('Failed to fetch class type slugs:', e);
-        return { kids: 'all', teens: 'all' };
-    }
-}
-
-export default async function HomePage() {
-    const slugs = await getClassTypeSlugs();
+export default function HomePage() {
     return (
         <>
             {/* ── HERO ── */}
@@ -106,58 +87,6 @@ export default async function HomePage() {
                 </div>
             </section>
 
-            {/* ── CHOOSE YOUR JOURNEY ── */}
-            <section className={styles.journeySection}>
-                <div className="container">
-                    <div className={styles.sectionHeader}>
-                        <span className={styles.sectionEyebrow}>Classes for Every Age</span>
-                        <h2>Choose your cooking journey</h2>
-                    </div>
-
-                    <div className={styles.journeyGrid}>
-                        {/* Kids Track */}
-                        <div className={`${styles.journeyCard} ${styles.kidsCard}`}>
-                            <div className={styles.journeyImageWrap}>
-                                <img src="/images/kids-cooking.png" alt="Kids Cooking Class" className={styles.journeyImage} />
-                                <div className={styles.ageBubble}>Ages 5–11</div>
-                            </div>
-                            <div className={styles.journeyContent}>
-                                <h3>Junior Cooks</h3>
-                                <p>A fun, safe introduction to healthy cooking. Kids explore fresh ingredients, basic kitchen skills, and the joy of making food from scratch in a supportive group setting.</p>
-                                <ul className={styles.featureChips}>
-                                    <li>Build confidence</li>
-                                    <li>Try new veggies</li>
-                                    <li>Teamwork</li>
-                                </ul>
-                                <Link href={`/classes?type=${slugs.kids}`} className={styles.cardCta}>
-                                    Find Junior Cooks <ArrowRight size={16} />
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Young Adults Track */}
-                        <div className={`${styles.journeyCard} ${styles.teensCard}`}>
-                            <div className={styles.journeyImageWrap}>
-                                <img src="/images/teen-cooking.png" alt="Young Adult Cooking Workshop" className={styles.journeyImage} />
-                                <div className={`${styles.ageBubble} ${styles.ageBubbleTeen}`}>Ages 12–18</div>
-                            </div>
-                            <div className={styles.journeyContent}>
-                                <h3>Teen Chefs</h3>
-                                <p>Real-world cooking skills for growing independence. From knife technique to budget meal planning — ideal for Duke of Edinburgh and life beyond the family kitchen.</p>
-                                <ul className={styles.featureChips}>
-                                    <li>Duke of Edinburgh</li>
-                                    <li>Knife skills</li>
-                                    <li>Budget meals</li>
-                                </ul>
-                                <Link href={`/classes?type=${slugs.teens}`} className={`${styles.cardCta} ${styles.cardCtaTeen}`}>
-                                    Find Teen Chefs <ArrowRight size={16} />
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             {/* ── FIND A CLASS (Map Section) ── */}
             <SessionMapSection />
 
@@ -184,6 +113,9 @@ export default async function HomePage() {
                             </div>
                         ))}
                     </div>
+                    <Link href="/what-they-learn" className={styles.learningApproachLink}>
+                        Explore our approach <ArrowRight size={17} />
+                    </Link>
                 </div>
             </section>
 

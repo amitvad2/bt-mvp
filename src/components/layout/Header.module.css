@@ -31,6 +31,8 @@
     color: var(--bt-coral);
     letter-spacing: -0.01em;
     font-family: var(--font-heading);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .logo svg {
@@ -41,6 +43,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
+    flex-shrink: 1;
 }
 
 .navLink {
@@ -48,6 +51,7 @@
     font-weight: 600;
     color: var(--bt-muted);
     transition: color var(--transition);
+    white-space: nowrap;
 }
 
 .navLink:hover {
@@ -58,6 +62,16 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1200px) and (min-width: 769px) {
+    .inner { gap: var(--space-3); }
+    .logo { font-size: 1.1rem; }
+    .nav { gap: 13px; }
+    .navLink { font-size: 1rem; }
+    .actions { gap: 8px; }
+    .actions :global(.btn) { padding-left: 12px; padding-right: 12px; }
 }
 
 .hamburger {
