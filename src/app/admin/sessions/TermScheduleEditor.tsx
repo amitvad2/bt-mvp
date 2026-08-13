@@ -180,7 +180,7 @@ export default function TermScheduleEditor({
                       <option value="">Select recipe...</option>
                       {recipes.map((r) => (
                         <option key={r.id} value={r.id}>
-                          {r.name}
+                          {r.name}{r.ageGroups?.length ? ` [${r.ageGroups.join(', ')}]` : ''}
                         </option>
                       ))}
                     </select>

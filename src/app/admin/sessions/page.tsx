@@ -3,7 +3,7 @@
 import { useState, useEffect, Fragment, useRef } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Session, BTClass, Recipe, Instructor, BTClassType, Booking, BookingSource } from '@/types';
+import { Session, BTClass, Recipe, Instructor, BTClassType, Venue, Booking, BookingSource } from '@/types';
 import { Calendar, Plus, Edit2, Trash2, X, Clock, ChefHat, MapPin, UserCheck, ClipboardList, Link as LinkIcon, MessageCircle, Share2, AlertTriangle } from 'lucide-react';
 import { isGuestCheckoutEnabled } from '@/lib/feature-flags';
 import { generateSchedule, generateScheduleMultiDay, validateTermDates } from '@/lib/term-schedule-utils';
@@ -205,6 +205,7 @@ function getEmergencyContactDetails(booking: Booking): { name: string; relations
 export default function AdminSessions() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [classes, setClasses] = useState<BTClass[]>([]);
+    const [venues, setVenues] = useState<Venue[]>([]);
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [instructors, setInstructors] = useState<Instructor[]>([]);
     const [classTypes, setClassTypes] = useState<BTClassType[]>([]);
@@ -353,12 +354,14 @@ export default function AdminSessions() {
             try {
                 const sessionsSnap = await getDocs(query(collection(db, 'sessions'), orderBy('date', 'desc')));
                 const classesSnap = await getDocs(collection(db, 'classes'));
+                const venuesSnap = await getDocs(collection(db, 'venues'));
                 const recipesSnap = await getDocs(collection(db, 'recipes'));
                 const instructorsSnap = await getDocs(collection(db, 'instructors'));
                 const classTypesSnap = await getDocs(query(collection(db, 'class_types'), orderBy('order')));
 
                 setSessions(sessionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Session)));
                 setClasses(classesSnap.docs.map(d => ({ id: d.id, ...d.data() } as BTClass)));
+                setVenues(venuesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Venue)));
                 setRecipes(recipesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Recipe)));
                 setInstructors(instructorsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Instructor)));
                 setClassTypes(classTypesSnap.docs.map(d => ({ id: d.id, ...d.data() } as BTClassType)));
@@ -519,6 +522,7 @@ export default function AdminSessions() {
                 classType: parentClass?.type || '',
                 venueId: parentClass?.venueId || '',
                 venueName: parentClass?.venueName || '',
+                venuePostcode: venues.find(v => v.id === parentClass?.venueId)?.postcode || '',
                 instructorId: formData.instructorId,
                 instructorName: instructor?.name || '',
                 startTime: formData.startTime || parentClass?.startTime || '',
@@ -581,6 +585,7 @@ export default function AdminSessions() {
             classType: parentClass?.type || '',
             venueId: parentClass?.venueId || '',
             venueName: parentClass?.venueName || '',
+            venuePostcode: venues.find(v => v.id === parentClass?.venueId)?.postcode || '',
             // Legacy single-recipe fields (backward compat)
             recipeId: firstRecipe?.id || '',
             recipeName: firstRecipe?.name || '',
@@ -746,7 +751,7 @@ export default function AdminSessions() {
                                             <span className={styles.mutedText}>—</span>
                                         )}
                                     </td>
-                                    <td className={styles.mutedText}>{s.venueName}</td>
+                                    <td className={styles.mutedText}>{s.venueName}{s.venuePostcode ? `, ${s.venuePostcode}` : (venues.find(v => v.id === s.venueId)?.postcode ? `, ${venues.find(v => v.id === s.venueId)!.postcode}` : '')}</td>
                                     <td>
                                         <span className={`badge ${s.spotsAvailable > 5 ? 'badge-green' : s.spotsAvailable > 0 ? 'badge-amber' : 'badge-red'}`}>
                                             {s.spotsAvailable} left

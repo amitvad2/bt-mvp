@@ -34,6 +34,13 @@ function WizardLayoutInner({ children }: { children: React.ReactNode }) {
 
         const checkTermClass = async () => {
             try {
+                // Skip this check for term sessions (sessionType === 'term') —
+                // they ARE meant to be booked via this wizard.
+                if (state.session?.sessionType === 'term') {
+                    setTermCheckComplete(true);
+                    return;
+                }
+
                 const classDoc = await getDoc(doc(db, 'classes', classId));
                 if (classDoc.exists()) {
                     const classData = classDoc.data();

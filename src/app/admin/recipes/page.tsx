@@ -14,7 +14,7 @@ export default function AdminRecipes() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
-    const [formData, setFormData] = useState({ name: '', description: '', photoUrl: '', skills: [] as string[] });
+    const [formData, setFormData] = useState({ name: '', description: '', photoUrl: '', skills: [] as string[], ageGroups: [] as string[] });
 
     // Skill input state
     const [skillInput, setSkillInput] = useState('');
@@ -43,10 +43,10 @@ export default function AdminRecipes() {
     const handleOpenModal = (recipe?: Recipe) => {
         if (recipe) {
             setEditingRecipe(recipe);
-            setFormData({ name: recipe.name, description: recipe.description, photoUrl: recipe.photoUrl || '', skills: recipe.skills || [] });
+            setFormData({ name: recipe.name, description: recipe.description, photoUrl: recipe.photoUrl || '', skills: recipe.skills || [], ageGroups: recipe.ageGroups || [] });
         } else {
             setEditingRecipe(null);
-            setFormData({ name: '', description: '', photoUrl: '', skills: [] });
+            setFormData({ name: '', description: '', photoUrl: '', skills: [], ageGroups: [] });
         }
         setSelectedFile(null);
         setUploadError(null);
@@ -128,6 +128,7 @@ export default function AdminRecipes() {
                 ...formData,
                 photoUrl: finalPhotoUrl,
                 skills: formData.skills,
+                ageGroups: formData.ageGroups,
                 updatedAt: serverTimestamp()
             };
 
@@ -203,6 +204,12 @@ export default function AdminRecipes() {
                             <div className={styles.recipeContent}>
                                 <h3>{recipe.name}</h3>
                                 <p className={styles.description}>{recipe.description}</p>
+                                {recipe.ageGroups && recipe.ageGroups.length > 0 && (
+                                    <div className={styles.ageGroupBadges}>
+                                        {recipe.ageGroups.includes('kids') && <span className="badge badge-green">Kids</span>}
+                                        {recipe.ageGroups.includes('teens') && <span className="badge badge-indigo">Teens</span>}
+                                    </div>
+                                )}
                                 {recipe.skills && recipe.skills.length > 0 && (
                                     <p className={styles.skillsList}>{recipe.skills.join(', ')}</p>
                                 )}
@@ -342,6 +349,42 @@ export default function AdminRecipes() {
                                     />
                                 </div>
                                 <span className={sessionStyles.skillHint}>Press Enter or comma to add a skill (e.g. &quot;chopping&quot;, &quot;mixing&quot;, &quot;creative plating&quot;)</span>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Age Group</label>
+                                <div className={styles.ageGroupCheckboxes}>
+                                    <label className={styles.ageGroupOption}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.ageGroups.includes('kids')}
+                                            onChange={e => {
+                                                if (e.target.checked) {
+                                                    setFormData({ ...formData, ageGroups: [...formData.ageGroups, 'kids'] });
+                                                } else {
+                                                    setFormData({ ...formData, ageGroups: formData.ageGroups.filter(g => g !== 'kids') });
+                                                }
+                                            }}
+                                            disabled={uploading}
+                                        />
+                                        Kids (5–11)
+                                    </label>
+                                    <label className={styles.ageGroupOption}>
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.ageGroups.includes('teens')}
+                                            onChange={e => {
+                                                if (e.target.checked) {
+                                                    setFormData({ ...formData, ageGroups: [...formData.ageGroups, 'teens'] });
+                                                } else {
+                                                    setFormData({ ...formData, ageGroups: formData.ageGroups.filter(g => g !== 'teens') });
+                                                }
+                                            }}
+                                            disabled={uploading}
+                                        />
+                                        Teens (12–18)
+                                    </label>
+                                </div>
                             </div>
 
                             <div className={styles.modalActions}>

@@ -139,6 +139,7 @@ export interface Session {
     status: 'open' | 'full' | 'cancelled' | 'closed' | 'draft'; // Added closed, draft
     venueId: string;
     venueName: string;
+    venuePostcode?: string;
     instructorId?: string;
     instructorName?: string;
     startTime: string;
@@ -155,12 +156,15 @@ export interface Session {
     createdAt: any;
 }
 
+export type RecipeAgeGroup = 'kids' | 'teens';
+
 export interface Recipe {
     id: string;
     name: string;
     description: string;
     photoUrl?: string;
     skills?: string[]; // Skills/learning outcomes (e.g. ['chopping', 'mixing', 'creative plating'])
+    ageGroups?: RecipeAgeGroup[]; // Target age groups: ['kids'], ['teens'], or ['kids', 'teens'] for both
     createdAt: any;
 }
 

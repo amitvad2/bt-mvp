@@ -197,3 +197,33 @@
         grid-template-columns: 1fr;
     }
 }
+
+
+/* Age Group Checkboxes */
+.ageGroupCheckboxes {
+    display: flex;
+    gap: var(--space-5);
+}
+
+.ageGroupOption {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--bt-gray-700);
+    cursor: pointer;
+}
+
+.ageGroupOption input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--bt-primary, #6366f1);
+}
+
+/* Age Group Badges on recipe cards */
+.ageGroupBadges {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}

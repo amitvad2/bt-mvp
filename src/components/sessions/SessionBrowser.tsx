@@ -366,7 +366,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                                 {ts.venueName && (
                                                     <div className={styles.detailRow}>
                                                         <dt>Venue</dt>
-                                                        <dd>{ts.venueName}</dd>
+                                                        <dd>{ts.venueName}{ts.venuePostcode ? `, ${ts.venuePostcode}` : (venues.find(v => v.id === ts.venueId)?.postcode ? `, ${venues.find(v => v.id === ts.venueId)!.postcode}` : '')}</dd>
                                                     </div>
                                                 )}
                                                 {ts.instructorName && (
@@ -528,7 +528,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                         {s.venueName && (
                                             <div className={styles.detailRow}>
                                                 <dt>Venue</dt>
-                                                <dd>{s.venueName}</dd>
+                                                <dd>{s.venueName}{s.venuePostcode ? `, ${s.venuePostcode}` : (venues.find(v => v.id === s.venueId)?.postcode ? `, ${venues.find(v => v.id === s.venueId)!.postcode}` : '')}</dd>
                                             </div>
                                         )}
                                         {s.instructorName && (
