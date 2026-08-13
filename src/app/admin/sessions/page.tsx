@@ -1164,6 +1164,51 @@ export default function AdminSessions() {
                             <span><MapPin size={14} /> {registerSession.venueName}</span>
                             <span><Clock size={14} /> {registerSession.startTime} – {registerSession.endTime}</span>
                             <span><UserCheck size={14} /> {registerBookings.filter(b => b.status === 'confirmed').length} participant{registerBookings.filter(b => b.status === 'confirmed').length !== 1 ? 's' : ''}</span>
+                            <button className="btn btn-ghost btn-sm" onClick={() => {
+                                const confirmed = registerBookings.filter(b => b.status === 'confirmed');
+                                const sessionDate = registerSession.date
+                                    ? new Date(registerSession.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                                    : '';
+                                const html = `<!DOCTYPE html><html><head><title>Session Register — ${registerSession.className}</title><style>
+                                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; color: #1a1a1a; }
+                                    h1 { font-size: 1.4rem; margin: 0 0 4px; }
+                                    .meta { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+                                    .card { border: 1.5px solid #ddd; border-radius: 8px; padding: 14px 18px; margin-bottom: 14px; page-break-inside: avoid; }
+                                    .card-header { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+                                    .card-header span { font-weight: 400; color: #555; }
+                                    .section { font-size: 0.85rem; margin-top: 6px; line-height: 1.6; }
+                                    .section strong { display: inline; }
+                                    .section ul { margin: 4px 0 0 18px; padding: 0; }
+                                    .section li { margin-bottom: 2px; }
+                                    .no-flags { color: #999; font-style: italic; font-size: 0.85rem; }
+                                    @media print { body { padding: 0; } }
+                                </style></head><body>
+                                <h1>Session Register — ${registerSession.className}</h1>
+                                <p class="meta">${sessionDate} · ${registerSession.startTime} – ${registerSession.endTime} · ${registerSession.venueName}</p>
+                                ${confirmed.map(booking => {
+                                    const name = getParticipantName(booking);
+                                    const parent = getParentName(booking);
+                                    const age = getParticipantAge(booking, registerSession.date);
+                                    const medical = getMedicalDetailsSummary(booking);
+                                    const emergency = getEmergencyContactDetails(booking);
+                                    return `<div class="card">
+                                        <div class="card-header">${name}${age !== null ? ` <span>(Age ${age})</span>` : ''} <span>— Parent: ${parent}</span></div>
+                                        ${medical.length > 0 ? `<div class="section"><strong>⚠️ Medical / Dietary:</strong><ul>${medical.map(d => `<li>${d}</li>`).join('')}</ul></div>` : ''}
+                                        ${emergency ? `<div class="section"><strong>📞 Emergency:</strong> ${emergency.name} (${emergency.relationship}) — ${emergency.phone}${emergency.email ? ` — ${emergency.email}` : ''}</div>` : ''}
+                                        ${!medical.length && !emergency ? '<div class="no-flags">No medical flags or emergency contact on file.</div>' : ''}
+                                    </div>`;
+                                }).join('')}
+                                </body></html>`;
+                                const printWindow = window.open('', '_blank');
+                                if (printWindow) {
+                                    printWindow.document.write(html);
+                                    printWindow.document.close();
+                                    printWindow.focus();
+                                    setTimeout(() => printWindow.print(), 300);
+                                }
+                            }} style={{ marginLeft: 'auto' }}>
+                                🖨️ Print Register
+                            </button>
                         </div>
 
                         {registerLoading ? (

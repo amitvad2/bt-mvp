@@ -611,3 +611,83 @@
     height: 16px;
     accent-color: var(--bt-primary, #6366f1);
 }
+
+
+/* ============================================================
+   Print-Friendly Register
+   ============================================================ */
+
+.printOnly {
+    display: none;
+}
+
+.printCard {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+}
+
+.printCardHeader {
+    font-size: 1rem;
+    margin-bottom: 6px;
+}
+
+.printSection {
+    font-size: 0.85rem;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+.printSection ul {
+    margin: 4px 0 0 16px;
+    padding: 0;
+}
+
+.printSection li {
+    margin-bottom: 2px;
+}
+
+@media print {
+    .printOnly {
+        display: block !important;
+    }
+
+    /* Hide everything except the print view */
+    .registerMeta,
+    .registerTableWrapper,
+    .registerEmpty {
+        display: none !important;
+    }
+
+    /* Hide modal chrome */
+    :global(.modal-header),
+    :global(.modal-close) {
+        display: none !important;
+    }
+
+    :global(.modal-overlay) {
+        position: static !important;
+        background: none !important;
+    }
+
+    :global(.modal) {
+        position: static !important;
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .page,
+    .header,
+    .tableCard {
+        display: none !important;
+    }
+
+    .printCard {
+        border: 1px solid #ccc;
+    }
+}

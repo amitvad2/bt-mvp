@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ChefHat, Heart, Leaf, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
+import { ArrowRight, ChefHat, Heart, ShieldCheck, Sparkles } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 };
 
 const outcomes = [
-  { icon: <ChefHat />, title: 'Kitchen confidence', text: 'Children learn that the kitchen is a place for them—one small success at a time.' },
-  { icon: <ShieldCheck />, title: 'Safe practical skills', text: 'From hygiene to age-appropriate tools, good habits become second nature.' },
-  { icon: <Leaf />, title: 'Food curiosity', text: 'They explore colourful ingredients, flavours and balanced meals without pressure.' },
-  { icon: <Sparkles />, title: 'Creative thinking', text: 'Choices, flavours and presentation show children there is more than one way to make something delicious.' },
-  { icon: <UsersRound />, title: 'Independence & teamwork', text: 'They organise their space, share tasks and feel proud of contributing.' },
+  { image: '/images/outcome-kitchen-confidence.png', alt: 'A child confidently stirring a colourful vegetarian dish', title: 'Kitchen confidence', text: 'Children learn that the kitchen is a place for them—one small success at a time.' },
+  { image: '/images/outcome-safe-skills.png', alt: 'A child learning safe food preparation', title: 'Safe practical skills', text: 'From hygiene to age-appropriate tools, good habits become second nature.' },
+  { image: '/images/outcome-food-curiosity.png', alt: 'Children exploring colourful vegetables and ingredients', title: 'Food curiosity', text: 'They explore colourful ingredients, flavours and balanced meals without pressure.' },
+  { image: '/images/outcome-creative-thinking.png', alt: 'A child creatively arranging a colourful vegetarian dish', title: 'Creative thinking', text: 'Choices, flavours and presentation show children there is more than one way to make something delicious.' },
+  { image: '/images/outcome-teamwork.png', alt: 'Children working together on a cooking activity', title: 'Independence & teamwork', text: 'They organise their space, share tasks and feel proud of contributing.' },
 ];
 
 const recipes = [
@@ -55,7 +55,7 @@ export default function WhatTheyLearnPage() {
           <div className={styles.outcomeGrid}>
             {outcomes.map((outcome) => (
               <article className={styles.outcomeCard} key={outcome.title}>
-                <div className={styles.outcomeIcon}>{outcome.icon}</div>
+                <Image src={outcome.image} alt={outcome.alt} width={900} height={600} className={styles.outcomeImage} />
                 <h3>{outcome.title}</h3>
                 <p>{outcome.text}</p>
               </article>
