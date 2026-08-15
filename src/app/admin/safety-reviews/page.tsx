@@ -43,7 +43,8 @@ function getParentContact(booking: Booking): { email: string; phone: string } {
 /** Build a list of key medical flags for summary display */
 function getMedicalFlags(booking: Booking): string[] {
     const flags: string[] = [];
-    const medical = booking.medicalSnapshot || booking.medicalInfo;
+    // Cast to Record to handle both MedicalInfo and GuestMedicalInfo shapes
+    const medical = (booking.medicalSnapshot || booking.medicalInfo) as Record<string, any> | undefined;
     if (!medical) return flags;
 
     // Guest medical info fields (GuestMedicalInfo shape)
