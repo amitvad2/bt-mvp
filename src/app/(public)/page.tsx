@@ -113,9 +113,11 @@ export default function HomePage() {
                             </div>
                         ))}
                     </div>
+                    {/* TODO: Re-enable in next phase
                     <Link href="/what-they-learn" className={styles.learningApproachLink}>
                         Explore our approach <ArrowRight size={17} />
                     </Link>
+                    */}
                 </div>
             </section>
 
