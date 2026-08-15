@@ -637,6 +637,9 @@ async function handleSessionTermPaymentSucceeded(
     let alreadyProcessed = false;
     let overbooking = false;
 
+    // Determine safety review status for authenticated term bookings
+    const safetyReviewStatus = determineSafetyReviewStatus(draft);
+
     await adminDb.runTransaction(async (tx) => {
         // --- Idempotency check ---
         const existingBooking = await tx.get(bookingRef);
@@ -681,6 +684,7 @@ async function handleSessionTermPaymentSucceeded(
             medicalInfo: draft.medicalInfo ?? null,
             emergencyContact: draft.emergencyContact ?? null,
             questionnaire: draft.questionnaire ?? null,
+            safetyReviewStatus,
             termsAccepted: draft.termsAccepted,
             termsAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
             // Payment
@@ -894,6 +898,8 @@ async function handleTermPaymentSucceeded(
             };
         } else {
             // Authenticated term booking — uses linked user/student docs
+            const safetyReviewStatus = determineSafetyReviewStatus(draft);
+
             termBookingDoc = {
                 bookingType: 'term',
                 classId,
@@ -919,6 +925,7 @@ async function handleTermPaymentSucceeded(
                 medicalInfo: draft.medicalInfo ?? null,
                 emergencyContact: draft.emergencyContact ?? null,
                 questionnaire: draft.questionnaire ?? null,
+                safetyReviewStatus,
                 termsAccepted: draft.termsAccepted,
                 termsAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
                 // Payment
@@ -1149,6 +1156,8 @@ function buildBookingDoc(
     draft: FirebaseFirestore.DocumentData,
     paymentIntent: Stripe.PaymentIntent
 ) {
+    const safetyReviewStatus = determineSafetyReviewStatus(draft);
+
     return {
         // Session
         sessionId: draft.sessionId,
@@ -1168,6 +1177,7 @@ function buildBookingDoc(
         medicalInfo: draft.medicalInfo ?? null,
         emergencyContact: draft.emergencyContact ?? null,
         questionnaire: draft.questionnaire ?? null,
+        safetyReviewStatus,
         termsAccepted: draft.termsAccepted,
         termsAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
         // Payment — mirrors the shape used by portal/my-payments and admin/bookings

@@ -37,20 +37,25 @@ function getParentContact(booking: Booking): { email: string; phone: string } {
     if (booking.guestContact) {
         return { email: booking.guestContact.email, phone: booking.guestContact.telephone };
     }
-    return { email: '', phone: '' };
+    return { email: booking.bookedByEmail || '', phone: '' };
 }
 
 /** Build a list of key medical flags for summary display */
 function getMedicalFlags(booking: Booking): string[] {
     const flags: string[] = [];
-    const medical = booking.medicalSnapshot;
+    const medical = booking.medicalSnapshot || booking.medicalInfo;
     if (!medical) return flags;
 
+    // Guest medical info fields (GuestMedicalInfo shape)
     if (medical.foodAllergies) flags.push('Food Allergies');
     if (medical.airborneAllergies) flags.push('Airborne Allergies');
     if (medical.epipenRequired) flags.push('EpiPen Required');
-    if (medical.respiratoryProblems) flags.push('Respiratory');
     if (medical.medicalConditions && medical.medicalConditions.trim().length > 0) flags.push('Medical Conditions');
+    // Authenticated medical info fields (MedicalInfo shape)
+    if (medical.allergies) flags.push('Allergies');
+    if (medical.conditions) flags.push('Medical Conditions');
+    // Shared / both shapes
+    if (medical.respiratoryProblems) flags.push('Respiratory');
     if (medical.visionImpairment) flags.push('Vision Impairment');
     if (medical.hearingImpairment) flags.push('Hearing Impairment');
     if (medical.additionalSupportNeeds && medical.additionalSupportNeeds.trim().length > 0) flags.push('Additional Needs');

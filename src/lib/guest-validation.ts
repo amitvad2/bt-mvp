@@ -72,29 +72,34 @@ export function validateChildAge(
 /**
  * Determines the safety review status based on medical declarations in the draft.
  *
- * Returns 'pending' if any high-risk declarations are present:
- * - foodAllergies is true
- * - epipenRequired is true
- * - respiratoryProblems is true
- * - airborneAllergies is true
- * - medicalConditions is non-empty
+ * Handles BOTH medical info shapes:
+ * - GuestMedicalInfo (guest bookings): foodAllergies, epipenRequired, airborneAllergies, medicalConditions
+ * - MedicalInfo (authenticated bookings): allergies, conditions, respiratoryProblems
  *
+ * Returns 'pending' if any high-risk declarations are present.
  * Returns 'not_required' otherwise.
  *
  * Validates: Requirements 13.1, 13.2
  *
- * @param draft - Object with a medicalInfo property matching GuestMedicalInfo
+ * @param draft - Object with a medicalInfo property (either GuestMedicalInfo or MedicalInfo shape)
  */
 export function determineSafetyReviewStatus(
-  draft: { medicalInfo?: GuestMedicalInfo }
+  draft: { medicalInfo?: GuestMedicalInfo | Record<string, any> }
 ): SafetyReviewStatus {
-  const medical = draft.medicalInfo;
+  const medical = draft.medicalInfo as Record<string, any> | undefined;
+  if (!medical) return 'not_required';
+
   const hasHighRiskDeclarations =
-    medical?.foodAllergies === true ||
-    medical?.epipenRequired === true ||
-    medical?.respiratoryProblems === true ||
-    medical?.airborneAllergies === true ||
-    (medical?.medicalConditions != null && medical.medicalConditions.trim().length > 0);
+    // Guest medical info fields (GuestMedicalInfo shape)
+    medical.foodAllergies === true ||
+    medical.epipenRequired === true ||
+    medical.airborneAllergies === true ||
+    (medical.medicalConditions != null && typeof medical.medicalConditions === 'string' && medical.medicalConditions.trim().length > 0) ||
+    // Authenticated medical info fields (MedicalInfo shape)
+    medical.allergies === true ||
+    medical.conditions === true ||
+    // Shared field (exists on both shapes)
+    medical.respiratoryProblems === true;
 
   return hasHighRiskDeclarations ? 'pending' : 'not_required';
 }

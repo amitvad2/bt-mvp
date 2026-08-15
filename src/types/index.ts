@@ -366,6 +366,7 @@ export interface Booking {
     venueName: string;
     bookedByUid: string;
     bookedByName: string;
+    bookedByEmail?: string;
     studentId: string;
     studentName: string;
     status: BookingStatus;
