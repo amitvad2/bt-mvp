@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Redesign the term session booking card in the SessionBrowser component so that parents clearly understand they are committing to a full block of sessions with a single upfront payment. Terms can take many forms — 4 Saturdays in a month, 5 weekdays in a single week, mixed days across weeks — so the card copy must adapt to any scheduling pattern rather than assuming a single recurring weekday. The current card uses ambiguous labels ("Term price", "Term Period") and duplicates information, causing confusion about what is being purchased. This redesign replaces unclear labelling with plain-English copy, adds per-session price breakdown, shows individual session dates, and removes redundant elements — all without changing booking logic or introducing new CSS classes.
+Redesign the term session booking card in the SessionBrowser component so that parents clearly understand they are committing to a full block of sessions with a single upfront payment. Terms can take many forms — 4 Saturdays in a month, 5 weekdays in a single week, mixed days across weeks — so the card copy must adapt to any scheduling pattern rather than assuming a single recurring weekday. The current card uses ambiguous labels ("Term price", "Term Period") and duplicates information, causing confusion about what is being purchased. This redesign replaces unclear labelling with plain-English copy, shows individual session dates, removes redundant elements (date badge, date range row, day row, category row), relocates the age range to the heading for quick scanning, adds a from–to time range, and streamlines the details table — all without changing booking logic or introducing new CSS classes.
 
 ## Glossary
 

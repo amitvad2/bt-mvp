@@ -2,7 +2,7 @@
 
 ## Overview
 
-This design details the implementation changes to the term session card within `SessionBrowser.tsx` (lines 314–433). The goal is to make the card communicate clearly to parents that they are paying upfront for a full block of sessions. The redesign touches only the term card's JSX output and introduces no new CSS classes, no changes to booking logic, and no modifications to single-session cards.
+This design details the implementation changes to the term session card within `SessionBrowser.tsx` (lines 314–433). The goal is to make the card communicate clearly to parents that they are paying upfront for a full block of sessions, while presenting a cleaner, more scannable layout. The redesign removes the date badge from the header, relocates the age range to the heading as a subtitle, strips redundant detail rows (Dates, Day, Category), adds a from–to time range, and introduces no new CSS classes, no changes to booking logic, and no modifications to single-session cards.
 
 All changes are confined to the term card rendering block inside the `termSessions.map(...)` loop. Three new pure helper functions are extracted to keep rendering logic testable: one for banner text generation, one for session date formatting, and one for price display text.
 
