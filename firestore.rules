@@ -41,6 +41,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Gallery categories — dynamic category tabs for the public gallery.
+    // Public read needed because unauthenticated visitors see category tabs.
+    // Writes restricted to admins (actual mutations use Admin SDK, this is defence-in-depth).
+    match /gallery_categories/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Session instances — public read needed by the unauthenticated homepage map
     // and the portal session browser.
     //

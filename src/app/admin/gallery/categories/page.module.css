@@ -1,0 +1,224 @@
+/* Category Manager — Admin page styles */
+
+.page {
+    padding: var(--space-6);
+    max-width: 800px;
+}
+
+.page h1 {
+    margin-bottom: var(--space-6);
+}
+
+/* Error banner */
+.errorBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+}
+
+.dismissBtn {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    line-height: 1;
+    color: inherit;
+}
+
+/* Create form */
+.createForm {
+    margin-bottom: var(--space-6);
+}
+
+.createInputGroup {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+}
+
+.createInputGroup input {
+    flex: 1;
+    max-width: 320px;
+}
+
+.validationError {
+    color: var(--bt-danger);
+    font-size: 0.85rem;
+    margin-top: var(--space-2);
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Category list */
+.categoryList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.categoryItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bt-white);
+    border: 1px solid var(--bt-border);
+    border-radius: var(--radius-sm);
+}
+
+.orderNumber {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--bt-muted);
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+/* Inline edit */
+.editGroup {
+    flex: 1;
+    min-width: 0;
+}
+
+.editInput {
+    width: 100%;
+    max-width: 280px;
+}
+
+/* Label button (click to edit) */
+.labelBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.labelBtn:hover {
+    background: var(--bt-gray-100);
+}
+
+.label {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.editIcon {
+    opacity: 0;
+    transition: opacity 0.15s;
+    color: var(--bt-muted);
+    flex-shrink: 0;
+}
+
+.labelBtn:hover .editIcon {
+    opacity: 1;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: var(--space-1);
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.iconBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--bt-gray-600);
+    transition: background 0.15s, color 0.15s;
+}
+
+.iconBtn:hover:not(:disabled) {
+    background: var(--bt-gray-100);
+    color: var(--bt-charcoal);
+}
+
+.iconBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.deleteBtn {
+    color: var(--bt-danger);
+}
+
+.deleteBtn:hover:not(:disabled) {
+    background: var(--bt-danger-light);
+    color: var(--bt-danger);
+}
+
+/* Empty state */
+.empty {
+    color: var(--bt-muted);
+    font-style: italic;
+    padding: var(--space-8) 0;
+    text-align: center;
+}
+
+/* Delete confirmation dialog */
+.dialogOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog {
+    background: var(--bt-white);
+    border-radius: var(--radius);
+    padding: var(--space-6);
+    max-width: 420px;
+    width: 90%;
+    box-shadow: var(--shadow);
+}
+
+.dialogTitle {
+    margin-bottom: var(--space-3);
+    font-size: 1.125rem;
+}
+
+.dialogBody {
+    margin-bottom: var(--space-6);
+    line-height: 1.5;
+    color: var(--bt-gray-700);
+}
+
+.dialogActions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+}

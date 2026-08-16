@@ -409,7 +409,16 @@ export interface Booking {
     createdAt: any;
 }
 
-export type GalleryCategory = 'cooking-classes' | 'personal-gallery';
+export type GalleryCategory = string;
+
+export interface GalleryCategoryDoc {
+    id: string;
+    slug: string;        // Unique, lowercase, hyphens, max 60 chars
+    label: string;       // Display name, max 50 chars
+    order: number;       // 1-based contiguous sort position
+    isVisible: boolean;  // Controls public visibility
+    createdAt: any;      // Firestore Timestamp
+}
 
 export interface GalleryImage {
     id: string;

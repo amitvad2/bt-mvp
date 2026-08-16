@@ -10,6 +10,12 @@
     align-items: flex-start;
 }
 
+.headerActions {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

@@ -1,4 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/lib/firebase', () => ({
+    db: {},
+}));
+
+vi.mock('firebase/firestore', () => ({
+    collection: vi.fn(),
+    getDocs: vi.fn(),
+    query: vi.fn(),
+    where: vi.fn(),
+    orderBy: vi.fn(),
+}));
+
 import {
     normalizeCategory,
     PUBLIC_CATEGORIES,

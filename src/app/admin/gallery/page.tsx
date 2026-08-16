@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
-import { GalleryImage, GalleryCategory } from '@/types';
-import { normalizeCategory, ADMIN_CATEGORIES, CATEGORY_LABELS } from '@/lib/gallery-categories';
-import { Image as ImageIcon, Plus, Edit2, Trash2, X, Upload, Loader2, AlertCircle } from 'lucide-react';
+import { GalleryImage, GalleryCategory, GalleryCategoryDoc } from '@/types';
+import { normalizeCategory, fetchCategories } from '@/lib/gallery-categories';
+import { Image as ImageIcon, Plus, Edit2, Trash2, X, Upload, Loader2, AlertCircle, Settings } from 'lucide-react';
+import Link from 'next/link';
 import styles from './page.module.css';
 
 export default function AdminGallery() {
@@ -14,7 +15,11 @@ export default function AdminGallery() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingImage, setEditingImage] = useState<GalleryImage | null>(null);
-    const [formData, setFormData] = useState<{ imageUrl: string, description: string, altText: string, order: number, category: GalleryCategory }>({ imageUrl: '', description: '', altText: '', order: 0, category: 'cooking-classes' });
+    const [formData, setFormData] = useState<{ imageUrl: string, description: string, altText: string, order: number, category: GalleryCategory }>({ imageUrl: '', description: '', altText: '', order: 0, category: '' });
+
+    // Category state
+    const [categories, setCategories] = useState<GalleryCategoryDoc[]>([]);
+    const [categoriesError, setCategoriesError] = useState(false);
 
     // Upload state
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -22,6 +27,22 @@ export default function AdminGallery() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Build validSlugs set from fetched categories
+    const validSlugs = useMemo(() => new Set(categories.map(c => c.slug)), [categories]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const cats = await fetchCategories();
+                setCategories(cats);
+                setCategoriesError(false);
+            } catch {
+                setCategoriesError(true);
+            }
+        };
+        loadCategories();
+    }, []);
 
     useEffect(() => {
         const fetchImages = async () => {
@@ -45,11 +66,11 @@ export default function AdminGallery() {
                 description: img.description || '',
                 altText: img.altText || '',
                 order: img.order || 0,
-                category: normalizeCategory(img.category),
+                category: normalizeCategory(img.category, validSlugs),
             });
         } else {
             setEditingImage(null);
-            setFormData({ imageUrl: '', description: '', altText: '', order: images.length, category: 'cooking-classes' });
+            setFormData({ imageUrl: '', description: '', altText: '', order: images.length, category: categories.length > 0 ? categories[0].slug : '' });
         }
         setSelectedFiles([]);
         setUploadError(null);
@@ -181,9 +202,14 @@ export default function AdminGallery() {
                     <h1>Gallery Master</h1>
                     <p>Manage the photos displayed on the public gallery page.</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-                    <Plus size={18} /> Add Photo
-                </button>
+                <div className={styles.headerActions}>
+                    <Link href="/admin/gallery/categories" className="btn btn-ghost">
+                        <Settings size={18} /> Manage Categories
+                    </Link>
+                    <button className="btn btn-primary" onClick={() => handleOpenModal()}>
+                        <Plus size={18} /> Add Photo
+                    </button>
+                </div>
             </div>
 
             {loading ? (
@@ -200,7 +226,7 @@ export default function AdminGallery() {
                             <div className={styles.itemMeta}>
                                 <div className={styles.metaRow}>
                                     <span className={styles.orderBadge}>#{img.order}</span>
-                                    <span className={styles.categoryBadge}>{CATEGORY_LABELS[normalizeCategory(img.category)]}</span>
+                                    <span className={styles.categoryBadge}>{categories.find(c => c.slug === normalizeCategory(img.category, validSlugs))?.label || normalizeCategory(img.category, validSlugs)}</span>
                                 </div>
                                 <p>{img.description || 'No description'}</p>
                             </div>
@@ -272,16 +298,25 @@ export default function AdminGallery() {
 
                             <div className="form-group">
                                 <label className="form-label">Category <span className="required">*</span></label>
-                                <select
-                                    className="form-input"
-                                    value={formData.category}
-                                    onChange={e => setFormData({ ...formData, category: e.target.value as GalleryCategory })}
-                                    disabled={uploading}
-                                >
-                                    {ADMIN_CATEGORIES.map(c => (
-                                        <option key={c.value} value={c.value}>{c.label}</option>
-                                    ))}
-                                </select>
+                                {categoriesError ? (
+                                    <div className={styles.errorText}>
+                                        <AlertCircle size={14} />
+                                        Categories could not be loaded. Please refresh the page and try again.
+                                    </div>
+                                ) : (
+                                    <select
+                                        className="form-input"
+                                        value={formData.category}
+                                        onChange={e => setFormData({ ...formData, category: e.target.value as GalleryCategory })}
+                                        disabled={uploading}
+                                        required
+                                    >
+                                        <option value="" disabled>Select a category</option>
+                                        {categories.map(c => (
+                                            <option key={c.slug} value={c.slug}>{c.label}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
 
                             <div className="form-group">
@@ -322,7 +357,7 @@ export default function AdminGallery() {
                                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)} disabled={uploading}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-primary" disabled={uploading || (selectedFiles.length === 0 && !formData.imageUrl)}>
+                                <button type="submit" className="btn btn-primary" disabled={uploading || categoriesError || !formData.category || (selectedFiles.length === 0 && !formData.imageUrl)}>
                                     {uploading ? (
                                         <>
                                             <Loader2 className="spinner-inline" />

@@ -1,37 +1,65 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { GalleryImage, GalleryCategory } from '@/types';
-import { normalizeCategory, PUBLIC_CATEGORIES } from '@/lib/gallery-categories';
+import { GalleryImage, GalleryCategoryDoc } from '@/types';
+import { fetchCategories, normalizeCategory } from '@/lib/gallery-categories';
 import styles from './page.module.css';
 
 export default function GalleryClient() {
     const [images, setImages] = useState<GalleryImage[]>([]);
+    const [categories, setCategories] = useState<GalleryCategoryDoc[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeCategory, setActiveCategory] = useState<GalleryCategory | 'all'>('all');
+    const [categoriesError, setCategoriesError] = useState(false);
+    const [activeCategory, setActiveCategory] = useState<string>('all');
 
     useEffect(() => {
-        const fetchImages = async () => {
+        const loadData = async () => {
             try {
+                // Fetch images
                 const q = query(collection(db, 'gallery'), orderBy('order', 'asc'));
                 const snap = await getDocs(q);
                 setImages(snap.docs.map(d => ({ id: d.id, ...d.data() } as GalleryImage)));
             } catch (e) {
                 console.error('Error fetching gallery:', e);
-            } finally {
-                setLoading(false);
             }
+
+            try {
+                // Fetch visible categories
+                const cats = await fetchCategories({ visibleOnly: true });
+                setCategories(cats);
+            } catch (e) {
+                console.error('Error fetching categories:', e);
+                setCategoriesError(true);
+            }
+
+            setLoading(false);
         };
-        fetchImages();
+        loadData();
     }, []);
 
-    if (loading) return <div className="spinner" />;
+    // Build valid slugs from fetched categories
+    const validSlugs = useMemo(
+        () => new Set(categories.map(c => c.slug)),
+        [categories]
+    );
 
-    const filteredImages = activeCategory === 'all'
-        ? images
-        : images.filter(img => normalizeCategory(img.category) === activeCategory);
+    // Determine whether to show tabs
+    const showTabs = categories.length > 0 && !categoriesError;
+
+    // Filter images based on active category
+    const filteredImages = useMemo(() => {
+        if (!showTabs || activeCategory === 'all') {
+            // "All Photos": show images belonging to any visible category
+            if (!showTabs) return images;
+            return images.filter(img => validSlugs.has(normalizeCategory(img.category, validSlugs)));
+        }
+        // Specific category: show images matching the selected slug
+        return images.filter(img => normalizeCategory(img.category, validSlugs) === activeCategory);
+    }, [images, activeCategory, validSlugs, showTabs]);
+
+    if (loading) return <div className="spinner" />;
 
     return (
         <section className={`section ${styles.gallerySection}`}>
@@ -45,19 +73,33 @@ export default function GalleryClient() {
                     </p>
                 </div>
 
-                <div className={styles.categoryNavigation}>
-                    <div className={styles.tabGroup}>
-                        {PUBLIC_CATEGORIES.map(category => (
+                {categoriesError && (
+                    <p className={styles.errorBanner}>
+                        Could not load categories. Showing all photos.
+                    </p>
+                )}
+
+                {showTabs && (
+                    <div className={styles.categoryNavigation}>
+                        <div className={styles.tabGroup}>
                             <button
-                                key={category.value}
-                                className={`${styles.tabButton} ${activeCategory === category.value ? styles.activeTab : ''}`}
-                                onClick={() => setActiveCategory(category.value as GalleryCategory | 'all')}
+                                className={`${styles.tabButton} ${activeCategory === 'all' ? styles.activeTab : ''}`}
+                                onClick={() => setActiveCategory('all')}
                             >
-                                {category.label}
+                                All Photos
                             </button>
-                        ))}
+                            {categories.map(category => (
+                                <button
+                                    key={category.slug}
+                                    className={`${styles.tabButton} ${activeCategory === category.slug ? styles.activeTab : ''}`}
+                                    onClick={() => setActiveCategory(category.slug)}
+                                >
+                                    {category.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className={styles.grid}>
                     {filteredImages.map((img) => (

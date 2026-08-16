@@ -108,3 +108,57 @@ export function formatProgrammeDescription(
 
   return `${formattedStart} – ${formattedEnd}`;
 }
+
+/**
+ * Counts the number of occurrences of a specific day-of-week between two dates inclusive.
+ *
+ * Examples:
+ *  countTermSessions('2026-09-05', '2026-09-26', 'Saturday') → 4
+ *  countTermSessions('2026-01-10', '2026-03-28', 'Saturday') → 12
+ *  countTermSessions('2026-09-05', '2026-09-05', 'Saturday') → 1
+ *  countTermSessions('2026-09-05', '2026-09-05', 'Monday') → 0
+ */
+export function countTermSessions(
+  termStartDate: string,
+  termEndDate: string,
+  dayOfWeek: string
+): number {
+  const start = new Date(termStartDate + 'T00:00:00');
+  const end = new Date(termEndDate + 'T00:00:00');
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+    return 0;
+  }
+
+  let count = 0;
+  const current = new Date(start);
+
+  while (current <= end) {
+    const currentDay = current.toLocaleDateString('en-GB', { weekday: 'long' });
+    if (currentDay === dayOfWeek) {
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
+}
+
+/**
+ * Formats a term date range in a compact human-readable format.
+ *
+ * Examples:
+ *  formatTermDateRange('2026-09-05', '2026-09-26') → "5 Sep – 26 Sep 2026"
+ *  formatTermDateRange('2025-12-20', '2026-01-10') → "20 Dec 2025 – 10 Jan 2026"
+ */
+export function formatTermDateRange(termStartDate: string, termEndDate: string): string {
+  const startYear = termStartDate.slice(0, 4);
+  const endYear = termEndDate.slice(0, 4);
+
+  // Only include year on start date if it differs from end date year
+  const startIncludesYear = startYear !== endYear;
+  const formattedStart = formatShortDate(termStartDate, startIncludesYear);
+  const formattedEnd = formatShortDate(termEndDate, true);
+
+  return `${formattedStart} – ${formattedEnd}`;
+}

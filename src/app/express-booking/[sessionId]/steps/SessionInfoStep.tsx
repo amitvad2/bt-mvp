@@ -9,6 +9,7 @@
 
 import React from 'react';
 import { useGuestBooking } from '../GuestBookingContext';
+import { formatRecurrenceDays, formatTermPrice, countTermSessions, formatTermDateRange } from '@/lib/term-utils';
 import styles from '../styles/GuestBooking.module.css';
 import stepStyles from '../styles/Steps.module.css';
 
@@ -24,6 +25,12 @@ export default function SessionInfoStep() {
       </div>
     );
   }
+
+  const isTermWithFullData =
+    session.sessionType === 'term' &&
+    !!session.dayOfWeek &&
+    !!session.termStartDate &&
+    !!session.termEndDate;
 
   const formattedDate = new Date(session.date + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -60,10 +67,27 @@ export default function SessionInfoStep() {
       {/* Session details card */}
       <div className={styles.sessionCard}>
         <div className={styles.sessionDetails}>
-          <div className={styles.sessionDetail}>
-            <span className={styles.sessionDetailLabel}>Date</span>
-            <span className={styles.sessionDetailValue}>{formattedDate}</span>
-          </div>
+          {isTermWithFullData ? (
+            <>
+              <div className={styles.sessionDetail}>
+                <span className={styles.sessionDetailLabel}>Schedule</span>
+                <span className={styles.sessionDetailValue}>{formatRecurrenceDays([session.dayOfWeek!])}</span>
+              </div>
+              <div className={styles.sessionDetail}>
+                <span className={styles.sessionDetailLabel}>Dates</span>
+                <span className={styles.sessionDetailValue}>{formatTermDateRange(session.termStartDate!, session.termEndDate!)}</span>
+              </div>
+              <div className={styles.sessionDetail}>
+                <span className={styles.sessionDetailLabel}>Sessions</span>
+                <span className={styles.sessionDetailValue}>{countTermSessions(session.termStartDate!, session.termEndDate!, session.dayOfWeek!)} sessions</span>
+              </div>
+            </>
+          ) : (
+            <div className={styles.sessionDetail}>
+              <span className={styles.sessionDetailLabel}>Date</span>
+              <span className={styles.sessionDetailValue}>{formattedDate}</span>
+            </div>
+          )}
           <div className={styles.sessionDetail}>
             <span className={styles.sessionDetailLabel}>Time</span>
             <span className={styles.sessionDetailValue}>
@@ -83,7 +107,9 @@ export default function SessionInfoStep() {
           <div className={styles.sessionDetail}>
             <span className={styles.sessionDetailLabel}>Price</span>
             <span className={styles.sessionPrice}>
-              £{(session.price / 100).toFixed(2)}
+              {isTermWithFullData
+                ? formatTermPrice(session.price)
+                : `£${(session.price / 100).toFixed(2)}`}
             </span>
           </div>
           <div className={styles.sessionDetail}>
