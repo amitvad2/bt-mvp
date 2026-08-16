@@ -11,6 +11,7 @@ import { Map, List, ChevronDown, ChevronUp, ChefHat } from 'lucide-react';
 import SessionMapSection from '@/components/home/SessionMapSection';
 import BundleBrowser from '@/components/sessions/BundleBrowser';
 import TermScheduleView from '@/components/sessions/TermScheduleView';
+import { getCommitmentBannerText, formatSessionDates, formatTermPrice } from '@/components/sessions/term-card-utils';
 import styles from './SessionBrowser.module.css';
 
 interface Props {
@@ -307,62 +308,54 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                     const isExpanded = expandedTermSchedule === ts.id;
 
                                     const [sh, sm] = ts.startTime.split(':').map(Number);
-                                    const period = sh >= 12 ? 'pm' : 'am';
-                                    const displayHour = sh % 12 || 12;
-                                    const timeDisplay = `${displayHour}:${sm.toString().padStart(2, '0')}`;
+                                    const startPeriod = sh >= 12 ? 'PM' : 'AM';
+                                    const startHour = sh % 12 || 12;
+                                    const timeDisplay = `${startHour}:${sm.toString().padStart(2, '0')} ${startPeriod}`;
+
+                                    const [eh, em] = ts.endTime.split(':').map(Number);
+                                    const endPeriod = eh >= 12 ? 'PM' : 'AM';
+                                    const endHour = eh % 12 || 12;
+                                    const endTimeDisplay = `${endHour}:${em.toString().padStart(2, '0')} ${endPeriod}`;
+                                    const timeRangeDisplay = `${timeDisplay} – ${endTimeDisplay}`;
 
                                     return (
                                         <div key={ts.id} className={`card ${styles.sessionCard}`}>
-                                            {/* Header: date range + title */}
+                                            {/* Header: title + age range */}
                                             <div className={styles.cardTop}>
-                                                <div className={`${styles.dateBadge} ${styles[`dateBadge_${badge.color}`]}`}>
-                                                    <span className={styles.badgeDay}>{startDate ? startDate.getDate() : '—'}</span>
-                                                    <span className={styles.badgeMonth}>{startDate ? startDate.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase() : 'TERM'}</span>
-                                                </div>
                                                 <div className={styles.cardTitleBlock}>
                                                     <h3 className={styles.sessionName}>{ts.className}</h3>
-                                                    <p className={styles.sessionSchedule}>{dateRangeStr}</p>
+                                                    {ts.ageMin != null && ts.ageMax != null && (
+                                                        <p className={styles.sessionSchedule}><strong>{ts.ageMin}–{ts.ageMax} yrs</strong></p>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {/* Term badge */}
-                                            <div className={styles.termBadgeRow}>
-                                                <span className="badge badge-indigo">Term</span>
-                                                {activeCount > 0 && (
+                                            {/* Commitment Banner */}
+                                            {activeCount > 0 && ts.termStartDate && (
+                                                <div className={styles.termBadgeRow}>
+                                                    <span className="badge badge-indigo">Term</span>
                                                     <span className={styles.termSessionCount}>
-                                                        {activeCount} session{activeCount !== 1 ? 's' : ''}
+                                                        {getCommitmentBannerText(ts.schedule!, ts.termStartDate)}
                                                     </span>
-                                                )}
-                                            </div>
+                                                </div>
+                                            )}
 
                                             {/* Details table */}
                                             <dl className={styles.detailsTable}>
-                                                <div className={styles.detailRow}>
-                                                    <dt>Term Period</dt>
-                                                    <dd>{dateRangeStr}</dd>
-                                                </div>
-                                                <div className={styles.detailRow}>
-                                                    <dt>Day</dt>
-                                                    <dd>{ts.dayOfWeek || '—'}</dd>
-                                                </div>
+                                                {ts.schedule && activeCount > 0 && (
+                                                    <div className={styles.detailRow}>
+                                                        <dt>Sessions</dt>
+                                                        <dd>{formatSessionDates(ts.schedule)}</dd>
+                                                    </div>
+                                                )}
                                                 <div className={styles.detailRow}>
                                                     <dt>Time</dt>
-                                                    <dd>{timeDisplay} {period.toUpperCase()}</dd>
+                                                    <dd>{timeRangeDisplay}</dd>
                                                 </div>
                                                 <div className={styles.detailRow}>
                                                     <dt>Spaces Available</dt>
                                                     <dd>{ts.spotsAvailable === 0 ? 'Full' : `${ts.spotsAvailable} spot${ts.spotsAvailable === 1 ? '' : 's'}`}</dd>
                                                 </div>
-                                                <div className={styles.detailRow}>
-                                                    <dt>Category</dt>
-                                                    <dd>{badge.displayName}</dd>
-                                                </div>
-                                                {ts.ageMin != null && ts.ageMax != null && (
-                                                    <div className={styles.detailRow}>
-                                                        <dt>Ages</dt>
-                                                        <dd>{ts.ageMin}–{ts.ageMax} yrs</dd>
-                                                    </div>
-                                                )}
                                                 {ts.venueName && (
                                                     <div className={styles.detailRow}>
                                                         <dt>Venue</dt>
@@ -379,8 +372,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
 
                                             {/* Price */}
                                             <div className={styles.priceRow}>
-                                                <span className={styles.priceLabel}>Term price</span>
-                                                <span className={styles.priceValue}>£{(ts.price / 100).toFixed(2)}</span>
+                                                <span className={styles.priceValue}>{formatTermPrice(activeCount, ts.price)}</span>
                                             </div>
 
                                             {/* Full term menu and learning plan */}
@@ -460,44 +452,21 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
 
                                 const [sh, sm] = s.startTime.split(':').map(Number);
                                 const [eh, em] = s.endTime.split(':').map(Number);
-                                const period = sh >= 12 ? 'pm' : 'am';
-                                const displayHour = sh % 12 || 12;
-                                const timeDisplay = `${displayHour}:${sm.toString().padStart(2, '0')}`;
-                                const durationMins = (eh * 60 + em) - (sh * 60 + sm);
-                                const durationHours = durationMins / 60;
-                                const durationLabel = Number.isInteger(durationHours) ? `${durationHours}` : durationHours.toFixed(1);
+                                const startPeriodS = sh >= 12 ? 'PM' : 'AM';
+                                const startHourS = sh % 12 || 12;
+                                const startTimeS = `${startHourS}:${sm.toString().padStart(2, '0')} ${startPeriodS}`;
+                                const endPeriodS = eh >= 12 ? 'PM' : 'AM';
+                                const endHourS = eh % 12 || 12;
+                                const endTimeS = `${endHourS}:${em.toString().padStart(2, '0')} ${endPeriodS}`;
+                                const timeRangeS = `${startTimeS} – ${endTimeS}`;
 
                                 return (
                                 <div key={s.id} className={`card ${styles.sessionCard}`}>
-                                    {/* Header: date badge + title */}
+                                    {/* Header: title + age range */}
                                     <div className={styles.cardTop}>
-                                        <div className={`${styles.dateBadge} ${styles[`dateBadge_${badge.color}`]}`}>
-                                            <span className={styles.badgeDay}>{dayNum}</span>
-                                            <span className={styles.badgeMonth}>{monthStr}</span>
-                                        </div>
                                         <div className={styles.cardTitleBlock}>
                                             <h3 className={styles.sessionName}>{s.className}</h3>
-                                            <p className={styles.sessionSchedule}>{dayFull} at {timeDisplay} {period.toUpperCase()}</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Stats strip */}
-                                    <div className={styles.statsStrip}>
-                                        <div className={styles.statItem}>
-                                            <span className={styles.statValue}>✓</span>
-                                            <span className={styles.statLabel}>spaces</span>
-                                        </div>
-                                        <div className={styles.statItem}>
-                                            <span className={styles.statValue}>{dayAbbrev}</span>
-                                            <span className={styles.statLabel}>days</span>
-                                        </div>
-                                        <div className={styles.statItem}>
-                                            <span className={styles.statValue}>{timeDisplay}</span>
-                                            <span className={styles.statLabel}>{period}</span>
-                                        </div>
-                                        <div className={styles.statItem}>
-                                            <span className={styles.statValue}>{durationLabel}</span>
-                                            <span className={styles.statLabel}>{durationHours === 1 ? 'hour' : 'hours'}</span>
+                                            <p className={styles.sessionSchedule}><strong>{dayFull} · {timeRangeS}{s.ageMin != null && s.ageMax != null ? ` · ${s.ageMin}–${s.ageMax} yrs` : ''}</strong></p>
                                         </div>
                                     </div>
 
@@ -511,20 +480,6 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                             <dt>Spaces Available</dt>
                                             <dd>{s.spotsAvailable === 0 ? 'Full' : `${s.spotsAvailable} spot${s.spotsAvailable === 1 ? '' : 's'}`}</dd>
                                         </div>
-                                        <div className={styles.detailRow}>
-                                            <dt>Category</dt>
-                                            <dd>{badge.displayName}</dd>
-                                        </div>
-                                        {s.ageMin != null && s.ageMax != null && (<>
-                                            <div className={styles.detailRow}>
-                                                <dt>Minimum Age</dt>
-                                                <dd>{s.ageMin} yrs</dd>
-                                            </div>
-                                            <div className={styles.detailRow}>
-                                                <dt>Maximum Age</dt>
-                                                <dd>{s.ageMax} yrs</dd>
-                                            </div>
-                                        </>)}
                                         {s.venueName && (
                                             <div className={styles.detailRow}>
                                                 <dt>Venue</dt>
