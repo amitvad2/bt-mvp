@@ -319,13 +319,16 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                     const timeRangeDisplay = `${timeDisplay} – ${endTimeDisplay}`;
 
                                     return (
-                                        <div key={ts.id} className={`card ${styles.sessionCard}`}>
+                                        <div key={ts.id} className={`card ${styles.sessionCard}`} style={{ borderLeft: `4px solid var(--card-accent-${badge.color})` }}>
                                             {/* Header: title + age range */}
                                             <div className={styles.cardTop}>
                                                 <div className={styles.cardTitleBlock}>
                                                     <h3 className={styles.sessionName}>{ts.className}</h3>
                                                     {ts.ageMin != null && ts.ageMax != null && (
-                                                        <p className={styles.sessionSchedule}><strong>{ts.ageMin}–{ts.ageMax} yrs</strong></p>
+                                                        <p className={styles.sessionSchedule}>
+                                                            <span className={`badge badge-${badge.color}`} style={{ marginRight: '0.5rem' }}>{badge.label}</span>
+                                                            <strong>{ts.ageMin}–{ts.ageMax} yrs</strong>
+                                                        </p>
                                                     )}
                                                 </div>
                                             </div>
@@ -461,15 +464,23 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                 const timeRangeS = `${startTimeS} – ${endTimeS}`;
 
                                 return (
-                                <div key={s.id} className={`card ${styles.sessionCard}`}>
+                                <div key={s.id} className={`card ${styles.sessionCard}`} style={{ borderLeft: `4px solid var(--card-accent-${badge.color})` }}>
                                     {/* Header: title + age range */}
                                     <div className={styles.cardTop}>
                                         <div className={styles.cardTitleBlock}>
                                             <h3 className={styles.sessionName}>{s.className}</h3>
                                             {s.ageMin != null && s.ageMax != null && (
-                                                <p className={styles.sessionSchedule}><strong>{s.ageMin}–{s.ageMax} yrs</strong></p>
+                                                <p className={styles.sessionSchedule}>
+                                                    <span className={`badge badge-${badge.color}`} style={{ marginRight: '0.5rem' }}>{badge.label}</span>
+                                                    <strong>{s.ageMin}–{s.ageMax} yrs</strong>
+                                                </p>
                                             )}
                                         </div>
+                                    </div>
+
+                                    {/* Single Session badge */}
+                                    <div className={styles.termBadgeRow}>
+                                        <span className="badge badge-green">Single Session</span>
                                     </div>
 
                                     {/* Details table */}

@@ -534,7 +534,9 @@ export default function AdminSessions() {
                 schedule,
                 price: termFormData.price,
                 spotsTotal: termFormData.spotsTotal,
-                spotsAvailable: editingSession ? (editingSession.spotsAvailable ?? termFormData.spotsTotal) : termFormData.spotsTotal,
+                spotsAvailable: editingSession
+                    ? formData.spotsAvailable
+                    : termFormData.spotsTotal,
                 ageMin: termFormData.ageMin,
                 ageMax: termFormData.ageMax,
                 status: termFormData.status,
@@ -1027,6 +1029,19 @@ export default function AdminSessions() {
                                                 required
                                             />
                                         </div>
+                                        {editingSession && (
+                                            <div className="form-group">
+                                                <label className="form-label">Spots Available (override)</label>
+                                                <input
+                                                    type="number"
+                                                    className="form-input"
+                                                    value={formData.spotsAvailable}
+                                                    onChange={e => setFormData({ ...formData, spotsAvailable: parseInt(e.target.value) || 0 })}
+                                                    min={0}
+                                                    max={termFormData.spotsTotal}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="form-row">

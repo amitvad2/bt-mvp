@@ -47,6 +47,14 @@
   --bt-green-light: #E8F2EB;
   --bt-warm-white: #FBF7F2;
 
+  /* Card accent border colours (mapped from badge colours) */
+  --card-accent-amber: var(--bt-amber);
+  --card-accent-green: var(--bt-leaf);
+  --card-accent-indigo: #3949AB;
+  --card-accent-red: var(--bt-danger);
+  --card-accent-gray: var(--bt-border);
+  --card-accent-leaf: var(--bt-leaf);
+
   /* Neutral Gray Scale (warm brown-tinted) */
   --bt-gray-50: #FAF6F1;
   --bt-gray-100: #F0EAE2;

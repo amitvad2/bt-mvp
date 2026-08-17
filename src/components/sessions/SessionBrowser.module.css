@@ -87,6 +87,7 @@
     background: #fff;
     padding: var(--space-6);
     border: none;
+    border-left: 4px solid var(--bt-border); /* default, overridden by inline style */
     box-shadow: var(--shadow);
     transition: transform var(--transition);
     display: flex;

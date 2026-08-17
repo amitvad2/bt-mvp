@@ -11,6 +11,8 @@ const schema = z.object({
     category: z.enum(['general', 'class-info', 'booking-help', 'dietary-allergy', 'private-event', 'technical', 'feedback']),
     message: z.string().min(10, 'Please enter at least 10 characters'),
     consentToReply: z.boolean().refine(v => v === true, { message: 'Consent is required' }),
+    // Honeypot field — bots fill this in, humans leave it empty
+    website: z.string().max(0).optional(),
     // userId is intentionally absent — client-supplied UIDs cannot be trusted.
     // User association can be added later via server-side token verification.
 });
@@ -42,6 +44,13 @@ export async function POST(req: Request) {
         }
 
         const { name, email, phone, category, message, consentToReply } = result.data;
+
+        // Honeypot check — if the hidden field was filled, it's a bot.
+        // Return fake success so the bot doesn't retry.
+        if (result.data.website) {
+            console.log('[contact] Bot detected via honeypot — silently rejected');
+            return NextResponse.json({ success: true, id: 'blocked' });
+        }
 
         const docData: Record<string, unknown> = {
             name,

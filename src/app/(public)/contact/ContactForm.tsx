@@ -15,6 +15,8 @@ const schema = z.object({
     }),
     message: z.string().min(10, 'Please enter at least 10 characters'),
     consentToReply: z.boolean().refine(v => v === true, { message: 'Please consent to being contacted back' }),
+    // Honeypot field — must be empty for legitimate submissions
+    website: z.string().max(0).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -76,6 +78,18 @@ export default function ContactForm() {
             <p className={styles.formSub}>Fill in the form below and we'll reply within 2 business days.</p>
             <form onSubmit={handleSubmit(onSubmit)} className={styles.form} noValidate>
             {serverError && <div className="alert alert-error">{serverError}</div>}
+
+            {/* Honeypot — hidden from humans, filled by bots */}
+            <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }}>
+                <label htmlFor="website">Website</label>
+                <input
+                    id="website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    {...register('website')}
+                />
+            </div>
 
             <div className="form-row">
                 <div className="form-group">
