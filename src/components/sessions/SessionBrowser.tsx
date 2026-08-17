@@ -475,7 +475,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                     {/* Details table */}
                                     <dl className={styles.detailsTable}>
                                         <div className={styles.detailRow}>
-                                            <dt>First Lesson</dt>
+                                            <dt>Session</dt>
                                             <dd>{firstLesson}</dd>
                                         </div>
                                         <div className={styles.detailRow}>
