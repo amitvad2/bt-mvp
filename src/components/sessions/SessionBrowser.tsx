@@ -466,7 +466,9 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                     <div className={styles.cardTop}>
                                         <div className={styles.cardTitleBlock}>
                                             <h3 className={styles.sessionName}>{s.className}</h3>
-                                            <p className={styles.sessionSchedule}><strong>{dayFull} · {timeRangeS}{s.ageMin != null && s.ageMax != null ? ` · ${s.ageMin}–${s.ageMax} yrs` : ''}</strong></p>
+                                            {s.ageMin != null && s.ageMax != null && (
+                                                <p className={styles.sessionSchedule}><strong>{s.ageMin}–{s.ageMax} yrs</strong></p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -475,6 +477,10 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
                                         <div className={styles.detailRow}>
                                             <dt>First Lesson</dt>
                                             <dd>{firstLesson}</dd>
+                                        </div>
+                                        <div className={styles.detailRow}>
+                                            <dt>Time</dt>
+                                            <dd>{timeRangeS}</dd>
                                         </div>
                                         <div className={styles.detailRow}>
                                             <dt>Spaces Available</dt>
@@ -496,8 +502,7 @@ function SessionBrowserContent({ onBook, showGuestOption }: Props) {
 
                                     {/* Price */}
                                     <div className={styles.priceRow}>
-                                        <span className={styles.priceLabel}>Cost per session from</span>
-                                        <span className={styles.priceValue}>£{(s.price / 100).toFixed(2)}</span>
+                                        <span className={styles.priceValue}>£{(s.price / 100).toFixed(2)} per session</span>
                                     </div>
 
                                     {/* Optional recipe detail for a single-session booking. */}
