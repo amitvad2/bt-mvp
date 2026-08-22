@@ -21,7 +21,7 @@ export default function HomePage() {
                         <span className={styles.heroGradient}>Blooming Tastebuds</span>
                     </h1>
                     <p className={styles.heroSub}>
-                        Where junior cooks and teen chefs learn confidence, creativity, and conscious eating — one delicious meal at a time.
+                        Where junior cooks and teen chefs learn confidence, creativity, and conscious eating, one delicious meal at a time.
                     </p>
                     <HeroCtas />
                 </div>

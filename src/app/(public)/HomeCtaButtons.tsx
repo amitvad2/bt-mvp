@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Flame } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import styles from './page.module.css';
 
@@ -11,15 +11,15 @@ export function HeroCtas() {
     return (
         <div className={styles.heroCtas}>
             <Link href={user ? '/portal/find-class' : '/classes'} className={styles.ctaPrimary}>
-                <Flame size={20} /> Book a Class
+                Book a Class
             </Link>
             {user ? (
                 <Link href="/portal/dashboard" className={styles.ctaSecondary}>
-                    My Portal <ArrowRight size={18} />
+                    My Portal
                 </Link>
             ) : !loading ? (
                 <Link href="/auth/signup" className={styles.ctaSecondary}>
-                    Register Here <ArrowRight size={18} />
+                    Register Here
                 </Link>
             ) : null}
         </div>
